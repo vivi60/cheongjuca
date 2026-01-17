@@ -1,16 +1,17 @@
 // script.js
+// script.js
 function checkLogin() {
     const id = document.getElementById('username').value;
     const pw = document.getElementById('password').value;
 
-    if (id === "admin" && pw === "admin0303") { // 관리자 계정
-        localStorage.setItem("loginStatus", "admin"); // 상태를 admin으로 저장
+    if (id === "admin" && pw === "admin0303") {
+        localStorage.setItem("loginStatus", "admin"); // 브라우저를 꺼도 남음
         alert("관리자 권한으로 접속합니다.");
-        window.location.href = "main.html";
-    } else if (id === "outbreak" && pw === "1234") { // 일반 생존자
+        window.location.href = "homepage/main.html"; // 경로 주의!
+    } else if (id === "outbreak" && pw === "1234") {
         localStorage.setItem("loginStatus", "success");
         alert("또 그들이 온다.");
-        window.location.href = "main.html";
+        window.location.href = "homepage/main.html";
     } else {
         alert("아이디 또는 비밀번호가 틀렸습니다.");
     }
