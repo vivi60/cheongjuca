@@ -21,46 +21,21 @@
       const database = firebase.database();
     </script>
     <style>
-        .shop-container {
-            width: 90%; max-width: 1000px; margin: 30px auto;
-            color: white; font-family: 'SchoolSafeBoardMarker';
-            display: flex; gap: 20px; flex-wrap: wrap;
-        }
-        .shop-section {
-            flex: 1; background: rgba(0,0,0,0.8);
-            border: 2px solid #555; border-radius: 10px;
-            padding: 20px; min-width: 300px;
-        }
-        .header-info {
-            width: 100%; text-align: center; margin-bottom: 20px;
-            background: #222; padding: 15px; border-radius: 10px;
-            font-size: 24px; border: 1px solid #ab0000;
-        }
-        .item-list {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px; max-height: 400px; overflow-y: auto;
-        }
-        .item-card {
-            background: #333; border: 1px solid #444;
-            border-radius: 5px; padding: 10px; text-align: center;
-            cursor: pointer; transition: 0.2s;
-        }
+        .shop-container { width: 90%; max-width: 1000px; margin: 30px auto; color: white; font-family: 'SchoolSafeBoardMarker'; display: flex; gap: 20px; flex-wrap: wrap; }
+        .shop-section { flex: 1; background: rgba(0,0,0,0.8); border: 2px solid #555; border-radius: 10px; padding: 20px; min-width: 300px; }
+        .header-info { width: 100%; text-align: center; margin-bottom: 20px; background: #222; padding: 15px; border-radius: 10px; font-size: 20px; border: 1px solid #ab0000; }
+        .item-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; }
+        .item-card { background: #333; border: 1px solid #444; border-radius: 5px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
         .item-card:hover { border-color: gold; transform: translateY(-2px); }
         .item-icon { font-size: 40px; }
         .item-price { color: gold; font-size: 14px; margin-top: 5px; }
-        
-        .buy-btn {
-            width: 100%; background: #ab0000; color: white; border: none;
-            padding: 15px; font-size: 18px; border-radius: 5px; cursor: pointer;
-            font-family: 'SchoolSafeBoardMarker'; margin-top: 10px;
-        }
-        .buy-btn:hover { background: #ff0000; }
+        .owned-tag { position: absolute; top: 5px; right: 5px; background: #ab0000; font-size: 10px; padding: 2px 4px; border-radius: 3px; }
     </style>
 </head>
 <body style="background-color: #111;">
 
     <nav class="navbar">
-        <div class="logo">OUT BREAK</div>
+        <div class="logo">OUT BREAK <span id="userBadge"></span></div>
         <ul class="nav-links">
             <li><a href="main.html">홈</a></li>
             <li><a href="shop.html">상점</a></li>
@@ -73,25 +48,35 @@
         <div class="header-info">
             👤 <span id="myNick">...</span>님의 자산<br>
             <span style="color:gold;">💵 <span id="myMoney">0</span> G</span> | 
-            <span style="color:#00ff00;">🐛 미끼 <span id="myBait">0</span>개</span>
+            <span style="color:#00ff00;">🐛 일반: <span id="myBait">0</span></span> | 
+            <span style="color:#ffcc00;">🪱 고급: <span id="myBaitHigh">0</span></span>
         </div>
 
         <div class="shop-section">
-            <h2 style="color:#ab0000; text-align:center;">🛒 보급소 (구매)</h2>
-            <div style="text-align:center; padding: 20px;">
-                <div style="font-size: 80px;">🐛</div>
-                <h3>최고급 지렁이 미끼</h3>
-                <p style="color:#aaa;">물고기가 환장하는 꿈틀이입니다.</p>
-                <div style="color:gold; font-size:24px; margin-bottom:20px;">가격: 10 G</div>
-                <button class="buy-btn" onclick="buyBait()">구매하기 (-10G)</button>
+            <h2 style="color:#ab0000; text-align:center;">🛒 생존 보급소</h2>
+            <div style="display: grid; gap: 10px;">
+                <div class="item-card" onclick="buyItem('bait', 10, '일반 미끼')">
+                    <div class="item-icon">🐛</div>
+                    <div>일반 미끼</div>
+                    <div class="item-price">10 G</div>
+                </div>
+                <div class="item-card" onclick="buyItem('bait_high', 35, '고급 미끼')">
+                    <div class="item-icon">🪱</div>
+                    <div>고급 미끼 (대어 확률UP)</div>
+                    <div class="item-price">35 G</div>
+                </div>
+                <div class="item-card" id="rodCard" onclick="buyRod()">
+                    <div id="rodTag"></div>
+                    <div class="item-icon">🎣</div>
+                    <div>카본 낚싯대 (성능 향상)</div>
+                    <div class="item-price" id="rodPriceDisplay">500 G</div>
+                </div>
             </div>
         </div>
 
         <div class="shop-section">
             <h2 style="color:#4caf50; text-align:center;">🎒 내 가방 (판매)</h2>
-            <p style="text-align:center; font-size:14px; color:#aaa;">아이템을 클릭하면 판매합니다.</p>
-            <div class="item-list" id="inventoryGrid">
-                </div>
+            <div class="item-list" id="inventoryGrid"></div>
         </div>
     </div>
 
@@ -100,88 +85,81 @@
         if(!nick) location.href='index.html';
         document.getElementById('myNick').innerText = nick;
 
-        let money = 0;
-        let bait = 0;
-        
-        // 1. 내 정보 불러오기 (돈, 미끼, 인벤토리)
+        let money = 0, bait = 0, baitHigh = 0, rodLevel = 1;
+
+        // 1. 데이터 실시간 로드
         database.ref('users/' + nick).on('value', (snapshot) => {
             const data = snapshot.val() || {};
-            
-            // 처음 온 사람은 기본 자금 100G, 미끼 3개 지급 (초기화)
             if (data.money === undefined) {
-                database.ref('users/' + nick).update({ money: 100, bait: 3 });
+                database.ref('users/' + nick).update({ money: 100, bait: 3, rod_level: 1 });
                 return;
             }
 
             money = data.money;
             bait = data.bait || 0;
-            const inventory = data.inventory || {};
+            baitHigh = data.bait_high || 0;
+            rodLevel = data.rod_level || 1;
 
-            // 화면 갱신
             document.getElementById('myMoney').innerText = money;
             document.getElementById('myBait').innerText = bait;
-            renderInventory(inventory);
+            document.getElementById('myBaitHigh').innerText = baitHigh;
+
+            // 낚싯대 소지 여부 표시
+            if(rodLevel >= 2) {
+                document.getElementById('rodTag').innerHTML = '<span class="owned-tag">보유중</span>';
+                document.getElementById('rodPriceDisplay').innerText = "SOLD OUT";
+            }
+
+            renderInventory(data.inventory || {});
         });
 
-        // 2. 인벤토리 그리기
+        // 2. 미끼 구매
+        function buyItem(type, price, name) {
+            if (money < price) return alert("자금이 부족합니다!");
+            if (confirm(`${name}을(를) 구매하시겠습니까?`)) {
+                let updates = { money: money - price };
+                if(type === 'bait') updates.bait = bait + 1;
+                if(type === 'bait_high') updates.bait_high = baitHigh + 1;
+                database.ref('users/' + nick).update(updates);
+            }
+        }
+
+        // 3. 낚싯대 구매
+        function buyRod() {
+            if (rodLevel >= 2) return alert("이미 최고급 낚싯대를 보유하고 있습니다.");
+            if (money < 500) return alert("돈이 부족합니다. 낚시로 돈을 더 모으세요!");
+            if (confirm("카본 낚싯대를 구매하시겠습니까?\n(게이지 조절이 쉬워지고 진행도가 빨리 오릅니다)")) {
+                database.ref('users/' + nick).update({
+                    money: money - 500,
+                    rod_level: 2
+                });
+                alert("장비 업그레이드 완료!");
+            }
+        }
+
         function renderInventory(invData) {
             const grid = document.getElementById('inventoryGrid');
             grid.innerHTML = "";
-
-            if(Object.keys(invData).length === 0) {
-                grid.innerHTML = "<p style='width:100%; text-align:center;'>가방이 비었습니다.<br>낚시터에 가서 뭐라도 잡아오세요.</p>";
-                return;
-            }
-
-            // 인벤토리 목록을 역순(최신순)으로 정렬하여 표시
             Object.entries(invData).reverse().forEach(([key, item]) => {
                 const div = document.createElement('div');
                 div.className = 'item-card';
-                div.innerHTML = `
-                    <div class="item-icon">${item.icon}</div>
-                    <div style="font-size:12px;">${item.name}</div>
-                    <div class="item-price">+ ${item.price} G</div>
-                `;
-                // 클릭하면 판매 함수 실행
+                div.innerHTML = `<div class="item-icon">${item.icon}</div><div style="font-size:12px;">${item.name}</div><div class="item-price">+ ${item.price} G</div>`;
                 div.onclick = () => sellItem(key, item.name, item.price);
                 grid.appendChild(div);
             });
         }
 
-        // 3. 미끼 구매
-        function buyBait() {
-            if (money < 10) {
-                alert("돈이 부족합니다! 물고기를 잡아와서 파세요.");
-                return;
-            }
-            if (confirm("미끼를 구매하시겠습니까? (10G)")) {
-                database.ref('users/' + nick).update({
-                    money: money - 10,
-                    bait: bait + 1
-                });
-                // alert("구매 완료!");
-            }
-        }
-
-        // 4. 아이템 판매
         function sellItem(key, name, price) {
             if (price <= 0) {
-                // 좀비 손목 같은 건 팔 수 없음 (버리기)
-                if(confirm(`${name}은(는) 상점이 매입하지 않습니다.\n그냥 버리시겠습니까?`)) {
-                    database.ref('users/' + nick + '/inventory/' + key).remove();
-                }
+                if(confirm(`${name}은(는) 가치가 없습니다. 버리시겠습니까?`)) database.ref('users/' + nick + '/inventory/' + key).remove();
                 return;
             }
-
-            if (confirm(`${name}을(를) ${price}G에 파시겠습니까?`)) {
-                // 1. 돈 추가
-                database.ref('users/' + nick).update({
-                    money: money + price
-                });
-                // 2. 아이템 삭제
+            if (confirm(`${name}을(를) ${price}G에 판매하시겠습니까?`)) {
+                database.ref('users/' + nick).update({ money: money + price });
                 database.ref('users/' + nick + '/inventory/' + key).remove();
             }
         }
+        function logout() { localStorage.removeItem("loginStatus"); location.href = "index.html"; }
     </script>
 </body>
 </html>

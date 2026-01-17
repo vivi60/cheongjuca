@@ -782,3 +782,30 @@ body.profile-page {
         padding: 40px;
     }
 }
+
+/* 상점/게시판 스크롤바 커스텀 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background: #ab0000; /* 생존 테마의 붉은색 */
+    border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+/* 의뢰 등록 폼 반응형 수정 */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column; /* 가로 배열을 세로로 변경 */
+        gap: 0;
+    }
+    .quest-form-box {
+        width: 95%;
+        padding: 15px;
+    }
+    #qReward {
+        margin-bottom: 10px;
+    }
+}
