@@ -1,62 +1,120 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <title>생존자 목록</title>
-    <link rel="stylesheet" href="style.css"> 
-<script>
-    (function() {
-        const status = localStorage.getItem("loginStatus");
-        const nick = localStorage.getItem("userNick"); // 저장된 닉네임 가져오기
+    <link rel="stylesheet" href="style.css">
+    <script>
+        // 로그인 체크
+        (function() {
+            const status = localStorage.getItem("loginStatus");
+            const nick = localStorage.getItem("userNick");
 
-        // 1. 로그인 안 된 사람 튕겨내기
-        if (!status || (status !== "success" && status !== "admin")) {
-            if (!window.location.href.includes("index.html")) {
-                alert("로그인이 필요합니다.");
-                window.location.href = "index.html";
-            }
-        }
-
-        // 2. 페이지 로딩 후 닉네임 표시하기
-        window.addEventListener('load', function() {
-            const badge = document.getElementById("userBadge");
-            if (badge && nick) {
-                // 관리자면 빨간색, 일반 유저는 흰색이나 회색 등으로 표시
-                if (status === "admin") {
-                    badge.innerText = `[관리자 모드]`;
-                    badge.style.color = "#ff0000";
-                } else {
-                    badge.innerText = `[${nick}]`; // 예: [러너1]
-                    badge.style.color = "#cccccc"; // 일반 유저 색상
+            if (!status || (status !== "success" && status !== "admin")) {
+                if (!window.location.href.includes("index.html")) {
+                    alert("생존자만 접근할 수 있습니다.");
+                    window.location.href = "index.html";
                 }
-                badge.style.display = "inline"; // 숨겨둔 배지를 보이게 함
             }
-        });
-    })();
 
-        // 로그아웃 함수
+            window.addEventListener('load', function() {
+                const badge = document.getElementById("userBadge");
+                if (badge && nick) {
+                    if (status === "admin") {
+                        badge.innerText = `[관리자 모드]`;
+                        badge.style.color = "#ff0000";
+                    } else {
+                        badge.innerText = `[${nick}]`;
+                        badge.style.color = "#cccccc";
+                    }
+                    badge.style.display = "inline";
+                }
+                
+                // 생존자 목록 생성 실행
+                renderSurvivors();
+            });
+        })();
+
         function logout() {
             localStorage.removeItem("loginStatus");
-            alert("로그아웃 되었습니다.");
-            window.location.href = "index.html";
+            location.href = "index.html";
         }
     </script>
 </head>
-<body class="sub-page">
-<nav class="navbar">
-    <div class="logo">
-        OUT BREAK 
-        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;">
-        </span>
+<body class="sub-page"> <nav class="navbar">
+        <div class="logo">
+            OUT BREAK 
+            <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="main.html">홈</a></li>
+            <li><a href="sub.html">생존자목록</a></li>
+            <li><a href="board.html">익명게시판</a></li>
+            <li><a href="quest.html">의뢰게시판</a></li>
+            <li><a href="#" onclick="logout()">로그아웃</a></li>
+        </ul>
+    </nav>
+
+    <div class="survivor-container">
+        <h2 style="font-family: 'SchoolSafeBoardMarker'; color: #ab0000; text-align: center; font-size: 40px; margin-bottom: 30px; text-shadow: 2px 2px 0 #000;">
+            등록된 생존자 명단
+        </h2>
+
+        <div class="survivor-grid" id="survivorList">
+            </div>
     </div>
-    <ul class="nav-links">
-        <li><a href="main.html">홈</a></li>
-        <li><a href="sub.html">생존자목록</a></li>
-        <li><a href="board.html">익명게시판</a></li>
-        <li><a href="quest.html">의뢰게시판</a></li>
-        <li><a href="#" onclick="logout()">로그아웃</a></li>
-    </ul>
-</nav>
-    
+
+    <script>
+        // ★ 여기에 생존자 정보를 입력하세요! (이미지가 없으면 자동으로 기본 이미지가 뜹니다)
+        const survivors = [
+            { name: "관리자", role: "총괄 리더", state: "생존", img: "image/admin.png", desc: "이 구역의 관리자입니다." },
+            { name: "러너1", role: "수색대", state: "생존", img: "image/runner1.jpg", desc: "발이 빠르고 지리에 밝음." },
+            { name: "러너2", role: "전투원", state: "부상", img: "image/fighter.jpg", desc: "현재 다리를 다쳐 치료 중." },
+            { name: "닥터K", role: "의무병", state: "생존", img: "", desc: "응급 처치 전문가." }, // 이미지 없음 테스트
+            { name: "쉐프", role: "조리장", state: "생존", img: "image/cook.png", desc: "통조림 요리의 달인." },
+            // ... 계속 추가 가능 ...
+        ];
+
+        // 20명 채우기용 더미 데이터 (테스트용)
+        for(let i=1; i<=15; i++) {
+            survivors.push({
+                name: `생존자${i}`,
+                role: "일반 시민",
+                state: "생존",
+                img: `image/user${i}.png`, 
+                desc: "특별한 특이사항 없음."
+            });
+        }
+
+        function renderSurvivors() {
+            const list = document.getElementById('survivorList');
+            list.innerHTML = ""; // 초기화
+
+            survivors.forEach(person => {
+                const card = document.createElement('div');
+                card.className = 'survivor-card';
+
+                // 상태에 따른 색상 변경
+                let stateColor = "#00ff00"; // 생존(초록)
+                if (person.state === "부상") stateColor = "orange";
+                if (person.state === "사망" || person.state === "실종") stateColor = "red";
+
+                // ★ 핵심: onerror 부분이 이미지가 깨졌을 때 기본 이미지를 보여줍니다
+                card.innerHTML = `
+                    <div class="survivor-img-box">
+                        <img src="${person.img}" 
+                             alt="${person.name}" 
+                             onerror="this.src='https://i.imgur.com/3SPL075.png'"> 
+                    </div>
+                    <div class="survivor-info">
+                        <h3>${person.name} <span style="font-size:12px; color:${stateColor}; border:1px solid ${stateColor}; padding:2px 4px; border-radius:4px;">${person.state}</span></h3>
+                        <p class="role">${person.role}</p>
+                        <p class="desc">${person.desc}</p>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+    </script>
 </body>
 </html>

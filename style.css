@@ -235,7 +235,7 @@ body.main-page {
 
 /* 생존자목록 */
 body.sub-page {
-    background-image: url('/image/survivals.png');
+    background-image: url('/image/noname.png');
     background-size: cover;      
     background-position: 0 20px;  
     background-repeat: no-repeat;
@@ -564,4 +564,80 @@ body.quest-page {
 .quest-card {
     position: relative;
     /* 기존 스타일 유지... */
+}
+
+/* --- 생존자 목록 (Sub Page) 스타일 --- */
+
+.survivor-container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 50px;
+}
+
+.survivor-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+/* 생존자 카드 디자인 */
+.survivor-card {
+    width: 200px;
+    background: rgba(0, 0, 0, 0.7); /* 반투명 검정 */
+    border: 1px solid #555;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.survivor-card:hover {
+    transform: translateY(-5px);
+    border-color: #ab0000;
+}
+
+/* 사진 영역 */
+.survivor-img-box {
+    width: 100%;
+    height: 200px;
+    background: #333;
+    overflow: hidden;
+}
+
+.survivor-img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 사진 비율 유지하며 꽉 채우기 */
+}
+
+/* 정보 영역 */
+.survivor-info {
+    padding: 15px;
+    color: white;
+    text-align: left;
+}
+
+.survivor-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.survivor-info .role {
+    color: #aaa;
+    font-size: 14px;
+    margin: 0 0 10px 0;
+    font-weight: bold;
+}
+
+.survivor-info .desc {
+    font-size: 13px;
+    color: #ddd;
+    margin: 0;
+    line-height: 1.4;
+    font-family: 'DaraeHandwriting', sans-serif; /* 손글씨 느낌 */
 }
