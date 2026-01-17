@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="referrer" content="no-referrer">
+    <meta charset="UTF-8">
+    <title>OUT BREAK</title>
+    <link rel="stylesheet" href="style.css"> 
+    
+    <script>
+        // 페이지가 열리자마자 로그인 상태 확인
+(function() {
+    const status = localStorage.getItem("loginStatus");
+    
+    // 로그인 체크 로직 (기존 수정본 유지)
+    if (status !== "success" && status !== "admin") {
+        alert("로그인이 필요한 페이지입니다.");
+        window.location.href = "login.html"; 
+    }
+
+    // 관리자 배지 제어 (추가된 부분)
+    window.onload = function() {
+        if (status === "admin") {
+            const badge = document.getElementById("adminBadge");
+            if (badge) badge.style.display = "inline"; // 관리자면 보이게 함
+        }
+    };
+})();
+
+        // 로그아웃 함수
+        function logout() {
+            localStorage.removeItem("loginStatus");
+            alert("로그아웃 되었습니다.");
+            window.location.href = "login.html";
+        }
+    </script>
+
+</head>
+<body class="main-page">
+<nav class="navbar">
+    <div class="logo">
+        OUT BREAK 
+        <span id="adminBadge" style="display: none; color: #ff0000; font-size: 12px; margin-left: 10px; vertical-align: middle;">
+            [관리자 모드]
+        </span>
+    </div>
+    <ul class="nav-links">
+        <li><a href="main.html">홈</a></li>
+        <li><a href="sub.html">생존자목록</a></li>
+        <li><a href="board.html">익명게시판</a></li>
+        <li><a href="#" onclick="logout()">로그아웃</a></li>
+    </ul>
+</nav>
+
+<div style="
+    background-image: url('https://i.postimg.cc/BnHNW2T8/1.png'); 
+    background-size: contain;    /* 이미지가 잘리지 않고 전체가 나오게 함 */
+    background-repeat: no-repeat; /* 이미지 반복 방지 */
+    background-position: center;  /* 이미지를 중앙에 배치 */
+    padding: 40px 0;             /* 글자와 배경 사이의 위아래 공간 */
+    width: 100%;      
+    display: flex;
+    justify-content: center;
+    align-items: center;
+">
+    <h1 style="
+        color: #ab0000; 
+        font-family: 'DaraeHandwriting'; 
+        font-size: 60px; 
+        margin: 0;
+    ">
+        OUT BREAK
+    </h1>
+</div>
+
+    <div class="image-container">
+        <a href="https://www.google.com" class="image-link" target="_blank">
+        <img src="https://i.imgur.com/cY4DjU7.png" class="original-img" alt="샘플 이미지">
+        <img src="https://i.imgur.com/Z6bp8LW.png" class="hover-img" alt="샘플 이미지 호버">
+        </a>
+        <a href="sub.html" class="image-link">
+        <img src="https://i.imgur.com/IbRS0sX.png" class="original-img" alt="샘플 이미지2">
+        <img src="https://i.imgur.com/0AYospR.png" class="hover-img" alt="샘플 이미지 호버">
+        </a>
+         <a href="sub.html" class="image-link">
+        <img src="https://i.imgur.com/3SPL075.png" class="original-img" alt="샘플 이미지2">
+        <img src="https://i.imgur.com/2zNwdLL.png" class="hover-img" alt="샘플 이미지 호버">
+        </a>
+        <a href="sub.html" class="image-link">
+        <img src="https://i.imgur.com/TZFuO24.png" class="original-img"v alt="샘플 이미지2">
+        <img src="https://i.imgur.com/l5C4AZZ.png" class="hover-img" alt="샘플 이미지 호버">
+        </a>
+        <a href="sub.html" class="image-link">
+        <img src="https://i.imgur.com/oltH399.png" class="original-img" alt="샘플 이미지2">
+        <img src="https://i.imgur.com/x2MeSJS.png" class="hover-img" alt="샘플 이미지 호버">
+        </a>
+    </div>
+    
+
+</body>
+</html>

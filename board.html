@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>익명 게시판</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 게시판 전용 추가 스타일 */
+        .board-container {
+            width: 80%;
+            max-width: 800px;
+            background: rgba(0, 0, 0, 0.7); /* 반투명 검정 */
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 0 20px rgba(171, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+        .post-form input, .post-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #222;
+            border: 1px solid #ab0000;
+            color: white;
+            border-radius: 5px;
+        }
+        .post-item {
+            border-bottom: 1px solid #444;
+            padding: 15px 0;
+        }
+        .post-header { color: #ab0000; font-weight: bold; margin-bottom: 5px; }
+        .comment-section { margin-left: 20px; margin-top: 10px; font-size: 0.9em; }
+        .comment-item { color: #ccc; border-left: 2px solid #ab0000; padding-left: 10px; margin-bottom: 5px; }
+        .btn-post { background: #ab0000; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
+    
+    /* 삭제 버튼 스타일 */
+.btn-delete {
+    float: right;
+    background: none;
+    border: 1px solid #666;
+    color: #666;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 3px;
+    transition: 0.3s;
+}
+.btn-delete:hover {
+    color: #ab0000;
+    border-color: #ab0000;
+}
+
+/* 댓글 삭제 (작은 x) */
+.del-comment {
+    margin-left: 10px;
+    color: #555;
+    cursor: pointer;
+    font-weight: bold;
+}
+.del-comment:hover {
+    color: #ff0000;
+}
+
+/* 게시글 박스 내 줄바꿈 허용 */
+.post-content {
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-bottom: 15px;
+}
+    
+    </style>
+
+    <script>
+        // 페이지가 열리자마자 로그인 상태 확인
+(function() {
+    const status = localStorage.getItem("loginStatus");
+    
+    // 로그인 체크 로직 (기존 수정본 유지)
+    if (status !== "success" && status !== "admin") {
+        alert("로그인이 필요한 페이지입니다.");
+        window.location.href = "login.html"; 
+    }
+
+    // 관리자 배지 제어 (추가된 부분)
+    window.onload = function() {
+        if (status === "admin") {
+            const badge = document.getElementById("adminBadge");
+            if (badge) badge.style.display = "inline"; // 관리자면 보이게 함
+        }
+    };
+})();
+
+        // 로그아웃 함수
+        function logout() {
+            localStorage.removeItem("loginStatus");
+            alert("로그아웃 되었습니다.");
+            window.location.href = "login.html";
+        }
+    </script>
+
+</head>
+<body class="board-page">
+<nav class="navbar">
+    <div class="logo">
+        OUT BREAK 
+        <span id="adminBadge" style="display: none; color: #ff0000; font-size: 12px; margin-left: 10px; vertical-align: middle;">
+            [관리자 모드]
+        </span>
+    </div>
+    <ul class="nav-links">
+        <li><a href="main.html">홈</a></li>
+        <li><a href="sub.html">생존자목록</a></li>
+        <li><a href="board.html">익명게시판</a></li>
+        <li><a href="#" onclick="logout()">로그아웃</a></li>
+    </ul>
+</nav>
+
+    <div class="board-container">
+        <h2 style="font-family: 'SchoolSafeBoardMarker'; color: #ab0000;">익명 게시판</h2>
+        
+        <div class="post-form">
+            <input type="text" id="postTitle" placeholder="제목">
+            <textarea id="postContent" rows="3" placeholder="내용을 입력하세요..."></textarea>
+            <button class="btn-post" onclick="addPost()">게시하기</button>
+        </div>
+
+        <hr style="border: 0.5px solid #444; margin: 30px 0;">
+
+        <div id="postList"></div>
+        <div id="pagination" style="text-align: center; margin-top: 30px; display: flex; justify-content: center; gap: 10px;"></div>
+        
+    </div>
+
+    <script src="board.js"></script>
+    <script>
+        function logout() {
+            localStorage.removeItem("loginStatus");
+            location.href = "login.html";
+        }
+    </script>
+</body>
+</html>
