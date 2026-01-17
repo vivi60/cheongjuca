@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>의뢰 게시판</title>
+    <link rel="stylesheet" href="style.css">
+<script>
+    (function() {
+        const status = localStorage.getItem("loginStatus");
+        const nick = localStorage.getItem("userNick"); // 저장된 닉네임 가져오기
+
+        // 1. 로그인 안 된 사람 튕겨내기
+        if (!status || (status !== "success" && status !== "admin")) {
+            if (!window.location.href.includes("index.html")) {
+                alert("로그인이 필요합니다.");
+                window.location.href = "index.html";
+            }
+        }
+
+        // 2. 페이지 로딩 후 닉네임 표시하기
+        window.addEventListener('load', function() {
+            const badge = document.getElementById("userBadge");
+            if (badge && nick) {
+                // 관리자면 빨간색, 일반 유저는 흰색이나 회색 등으로 표시
+                if (status === "admin") {
+                    badge.innerText = `[관리자 모드]`;
+                    badge.style.color = "#ff0000";
+                } else {
+                    badge.innerText = `[${nick}]`; // 예: [러너1]
+                    badge.style.color = "#cccccc"; // 일반 유저 색상
+                }
+                badge.style.display = "inline"; // 숨겨둔 배지를 보이게 함
+            }
+        });
+    })();
+
+        function logout() {
+            localStorage.removeItem("loginStatus");
+            location.href = "index.html";
+        }
+    </script>
+</head>
+<body class="quest-page">
+    <nav class="navbar">
+        <div class="logo">
+            OUT BREAK 
+        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;">
+        </span>
+        <ul class="nav-links">
+            <li><a href="main.html">홈</a></li>
+            <li><a href="sub.html">생존자목록</a></li>
+            <li><a href="board.html">익명게시판</a></li>
+            <li><a href="quest.html">의뢰게시판</a></li> <li><a href="#" onclick="logout()">로그아웃</a></li>
+        </ul>
+    </nav>
+
+    <div class="quest-container">
+        <h2 style="font-family: 'SchoolSafeBoardMarker'; color: #ab0000; text-align: center; font-size: 40px; margin-bottom: 30px;">
+            생존자 의뢰 현황
+        </h2>
+
+        <div class="quest-grid">
+            
+            <div class="quest-card">
+                <div class="quest-profile">
+                    <img src="https://i.imgur.com/3SPL075.png" alt="의뢰자">
+                </div>
+                <h3 class="quest-title">[약품 탐색]</h3>
+                <p class="quest-desc">B동 203호에 두고 온<br>인슐린을 찾아줘.</p>
+                <div class="quest-reward">
+                    <span>보상</span>
+                    <strong>통조림 2개</strong>
+                </div>
+                <div class="quest-buttons">
+                    <button class="btn-decline" onclick="removeCard(this)">거절</button>
+                    <button class="btn-accept" onclick="acceptQuest(this)">수락</button>
+                </div>
+            </div>
+
+            <div class="quest-card">
+                <div class="quest-profile">
+                    <img src="https://i.imgur.com/oltH399.png" alt="의뢰자">
+                </div>
+                <h3 class="quest-title">[좀비 소탕]</h3>
+                <p class="quest-desc">후문 주차장을 막고 있는<br>감염자들을 처리해 줘.</p>
+                <div class="quest-reward">
+                    <span>보상</span>
+                    <strong>탄약 10발</strong>
+                </div>
+                <div class="quest-buttons">
+                    <button class="btn-decline" onclick="removeCard(this)">거절</button>
+                    <button class="btn-accept" onclick="acceptQuest(this)">수락</button>
+                </div>
+            </div>
+
+            <div class="quest-card">
+                <div class="quest-profile">
+                    <img src="https://i.imgur.com/TZFuO24.png" alt="의뢰자">
+                </div>
+                <h3 class="quest-title">[동료 찾기]</h3>
+                <p class="quest-desc">내 동생이 학교 근처에서<br>마지막으로 목격됐어.</p>
+                <div class="quest-reward">
+                    <span>보상</span>
+                    <strong>지도 조각</strong>
+                </div>
+                <div class="quest-buttons">
+                    <button class="btn-decline" onclick="removeCard(this)">거절</button>
+                    <button class="btn-accept" onclick="acceptQuest(this)">수락</button>
+                </div>
+            </div>
+
+            <div class="quest-card">
+                <div class="quest-profile">
+                    <div style="width:100%; height:100%; background:#333;"></div>
+                </div>
+                <h3 class="quest-title">[정찰]</h3>
+                <p class="quest-desc">옥상에 올라가서<br>구조 신호 확인 요망.</p>
+                <div class="quest-reward">
+                    <span>보상</span>
+                    <strong>물 500ml</strong>
+                </div>
+                <div class="quest-buttons">
+                    <button class="btn-decline" onclick="removeCard(this)">거절</button>
+                    <button class="btn-accept" onclick="acceptQuest(this)">수락</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // 거절 버튼 누르면 카드가 사라지는 효과
+        function removeCard(button) {
+            if(confirm("정말 이 의뢰를 거절하시겠습니까?")) {
+                const card = button.closest('.quest-card');
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.8)';
+                setTimeout(() => card.remove(), 300);
+            }
+        }
+
+        // 수락 버튼 누르면 알림
+        function acceptQuest(button) {
+            alert("의뢰를 수락했습니다! 목숨을 걸고 완수하세요.");
+            button.style.background = "#444";
+            button.innerText = "진행중";
+            button.disabled = true;
+            // 옆에 거절 버튼 숨기기
+            button.previousElementSibling.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
