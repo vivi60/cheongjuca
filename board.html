@@ -102,13 +102,14 @@ const firebaseConfig = {
     const status = localStorage.getItem("loginStatus");
 
     // 2. 상태가 없으면 (null 이면) 로그인 페이지로 보냄
-    if (!status || (status !== "success" && status !== "admin")) {
-        // 이미 index.html에 있다면 무한 루프 방지를 위해 체크
-        if (!window.location.href.includes("index.html")) {
-            alert("세션이 만료되었거나 로그인이 필요합니다.");
-            window.location.href = "../index.html"; // 경로를 index.html 위치에 맞추세요
-        }
+// main.html, board.html, sub.html 상단 공통 수정
+if (!status || (status !== "success" && status !== "admin")) {
+    if (!window.location.href.includes("index.html")) {
+        alert("세션이 만료되었거나 로그인이 필요합니다.");
+        // 수정 전: window.location.href = "../index.html";
+        window.location.href = "index.html"; // 수정 후
     }
+}
 
     // 3. 관리자 배지는 페이지가 다 그려진 후 처리
     window.addEventListener('load', function() {
