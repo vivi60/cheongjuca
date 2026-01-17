@@ -477,3 +477,91 @@ body.quest-page {
     box-shadow: 0 0 10px #ff0000;
 }
 
+/* style.css 하단에 추가 */
+
+/* 의뢰 등록 폼 박스 */
+/* 1. 폼 박스 자체도 크기 계산을 안전하게 */
+.quest-form-box {
+    width: 90%;
+    max-width: 800px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #555;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 50px auto 20px auto;
+    color: white;
+    
+    box-sizing: border-box; /* [추가됨] 패딩 때문에 박스가 커지는 것 방지 */
+}
+.form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+/* 2. 입력창들이 삐져나가는 문제 해결 */
+.quest-form-box input, 
+.quest-form-box textarea {
+    background: #222;
+    border: 1px solid #444;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: inherit;
+    width: 100%;
+    
+    /* [핵심 수정] 테두리와 안쪽 여백을 너비에 포함시켜서 삐져나가지 않게 함 */
+    box-sizing: border-box; 
+    
+    margin-bottom: 10px; /* 입력창끼리 딱 붙지 않게 여백 추가 */
+    resize: vertical;    /* 텍스트창 가로 사이즈 조절 막기 (깨짐 방지) */
+}
+
+.quest-form-box input:focus, 
+.quest-form-box textarea:focus {
+    outline: none;
+    border-color: #ab0000;
+}
+
+/* 이미지와 제목은 반반씩 */
+#qImg { flex: 1; }
+#qTitle { flex: 1; }
+
+/* 보상 입력창과 등록 버튼 */
+#qReward { flex: 2; }
+.quest-form-box button {
+    flex: 1;
+    background: #ab0000;
+    color: white;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+.quest-form-box button:hover {
+    background: #ff0000;
+}
+
+/* 의뢰 카드 우측 상단 삭제(X) 버튼 */
+.btn-delete-quest {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: transparent;
+    border: none;
+    color: #555;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+}
+.btn-delete-quest:hover {
+    color: red;
+}
+
+/* 카드가 동적으로 생성되므로 relative 설정 필요 */
+.quest-card {
+    position: relative;
+    /* 기존 스타일 유지... */
+}

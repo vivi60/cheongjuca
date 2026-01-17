@@ -5,52 +5,50 @@
     <title>의뢰 게시판</title>
     <link rel="stylesheet" href="style.css">
 
-<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
-    authDomain: "cheongjuca.firebaseapp.com",
-    databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
-    projectId: "cheongjuca",
-    storageBucket: "cheongjuca.firebasestorage.app",
-    messagingSenderId: "455437421321",
-    appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8",
-    measurementId: "G-9XG7JRFM3D"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-</script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
+        authDomain: "cheongjuca.firebaseapp.com",
+        databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
+        projectId: "cheongjuca",
+        storageBucket: "cheongjuca.firebasestorage.app",
+        messagingSenderId: "455437421321",
+        appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8",
+        measurementId: "G-9XG7JRFM3D"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+    </script>
 
-<script>
-    (function() {
-        const status = localStorage.getItem("loginStatus");
-        const nick = localStorage.getItem("userNick"); // 저장된 닉네임 가져오기
+    <script>
+        // 로그인 체크 및 닉네임 표시
+        (function() {
+            const status = localStorage.getItem("loginStatus");
+            const nick = localStorage.getItem("userNick");
 
-        // 1. 로그인 안 된 사람 튕겨내기
-        if (!status || (status !== "success" && status !== "admin")) {
-            if (!window.location.href.includes("index.html")) {
-                alert("로그인이 필요합니다.");
-                window.location.href = "index.html";
-            }
-        }
-
-        // 2. 페이지 로딩 후 닉네임 표시하기
-        window.addEventListener('load', function() {
-            const badge = document.getElementById("userBadge");
-            if (badge && nick) {
-                // 관리자면 빨간색, 일반 유저는 흰색이나 회색 등으로 표시
-                if (status === "admin") {
-                    badge.innerText = `[관리자 모드]`;
-                    badge.style.color = "#ff0000";
-                } else {
-                    badge.innerText = `[${nick}]`; // 예: [러너1]
-                    badge.style.color = "#cccccc"; // 일반 유저 색상
+            if (!status || (status !== "success" && status !== "admin")) {
+                if (!window.location.href.includes("index.html")) {
+                    alert("로그인이 필요합니다.");
+                    window.location.href = "index.html";
                 }
-                badge.style.display = "inline"; // 숨겨둔 배지를 보이게 함
             }
-        });
-    })();
+
+            window.addEventListener('load', function() {
+                const badge = document.getElementById("userBadge");
+                if (badge && nick) {
+                    if (status === "admin") {
+                        badge.innerText = `[관리자 모드]`;
+                        badge.style.color = "#ff0000";
+                    } else {
+                        badge.innerText = `[${nick}]`;
+                        badge.style.color = "#cccccc";
+                    }
+                    badge.style.display = "inline";
+                }
+            });
+        })();
 
         function logout() {
             localStorage.removeItem("loginStatus");
@@ -62,14 +60,14 @@
     <nav class="navbar">
         <div class="logo">
             OUT BREAK 
-        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;">
-        </span>
+            <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
         </div>
         <ul class="nav-links">
             <li><a href="main.html">홈</a></li>
             <li><a href="sub.html">생존자목록</a></li>
             <li><a href="board.html">익명게시판</a></li>
-            <li><a href="quest.html">의뢰게시판</a></li> <li><a href="#" onclick="logout()">로그아웃</a></li>
+            <li><a href="quest.html">의뢰게시판</a></li>
+            <li><a href="#" onclick="logout()">로그아웃</a></li>
         </ul>
     </nav>
 
@@ -78,182 +76,208 @@
             생존자 의뢰 현황
         </h2>
 
-        <div class="quest-grid" id="q1">
-            
-            <div class="quest-card">
-                <div class="quest-profile">
-                    <img src="https://i.imgur.com/3SPL075.png" alt="의뢰자">
-                </div>
-                <h3 class="quest-title">[약품 탐색]</h3>
-                <p class="quest-desc">B동 203호에 두고 온<br>인슐린을 찾아줘.</p>
-                <div class="quest-reward">
-                    <span>보상</span>
-                    <strong>통조림 2개</strong>
-                </div>
-                <div class="quest-buttons">
-                    <button class="btn-decline" onclick="removeCard(this)">거절</button>
-                    <button class="btn-accept" onclick="acceptQuest(this)">수락</button>
-                </div>
+        <div class="quest-grid" id="questListArea">
             </div>
 
-            <div class="quest-card" id="q2">
-                <div class="quest-profile">
-                    <img src="https://i.imgur.com/oltH399.png" alt="의뢰자">
-                </div>
-                <h3 class="quest-title">[좀비 소탕]</h3>
-                <p class="quest-desc">후문 주차장을 막고 있는<br>감염자들을 처리해 줘.</p>
-                <div class="quest-reward">
-                    <span>보상</span>
-                    <strong>탄약 10발</strong>
-                </div>
-                <div class="quest-buttons">
-                    <button class="btn-decline" onclick="removeCard(this)">거절</button>
-                    <button class="btn-accept" onclick="acceptQuest(this)">수락</button>
-                </div>
+        <div class="quest-form-box">
+            <h3 style="color: #ab0000; font-family: 'SchoolSafeBoardMarker'; text-align: center;">새 의뢰 등록</h3>
+            <div class="form-row">
+                <input type="text" id="qImg" placeholder="이미지 주소 (링크)">
+                <input type="text" id="qTitle" placeholder="의뢰 제목 (예: 식량 부족)">
             </div>
-
-            <div class="quest-card" id="q3">
-                <div class="quest-profile">
-                    <img src="https://i.imgur.com/TZFuO24.png" alt="의뢰자">
-                </div>
-                <h3 class="quest-title">[동료 찾기]</h3>
-                <p class="quest-desc">내 동생이 학교 근처에서<br>마지막으로 목격됐어.</p>
-                <div class="quest-reward">
-                    <span>보상</span>
-                    <strong>지도 조각</strong>
-                </div>
-                <div class="quest-buttons">
-                    <button class="btn-decline" onclick="removeCard(this)">거절</button>
-                    <button class="btn-accept" onclick="acceptQuest(this)">수락</button>
-                </div>
+            <textarea id="qDesc" rows="2" placeholder="의뢰 내용 (상세히 적어주세요)"></textarea>
+            <div class="form-row">
+                <input type="text" id="qReward" placeholder="보상 (예: 통조림 1개)">
+                <button onclick="writeQuest()">의뢰 등록하기</button>
             </div>
-
-            <div class="quest-card" id="q4">
-                <div class="quest-profile">
-                    <div style="width:100%; height:100%; background:#333;"></div>
-                </div>
-                <h3 class="quest-title">[정찰]</h3>
-                <p class="quest-desc">옥상에 올라가서<br>구조 신호 확인 요망.</p>
-                <div class="quest-reward">
-                    <span>보상</span>
-                    <strong>물 500ml</strong>
-                </div>
-                <div class="quest-buttons">
-                    <button class="btn-decline" onclick="removeCard(this)">거절</button>
-                    <button class="btn-accept" onclick="acceptQuest(this)">수락</button>
-                </div>
-            </div>
-
         </div>
     </div>
 
 <script>
-    // 1. 현재 내 닉네임 가져오기
     const myNick = localStorage.getItem("userNick");
+    const isAdmin = localStorage.getItem("loginStatus") === "admin";
 
-    // 2. [실시간] Firebase에서 퀘스트 상태 감시하기
-    database.ref('questStatus').on('value', (snapshot) => {
-        const data = snapshot.val() || {}; // 데이터가 없으면 빈 객체
+    // 1. [실시간] Firebase 감시 및 화면 그리기
+    database.ref('requests').on('value', (snapshot) => {
+        const questListArea = document.getElementById('questListArea');
+        const data = snapshot.val();
 
-        // 화면에 있는 모든 카드를 하나씩 검사
-        const cards = document.querySelectorAll('.quest-card');
-        
-        cards.forEach(card => {
-            const questId = card.id;      
-            const questInfo = data[questId]; // DB 정보
+        questListArea.innerHTML = ""; // 화면 초기화
 
-            if (questInfo && questInfo.status === 'accepted') {
-                // 누군가 수락한 상태
-                updateCardToTaken(card, questInfo.takenBy);
-            } else {
-                // 아무도 수락 안 함 (또는 포기함) -> 초기화
-                resetCard(card);
+        if (!data) {
+            questListArea.innerHTML = "<p style='color:white; width:100%; text-align:center;'>등록된 의뢰가 없습니다.</p>";
+            return;
+        }
+
+        // 최신순 정렬
+        const entries = Object.entries(data).reverse();
+
+        entries.forEach(([key, quest]) => {
+            const card = document.createElement('div');
+            card.className = 'quest-card';
+            card.id = key;
+
+            // --- [버튼 로직의 핵심] ---
+            let buttonsHtml = "";
+            let statusBadge = ""; // 카드 위에 띄울 상태 메시지
+
+            // 1) 내가 작성자(A)인가?
+            const isAuthor = (quest.author === myNick);
+            // 2) 내가 수행자(B)인가?
+            const isRunner = (quest.takenBy === myNick);
+
+            if (quest.status === 'open') {
+                // [상태: 의뢰 중] -> 누구나 수락 가능
+                buttonsHtml = `<button class="btn-accept" onclick="acceptQuest('${key}')">수락하기</button>`;
+            
+            } else if (quest.status === 'accepted') {
+                // [상태: 진행 중]
+                if (isRunner) {
+                    // B: "다 했어요!" 보고 버튼
+                    buttonsHtml = `
+                        <button class="btn-accept" onclick="requestApproval('${key}')" 
+                                style="background:#222; border:2px solid #ab0000; color:#ab0000; font-weight:bold;">
+                            임무 완료 보고 (V)
+                        </button>
+                        <button class="btn-decline" onclick="giveUpQuest('${key}')" 
+                                style="background:#555; color:white; margin-left:5px;">포기</button>
+                    `;
+                } else {
+                    // A & 제3자: 진행 중 표시
+                    buttonsHtml = `<button class="btn-accept" disabled style="background:#222; color:#ff4444; cursor:not-allowed;">[${quest.takenBy}] 수행중...</button>`;
+                }
+
+            } else if (quest.status === 'pending') {
+                // [상태: 검토 대기] -> B가 완료 버튼을 누름
+                if (isAuthor) {
+                    // ★ A에게만 보임: "확인 도장 찍기"
+                    statusBadge = "<div style='color:#00ff00; font-size:14px; margin-bottom:5px;'>★ 상대방이 완료했습니다!</div>";
+                    buttonsHtml = `
+                        <button class="btn-accept" onclick="approveQuest('${key}')" 
+                                style="background:#006400; color:white; font-weight:bold; border:2px solid #00ff00;">
+                            완료 확인 (보상 지급)
+                        </button>
+                    `;
+                } else if (isRunner) {
+                    // B: 의뢰자의 확인을 기다리는 중
+                    buttonsHtml = `<button class="btn-accept" disabled style="background:#444; color:white;">의뢰자 확인 대기중...</button>`;
+                } else {
+                    // 제3자
+                    buttonsHtml = `<button class="btn-accept" disabled style="background:#222; color:#888;">검토 진행 중</button>`;
+                }
+
+            } else if (quest.status === 'completed') {
+                // [상태: 최종 완료] -> A가 도장을 찍음
+                if (isRunner) {
+                    // ★ B에게만 보임: "보상 받으세요"
+                    statusBadge = "<div style='color:gold; font-size:14px; margin-bottom:5px;'>★ 의뢰자가 확인했습니다!</div>";
+                    buttonsHtml = `
+                        <button class="btn-accept" onclick="finishAndGetReward('${key}')" 
+                                style="background:gold; color:black; font-weight:bold; border:2px solid orange;">
+                            보상 수령 (목록에서 삭제)
+                        </button>
+                    `;
+                } else {
+                    // A & 제3자: 이미 완료된 건이니 숨김 (또는 완료됨 표시)
+                    card.style.display = 'none'; // 목록에서 사라짐
+                    return; 
+                }
             }
+
+            // 삭제 버튼 (작성자 또는 관리자)
+            let deleteBtnHtml = "";
+            if (isAuthor || isAdmin || myNick === "관리자") {
+                deleteBtnHtml = `<button class="btn-delete-quest" onclick="deleteQuest('${key}')">X</button>`;
+            }
+
+            // HTML 조립
+            card.innerHTML = `
+                ${deleteBtnHtml}
+                <div class="quest-profile">
+                    <img src="${quest.image || 'https://i.imgur.com/3SPL075.png'}" alt="이미지" onerror="this.src='https://i.imgur.com/3SPL075.png'">
+                </div>
+                <h3 class="quest-title">[${quest.title}]</h3>
+                <p class="quest-desc">${quest.desc}</p>
+                <div class="quest-reward">
+                    <span>보상</span>
+                    <strong>${quest.reward}</strong>
+                </div>
+                <div style="font-size:12px; color:#666; margin-bottom:5px;">의뢰자: ${quest.author}</div>
+                ${statusBadge}
+                <div class="quest-buttons">
+                    ${buttonsHtml}
+                </div>
+            `;
+            questListArea.appendChild(card);
         });
     });
 
-    // 3. [기능] 수락하기 (DB에 등록)
-    function acceptQuest(button) {
-        const card = button.closest('.quest-card');
-        const questId = card.id;
+    // --- [기능 함수들] ---
 
-        if (confirm("이 의뢰를 수락하시겠습니까? (모두에게 알려집니다)")) {
-            database.ref('questStatus/' + questId).set({
-                status: 'accepted',
-                takenBy: myNick,
-                timestamp: new Date().toLocaleString()
-            });
+    // 1. 의뢰 등록
+    function writeQuest() {
+        const img = document.getElementById('qImg').value;
+        const title = document.getElementById('qTitle').value;
+        const desc = document.getElementById('qDesc').value;
+        const reward = document.getElementById('qReward').value;
+
+        if (!title || !desc || !reward) return alert("내용을 모두 입력해주세요.");
+
+        const newQuest = {
+            image: img, title: title, desc: desc, reward: reward,
+            author: myNick,
+            status: 'open', // 초기 상태
+            timestamp: new Date().toLocaleString()
+        };
+        database.ref('requests').push(newQuest);
+        
+        // 입력창 비우기
+        document.getElementById('qImg').value = '';
+        document.getElementById('qTitle').value = '';
+        document.getElementById('qDesc').value = '';
+        document.getElementById('qReward').value = '';
+    }
+
+    // 2. 수락하기 (B의 행동)
+    function acceptQuest(key) {
+        if (confirm("의뢰를 수락하시겠습니까?")) {
+            database.ref('requests/' + key).update({ status: 'accepted', takenBy: myNick });
         }
     }
 
-    // 4. [기능] 포기하기 (DB에서 삭제) - 새로 추가된 기능!
-    function giveUpQuest(button) {
-        const card = button.closest('.quest-card');
-        const questId = card.id;
-
-        if (confirm("정말 의뢰를 포기하시겠습니까? (다른 생존자가 다시 수락할 수 있게 됩니다)")) {
-            // Firebase에서 해당 퀘스트 정보 삭제 -> 즉시 '초기화' 상태로 공유됨
-            database.ref('questStatus/' + questId).remove();
-            alert("의뢰를 포기했습니다.");
+    // 3. 완료 보고하기 (B -> A) : "저 다 했어요!"
+    function requestApproval(key) {
+        if (confirm("임무를 완수했습니까? 의뢰자에게 확인을 요청합니다.")) {
+            database.ref('requests/' + key).update({ status: 'pending' });
         }
     }
 
-    // 5. [화면처리] 카드를 '수행 중' 상태로 바꾸는 함수
-    function updateCardToTaken(card, ownerName) {
-        const acceptBtn = card.querySelector('.btn-accept');
-        const declineBtn = card.querySelector('.btn-decline');
-
-        // 거절 버튼은 무조건 숨김
-        if(declineBtn) declineBtn.style.display = 'none';
-
-        // ★ 핵심 로직: 내가 주인인가? 남이 주인인가?
-        if (ownerName === myNick) {
-            // [내 퀘스트] -> "포기하기" 버튼으로 변신
-            acceptBtn.innerText = "포기하기 🏳️";
-            acceptBtn.style.background = "#555";     // 회색 (포기 느낌)
-            acceptBtn.style.color = "#fff";
-            acceptBtn.style.cursor = "pointer";
-            acceptBtn.disabled = false;              // 클릭 가능하게 품!
-            
-            // 기존 수락 함수(onclick)를 제거하고 포기 함수로 교체
-            acceptBtn.setAttribute("onclick", "giveUpQuest(this)");
-
-        } else {
-            // [남의 퀘스트] -> "잠금" 상태
-            acceptBtn.innerText = `[${ownerName}] 진행 중`;
-            acceptBtn.style.background = "#222";     // 검은색 (잠김)
-            acceptBtn.style.color = "#ff4444";       // 붉은 글씨
-            acceptBtn.style.cursor = "not-allowed";
-            acceptBtn.disabled = true;               // 클릭 불가능
+    // 4. 완료 승인하기 (A -> B) : "확인했어. 보상 가져가."
+    function approveQuest(key) {
+        if (confirm("수행 내용을 확인하셨습니까? 승인하면 상대방에게 보상 알림이 뜹니다.")) {
+            database.ref('requests/' + key).update({ status: 'completed' });
         }
-        
-        card.style.opacity = "0.9";
     }
 
-    // 6. [화면처리] 카드를 다시 '수락 가능' 상태로 원상복구
-    function resetCard(card) {
-        const acceptBtn = card.querySelector('.btn-accept');
-        const declineBtn = card.querySelector('.btn-decline');
-
-        // 버튼 디자인 원상복구
-        acceptBtn.style.background = "#ab0000";
-        acceptBtn.style.color = "white";
-        acceptBtn.innerText = "수락";
-        acceptBtn.disabled = false;
-        acceptBtn.style.cursor = "pointer";
-        
-        // 함수도 다시 '수락'으로 연결
-        acceptBtn.setAttribute("onclick", "acceptQuest(this)");
-        
-        // 거절 버튼 다시 보이기
-        if(declineBtn) declineBtn.style.display = "inline-block";
-        
-        card.style.opacity = "1";
+    // 5. 보상 수령 및 삭제 (B의 행동) : "감사합니다!" (목록에서 삭제)
+    function finishAndGetReward(key) {
+        alert("보상을 획득했습니다! 수고하셨습니다.");
+        // 기록을 남기고 싶으면 상태를 'archived'로 바꾸고, 없애고 싶으면 remove()
+        database.ref('requests/' + key).remove(); 
     }
-    
-    // 7. [기능] 거절 버튼 (개인적 숨김 없음, 공용 퀘스트라 막음)
-    function removeCard(button) {
-        alert("공동 의뢰는 개인이 삭제할 수 없습니다.");
+
+    // 6. 포기하기
+    function giveUpQuest(key) {
+        if (confirm("정말 포기하시겠습니까?")) {
+            database.ref('requests/' + key).update({ status: 'open', takenBy: null });
+        }
+    }
+
+    // 7. 삭제하기
+    function deleteQuest(key) {
+        if (confirm("정말 삭제하시겠습니까?")) {
+            database.ref('requests/' + key).remove();
+        }
     }
 </script>
 </body>
