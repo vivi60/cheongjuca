@@ -5,22 +5,47 @@
     <title>생존자 상세 정보</title>
     <link rel="stylesheet" href="style.css">
     <script>
-        // 로그인 체크 (기본)
+        // 로그인 체크 및 닉네임 표시 (이 부분이 빠져있었습니다!)
         (function() {
             const status = localStorage.getItem("loginStatus");
+            const nick = localStorage.getItem("userNick");
+
+            // 로그인 안 했으면 쫓아내기
             if (!status) { location.href = "index.html"; }
+
+            window.addEventListener('load', function() {
+                // 1. 네비게이션 바에 내 이름 표시하기
+                const badge = document.getElementById("userBadge");
+                if (badge && nick) {
+                    if (status === "admin") {
+                        badge.innerText = `[관리자 모드]`;
+                        badge.style.color = "#ff0000";
+                    } else {
+                        badge.innerText = `[${nick}]`;
+                        badge.style.color = "#cccccc";
+                    }
+                    badge.style.display = "inline";
+                }
+
+                // 2. 프로필 정보 불러오기 실행
+                loadProfile();
+            });
         })();
     </script>
 </head>
 <body class="profile-page">
     
     <nav class="navbar">
-        <div class="logo">OUT BREAK</div>
+        <div class="logo">
+            OUT BREAK
+            <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
+        </div>
         <ul class="nav-links">
             <li><a href="main.html">홈</a></li>
             <li><a href="sub.html">생존자목록</a></li>
             <li><a href="board.html">익명게시판</a></li>
             <li><a href="quest.html">의뢰게시판</a></li>
+            <li><a href="game.html">낚시터</a></li>
             <li><a href="#" onclick="logout()">로그아웃</a></li>
         </ul>
     </nav>
@@ -45,7 +70,7 @@
                     <ul class="activity-log">
                         <li>2026.01.15 - 의뢰 게시판 접속 확인</li>
                         <li>2026.01.12 - 식량 창고에서 목격됨</li>
-                        </ul>
+                    </ul>
                 </div>
 
                 <div class="profile-actions">
@@ -57,40 +82,52 @@
     </div>
 
     <script>
-        // ★ sub.html에 있는 명단과 똑같은 데이터를 가져와야 합니다.
-        // (나중에는 DB 하나로 관리하겠지만, 지금은 복사해서 씁니다)
+        // sub.html과 동일한 데이터 (나중엔 통합 예정)
         const survivors = [
             { name: "관리자", role: "총괄 리더", state: "생존", img: "image/admin.png", desc: "이 구역의 관리자입니다. 모든 권한을 가지고 있습니다." },
             { name: "러너1", role: "수색대", state: "생존", img: "image/runner1.jpg", desc: "발이 빠르고 지리에 밝음. 주로 낮 시간에 활동함." },
             { name: "러너2", role: "전투원", state: "부상", img: "image/fighter.jpg", desc: "현재 다리를 다쳐 치료 중. 전투력은 높으나 이동 불가." },
             { name: "닥터K", role: "의무병", state: "생존", img: "", desc: "응급 처치 전문가. B동 101호에 거주 중." },
             { name: "쉐프", role: "조리장", state: "생존", img: "image/cook.png", desc: "통조림 요리의 달인. 식량 배급 담당." },
-            // ... sub.html과 똑같이 나머지 사람들도 추가해주세요 ...
             { name: "생존자1", role: "일반 시민", state: "생존", img: "image/user1.png", desc: "특별한 특이사항 없음." }
         ];
 
-        // 1. 주소창에서 ?name=누구 인지 알아내기
-        const params = new URLSearchParams(window.location.search);
-        const targetName = params.get('name');
+        // 20명 더미 데이터 생성 (sub.html과 똑같이 맞춰야 에러가 안 납니다)
+        for(let i=2; i<=15; i++) {
+            survivors.push({
+                name: `생존자${i}`,
+                role: "일반 시민",
+                state: "생존",
+                img: `image/user${i}.png`, 
+                desc: "특별한 특이사항 없음."
+            });
+        }
 
-        // 2. 명단에서 그 사람 찾기
-        const person = survivors.find(p => p.name === targetName);
+        function loadProfile() {
+            // 1. 주소창에서 ?name=누구 인지 알아내기
+            const params = new URLSearchParams(window.location.search);
+            const targetName = params.get('name');
 
-        // 3. 화면에 뿌리기
-        if (person) {
-            document.getElementById('pName').innerText = person.name;
-            document.getElementById('pRole').innerText = person.role;
-            document.getElementById('pDesc').innerText = person.desc;
-            document.getElementById('pImg').src = person.img;
-            
-            // 상태 뱃지 색상 및 텍스트 설정
-            const badge = document.getElementById('pStateBadge');
-            badge.innerText = person.state;
-            if(person.state === "부상") badge.style.backgroundColor = "orange";
-            else if(person.state === "사망") badge.style.backgroundColor = "red";
-        } else {
-            alert("존재하지 않는 생존자입니다.");
-            location.href = "sub.html";
+            if (!targetName) return; // 이름이 없으면 중단
+
+            // 2. 명단에서 그 사람 찾기
+            const person = survivors.find(p => p.name === targetName);
+
+            // 3. 화면에 뿌리기
+            if (person) {
+                document.getElementById('pName').innerText = person.name;
+                document.getElementById('pRole').innerText = person.role;
+                document.getElementById('pDesc').innerText = person.desc;
+                document.getElementById('pImg').src = person.img;
+                
+                const badge = document.getElementById('pStateBadge');
+                badge.innerText = person.state;
+                if(person.state === "부상") badge.style.backgroundColor = "orange";
+                else if(person.state === "사망") badge.style.backgroundColor = "red";
+            } else {
+                alert("존재하지 않는 생존자입니다.");
+                location.href = "sub.html";
+            }
         }
 
         function logout() {

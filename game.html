@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>오염된 강 낚시</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
+        authDomain: "cheongjuca.firebaseapp.com",
+        databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
+        projectId: "cheongjuca",
+        storageBucket: "cheongjuca.firebasestorage.app",
+        messagingSenderId: "455437421321",
+        appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8",
+        measurementId: "G-9XG7JRFM3D"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+    </script>
+
+    <style>
+        .game-container {
+            width: 800px;
+            margin: 50px auto;
+            text-align: center;
+            color: white;
+            font-family: 'SchoolSafeBoardMarker';
+        }
+        /* 기존 스타일 유지 + 상단 정보창 추가 */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            background: #222;
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #555;
+            font-size: 20px;
+        }
+
+        .river-box {
+            width: 100%; height: 400px;
+            background: linear-gradient(to bottom, #2b32b2, #1488cc);
+            border: 4px solid #555; border-radius: 15px;
+            position: relative; overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); cursor: pointer;
+        }
+        .wave {
+            position: absolute; bottom: 0; left: 0; width: 200%; height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            animation: waveMove 5s linear infinite;
+            border-radius: 40%; transform: translateY(50%);
+        }
+        @keyframes waveMove {
+            0% { transform: translateX(0) translateY(50%) rotate(0deg); }
+            50% { transform: translateX(-25%) translateY(45%) rotate(2deg); }
+            100% { transform: translateX(-50%) translateY(50%) rotate(0deg); }
+        }
+        #bobber {
+            width: 30px; height: 30px;
+            background: radial-gradient(circleAt 30% 30%, #ff4444, #8b0000);
+            border: 2px solid white; border-radius: 50%;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            display: none; z-index: 10; transition: top 0.2s;
+        }
+        .floating { animation: float 2s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { top: 50%; } 50% { top: 48%; } }
+        .bite { top: 60% !important; border-color: yellow; box-shadow: 0 0 15px yellow; }
+        
+        #catch-display { font-size: 80px; margin: 20px; height: 100px; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        #msg-box { font-size: 24px; height: 30px; color: #ddd; margin-bottom: 20px; }
+
+        .btn-group { display: flex; gap: 10px; justify-content: center; }
+        .action-btn {
+            background: #ab0000; color: white;
+            font-family: 'SchoolSafeBoardMarker'; font-size: 24px;
+            padding: 15px 30px; border: none; border-radius: 10px;
+            cursor: pointer; transition: 0.2s; flex: 1;
+        }
+        .action-btn:hover { background: #ff0000; }
+        .stop-btn { background: #555; }
+        .stop-btn:hover { background: #777; }
+    </style>
+</head>
+<body class="game-page" style="background-color: #111;">
+
+    <nav class="navbar">
+        <div class="logo">OUT BREAK</div>
+        <ul class="nav-links">
+            <li><a href="main.html">홈</a></li>
+            <li><a href="shop.html">상점</a></li> 
+            <li><a href="game.html">낚시터</a></li>
+            <li><a href="#" onclick="logout()">로그아웃</a></li>
+        </ul>
+    </nav>
+
+    <div class="game-container">
+        <div class="status-bar">
+            <span>👤 <span id="userNickDisplay">생존자</span></span>
+            <span>🐛 미끼: <span id="baitCount" style="color:#00ff00;">0</span>개</span>
+        </div>
+
+        <h1 style="color:#ab0000;">🎣 오염된 강 낚시터</h1>
+        
+        <div class="river-box" onclick="tryPull()">
+            <div id="bobber"></div>
+            <div class="wave"></div>
+            <div class="wave" style="animation-delay: -2s; opacity: 0.5;"></div>
+        </div>
+
+        <div id="catch-display">🐟</div>
+        <div id="msg-box">미끼를 끼우고 던져보세요...</div>
+
+        <div class="btn-group">
+            <button id="btn" class="action-btn" onclick="handleBtn()">낚싯대 던지기</button>
+            <button class="action-btn stop-btn" onclick="stopFishing()">낚시 중단 (상점으로)</button>
+        </div>
+    </div>
+
+    <script>
+        const myNick = localStorage.getItem("userNick");
+        if(!myNick) { alert("로그인이 필요합니다."); location.href='index.html'; }
+        document.getElementById('userNickDisplay').innerText = myNick;
+
+        const bobber = document.getElementById('bobber');
+        const btn = document.getElementById('btn');
+        const msgBox = document.getElementById('msg-box');
+        const catchDisplay = document.getElementById('catch-display');
+        const baitDisplay = document.getElementById('baitCount');
+
+        let gameState = 'idle'; 
+        let biteTimeout, failTimeout;
+        let currentBait = 0;
+
+        // 1. DB에서 내 정보(미끼) 실시간 감시
+        database.ref('users/' + myNick).on('value', (snapshot) => {
+            const data = snapshot.val() || {};
+            // 미끼가 없으면 0개, 있으면 그 개수
+            currentBait = data.bait || 0;
+            baitDisplay.innerText = currentBait;
+        });
+
+        // 2. 버튼 핸들러
+        function handleBtn() {
+            if (gameState === 'idle' || gameState === 'result') {
+                castLine();
+            } else if (gameState === 'waiting' || gameState === 'bite') {
+                tryPull();
+            }
+        }
+
+        // 3. 낚싯대 던지기 (미끼 소모)
+        function castLine() {
+            if (currentBait <= 0) {
+                alert("미끼가 부족합니다! 상점에서 지렁이를 사오세요.");
+                location.href = "shop.html";
+                return;
+            }
+
+            // 미끼 1개 차감 (DB 업데이트)
+            database.ref('users/' + myNick).update({
+                bait: currentBait - 1
+            });
+
+            gameState = 'waiting';
+            btn.innerText = "기다리는 중...";
+            btn.style.background = "#555"; 
+            msgBox.innerText = "찌를 주시하세요...";
+            catchDisplay.innerText = "";
+            
+            bobber.style.display = "block";
+            bobber.classList.remove('bite');
+            bobber.classList.add('floating');
+
+            const waitTime = Math.random() * 4000 + 2000;
+            biteTimeout = setTimeout(fishBite, waitTime);
+        }
+
+        // 4. 입질
+        function fishBite() {
+            if (gameState !== 'waiting') return;
+            gameState = 'bite';
+            bobber.classList.remove('floating');
+            bobber.classList.add('bite');
+            msgBox.innerText = "지금이야! 당겨!!";
+            msgBox.style.color = "yellow";
+            btn.innerText = "낚아채기! (클릭)";
+            btn.style.background = "#ab0000";
+
+            failTimeout = setTimeout(() => {
+                if (gameState === 'bite') failFish();
+            }, 800); 
+        }
+
+        // 5. 당기기 시도
+        function tryPull() {
+            if (gameState === 'waiting') {
+                clearTimeout(biteTimeout);
+                failEarly();
+            } else if (gameState === 'bite') {
+                clearTimeout(failTimeout);
+                successCatch();
+            }
+        }
+
+        // 6. 성공: 아이템 획득 및 DB 저장
+        function successCatch() {
+            gameState = 'result';
+            bobber.style.display = "none";
+
+            // 아이템 확률 테이블
+            const rand = Math.random();
+            let itemName = "";
+            let icon = "";
+            let price = 0;
+
+            if (rand < 0.05) { itemName = "통조림 박스"; icon = "🥫"; price = 100; }
+            else if (rand < 0.20) { itemName = "방사능 송어"; icon = "🐟"; price = 50; }
+            else if (rand < 0.60) { itemName = "작은 피라미"; icon = "🐠"; price = 20; }
+            else if (rand < 0.85) { itemName = "썩은 장화"; icon = "👢"; price = 5; }
+            else { itemName = "좀비 손목"; icon = "🧟"; price = 0; }
+
+            msgBox.innerText = `${itemName} 획득!`;
+            msgBox.style.color = "#00ff00";
+            catchDisplay.innerText = icon;
+            btn.innerText = "다시 던지기";
+            
+            // ★ 핵심: DB 인벤토리에 아이템 추가
+            const newItem = {
+                name: itemName,
+                icon: icon,
+                price: price,
+                date: new Date().toLocaleString()
+            };
+            
+            database.ref('users/' + myNick + '/inventory').push(newItem);
+        }
+
+        // 7. 실패 처리들
+        function failEarly() {
+            gameState = 'result';
+            bobber.style.display = "none";
+            msgBox.innerText = "너무 빨랐어! 물고기가 도망감.";
+            msgBox.style.color = "#888";
+            catchDisplay.innerText = "💨";
+            btn.innerText = "다시 던지기";
+            btn.style.background = "#ab0000";
+        }
+        function failFish() {
+            gameState = 'result';
+            bobber.style.display = "none";
+            msgBox.innerText = "놓쳤다... 미끼만 날렸군.";
+            msgBox.style.color = "#888";
+            catchDisplay.innerText = "❌";
+            btn.innerText = "다시 던지기";
+            btn.style.background = "#ab0000";
+        }
+
+        function stopFishing() {
+            if(confirm("낚시를 그만하고 상점으로 이동할까요?")) {
+                location.href = "shop.html";
+            }
+        }
+    </script>
+</body>
+</html>

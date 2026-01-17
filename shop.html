@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>생존자 교역소</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
+        authDomain: "cheongjuca.firebaseapp.com",
+        databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
+        projectId: "cheongjuca",
+        storageBucket: "cheongjuca.firebasestorage.app",
+        messagingSenderId: "455437421321",
+        appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8",
+        measurementId: "G-9XG7JRFM3D"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+    </script>
+    <style>
+        .shop-container {
+            width: 90%; max-width: 1000px; margin: 30px auto;
+            color: white; font-family: 'SchoolSafeBoardMarker';
+            display: flex; gap: 20px; flex-wrap: wrap;
+        }
+        .shop-section {
+            flex: 1; background: rgba(0,0,0,0.8);
+            border: 2px solid #555; border-radius: 10px;
+            padding: 20px; min-width: 300px;
+        }
+        .header-info {
+            width: 100%; text-align: center; margin-bottom: 20px;
+            background: #222; padding: 15px; border-radius: 10px;
+            font-size: 24px; border: 1px solid #ab0000;
+        }
+        .item-list {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px; max-height: 400px; overflow-y: auto;
+        }
+        .item-card {
+            background: #333; border: 1px solid #444;
+            border-radius: 5px; padding: 10px; text-align: center;
+            cursor: pointer; transition: 0.2s;
+        }
+        .item-card:hover { border-color: gold; transform: translateY(-2px); }
+        .item-icon { font-size: 40px; }
+        .item-price { color: gold; font-size: 14px; margin-top: 5px; }
+        
+        .buy-btn {
+            width: 100%; background: #ab0000; color: white; border: none;
+            padding: 15px; font-size: 18px; border-radius: 5px; cursor: pointer;
+            font-family: 'SchoolSafeBoardMarker'; margin-top: 10px;
+        }
+        .buy-btn:hover { background: #ff0000; }
+    </style>
+</head>
+<body style="background-color: #111;">
+
+    <nav class="navbar">
+        <div class="logo">OUT BREAK</div>
+        <ul class="nav-links">
+            <li><a href="main.html">홈</a></li>
+            <li><a href="shop.html">상점</a></li>
+            <li><a href="game.html">낚시터</a></li>
+            <li><a href="#" onclick="logout()">로그아웃</a></li>
+        </ul>
+    </nav>
+
+    <div class="shop-container">
+        <div class="header-info">
+            👤 <span id="myNick">...</span>님의 자산<br>
+            <span style="color:gold;">💵 <span id="myMoney">0</span> G</span> | 
+            <span style="color:#00ff00;">🐛 미끼 <span id="myBait">0</span>개</span>
+        </div>
+
+        <div class="shop-section">
+            <h2 style="color:#ab0000; text-align:center;">🛒 보급소 (구매)</h2>
+            <div style="text-align:center; padding: 20px;">
+                <div style="font-size: 80px;">🐛</div>
+                <h3>최고급 지렁이 미끼</h3>
+                <p style="color:#aaa;">물고기가 환장하는 꿈틀이입니다.</p>
+                <div style="color:gold; font-size:24px; margin-bottom:20px;">가격: 10 G</div>
+                <button class="buy-btn" onclick="buyBait()">구매하기 (-10G)</button>
+            </div>
+        </div>
+
+        <div class="shop-section">
+            <h2 style="color:#4caf50; text-align:center;">🎒 내 가방 (판매)</h2>
+            <p style="text-align:center; font-size:14px; color:#aaa;">아이템을 클릭하면 판매합니다.</p>
+            <div class="item-list" id="inventoryGrid">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const nick = localStorage.getItem("userNick");
+        if(!nick) location.href='index.html';
+        document.getElementById('myNick').innerText = nick;
+
+        let money = 0;
+        let bait = 0;
+        
+        // 1. 내 정보 불러오기 (돈, 미끼, 인벤토리)
+        database.ref('users/' + nick).on('value', (snapshot) => {
+            const data = snapshot.val() || {};
+            
+            // 처음 온 사람은 기본 자금 100G, 미끼 3개 지급 (초기화)
+            if (data.money === undefined) {
+                database.ref('users/' + nick).update({ money: 100, bait: 3 });
+                return;
+            }
+
+            money = data.money;
+            bait = data.bait || 0;
+            const inventory = data.inventory || {};
+
+            // 화면 갱신
+            document.getElementById('myMoney').innerText = money;
+            document.getElementById('myBait').innerText = bait;
+            renderInventory(inventory);
+        });
+
+        // 2. 인벤토리 그리기
+        function renderInventory(invData) {
+            const grid = document.getElementById('inventoryGrid');
+            grid.innerHTML = "";
+
+            if(Object.keys(invData).length === 0) {
+                grid.innerHTML = "<p style='width:100%; text-align:center;'>가방이 비었습니다.<br>낚시터에 가서 뭐라도 잡아오세요.</p>";
+                return;
+            }
+
+            // 인벤토리 목록을 역순(최신순)으로 정렬하여 표시
+            Object.entries(invData).reverse().forEach(([key, item]) => {
+                const div = document.createElement('div');
+                div.className = 'item-card';
+                div.innerHTML = `
+                    <div class="item-icon">${item.icon}</div>
+                    <div style="font-size:12px;">${item.name}</div>
+                    <div class="item-price">+ ${item.price} G</div>
+                `;
+                // 클릭하면 판매 함수 실행
+                div.onclick = () => sellItem(key, item.name, item.price);
+                grid.appendChild(div);
+            });
+        }
+
+        // 3. 미끼 구매
+        function buyBait() {
+            if (money < 10) {
+                alert("돈이 부족합니다! 물고기를 잡아와서 파세요.");
+                return;
+            }
+            if (confirm("미끼를 구매하시겠습니까? (10G)")) {
+                database.ref('users/' + nick).update({
+                    money: money - 10,
+                    bait: bait + 1
+                });
+                // alert("구매 완료!");
+            }
+        }
+
+        // 4. 아이템 판매
+        function sellItem(key, name, price) {
+            if (price <= 0) {
+                // 좀비 손목 같은 건 팔 수 없음 (버리기)
+                if(confirm(`${name}은(는) 상점이 매입하지 않습니다.\n그냥 버리시겠습니까?`)) {
+                    database.ref('users/' + nick + '/inventory/' + key).remove();
+                }
+                return;
+            }
+
+            if (confirm(`${name}을(를) ${price}G에 파시겠습니까?`)) {
+                // 1. 돈 추가
+                database.ref('users/' + nick).update({
+                    money: money + price
+                });
+                // 2. 아이템 삭제
+                database.ref('users/' + nick + '/inventory/' + key).remove();
+            }
+        }
+    </script>
+</body>
+</html>
