@@ -4,6 +4,28 @@
     <meta charset="UTF-8">
     <title>의뢰 게시판</title>
     <link rel="stylesheet" href="style.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+
+<script>
+  // board.html에 있는 것과 똑같은 설정값을 넣으세요!
+const firebaseConfig = {
+    apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
+    authDomain: "cheongjuca.firebaseapp.com",
+    databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
+    projectId: "cheongjuca",
+    storageBucket: "cheongjuca.firebasestorage.app",
+    messagingSenderId: "455437421321",
+    appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8",
+    measurementId: "G-9XG7JRFM3D"
+  };
+  
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+</script>
+
+
 <script>
     (function() {
         const status = localStorage.getItem("loginStatus");
@@ -60,7 +82,7 @@
             생존자 의뢰 현황
         </h2>
 
-        <div class="quest-grid">
+        <div class="quest-grid" id="q1">
             
             <div class="quest-card">
                 <div class="quest-profile">
@@ -78,7 +100,7 @@
                 </div>
             </div>
 
-            <div class="quest-card">
+            <div class="quest-card" id="q2">
                 <div class="quest-profile">
                     <img src="https://i.imgur.com/oltH399.png" alt="의뢰자">
                 </div>
@@ -94,7 +116,7 @@
                 </div>
             </div>
 
-            <div class="quest-card">
+            <div class="quest-card" id="q3">
                 <div class="quest-profile">
                     <img src="https://i.imgur.com/TZFuO24.png" alt="의뢰자">
                 </div>
@@ -110,7 +132,7 @@
                 </div>
             </div>
 
-            <div class="quest-card">
+            <div class="quest-card" id="q4">
                 <div class="quest-profile">
                     <div style="width:100%; height:100%; background:#333;"></div>
                 </div>
@@ -129,26 +151,94 @@
         </div>
     </div>
 
-    <script>
-        // 거절 버튼 누르면 카드가 사라지는 효과
-        function removeCard(button) {
-            if(confirm("정말 이 의뢰를 거절하시겠습니까?")) {
-                const card = button.closest('.quest-card');
-                card.style.opacity = '0';
-                card.style.transform = 'scale(0.8)';
-                setTimeout(() => card.remove(), 300);
+<script>
+    // 1. 현재 내 닉네임 가져오기
+    const myNick = localStorage.getItem("userNick");
+
+    // 2. [실시간] Firebase에서 퀘스트 상태 감시하기
+    database.ref('questStatus').on('value', (snapshot) => {
+        const data = snapshot.val() || {}; // 데이터가 없으면 빈 객체
+
+        // 화면에 있는 모든 카드를 하나씩 검사
+        const cards = document.querySelectorAll('.quest-card');
+        
+        cards.forEach(card => {
+            const questId = card.id;      // 예: q1
+            const questInfo = data[questId]; // DB에 저장된 정보 (누가 수락했는지)
+
+            if (questInfo && questInfo.status === 'accepted') {
+                // 누군가 이미 수락한 경우
+                updateCardToTaken(card, questInfo.takenBy);
+            } else {
+                // 아무도 수락 안 한 경우 (초기화)
+                resetCard(card);
             }
+        });
+    });
+
+    // 3. [기능] 수락 버튼을 눌렀을 때 (서버에 알림)
+    function acceptQuest(button) {
+        const card = button.closest('.quest-card');
+        const questId = card.id;
+
+        if (confirm("이 의뢰를 수락하시겠습니까? (모두에게 알려집니다)")) {
+            // Firebase에 "내가 찜했음" 하고 저장
+            database.ref('questStatus/' + questId).set({
+                status: 'accepted',
+                takenBy: myNick,
+                timestamp: new Date().toLocaleString()
+            });
+        }
+    }
+
+    // 4. [기능] 거절 버튼 (나한테만 안 보이게 할지, 아니면 버튼을 없앨지 선택)
+    // 공유 퀘스트에서는 함부로 거절(삭제)하면 다른 사람도 못 하게 되므로
+    // 보통은 '거절' 버튼을 숨기거나 비활성화하는 게 좋습니다.
+    function removeCard(button) {
+        alert("공동 의뢰는 거절할 수 없습니다. 누군가는 해야 하니까요...");
+    }
+
+    // 5. [화면처리] 카드를 '수행 중' 상태로 바꾸는 함수
+    function updateCardToTaken(card, ownerName) {
+        const acceptBtn = card.querySelector('.btn-accept');
+        const declineBtn = card.querySelector('.btn-decline');
+
+        // 수락 버튼 스타일 변경
+        acceptBtn.style.background = "#222"; 
+        acceptBtn.style.color = "#ff4444"; // 붉은 글씨
+        acceptBtn.style.border = "1px solid #555";
+        
+        // 텍스트 변경 (핵심 기능!)
+        if (ownerName === myNick) {
+            acceptBtn.innerText = "내가 수행 중";
+        } else {
+            acceptBtn.innerText = `[${ownerName}] 진행 중`;
         }
 
-        // 수락 버튼 누르면 알림
-        function acceptQuest(button) {
-            alert("의뢰를 수락했습니다! 목숨을 걸고 완수하세요.");
-            button.style.background = "#444";
-            button.innerText = "진행중";
-            button.disabled = true;
-            // 옆에 거절 버튼 숨기기
-            button.previousElementSibling.style.display = 'none';
-        }
-    </script>
+        acceptBtn.disabled = true;       // 버튼 못 누르게 잠금
+        acceptBtn.style.cursor = "not-allowed";
+        
+        // 거절 버튼은 숨김
+        if(declineBtn) declineBtn.style.display = 'none';
+        
+        // 카드 전체를 약간 어둡게 처리 (선택사항)
+        card.style.opacity = "0.8";
+    }
+
+    // 6. [화면처리] 카드를 다시 원상복구 (혹시 취소 기능 넣을 때 대비)
+    function resetCard(card) {
+        const acceptBtn = card.querySelector('.btn-accept');
+        const declineBtn = card.querySelector('.btn-decline');
+
+        acceptBtn.style.background = "#ab0000";
+        acceptBtn.style.color = "white";
+        acceptBtn.innerText = "수락";
+        acceptBtn.disabled = false;
+        acceptBtn.style.cursor = "pointer";
+        card.style.opacity = "1";
+        
+        if(declineBtn) declineBtn.style.display = "inline-block";
+    }
+</script>
 </body>
 </html>
