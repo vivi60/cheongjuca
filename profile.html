@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>생존자 상세 정보</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        // 로그인 체크 (기본)
+        (function() {
+            const status = localStorage.getItem("loginStatus");
+            if (!status) { location.href = "index.html"; }
+        })();
+    </script>
+</head>
+<body class="profile-page">
+    
+    <nav class="navbar">
+        <div class="logo">OUT BREAK</div>
+        <ul class="nav-links">
+            <li><a href="main.html">홈</a></li>
+            <li><a href="sub.html">생존자목록</a></li>
+            <li><a href="board.html">익명게시판</a></li>
+            <li><a href="quest.html">의뢰게시판</a></li>
+            <li><a href="#" onclick="logout()">로그아웃</a></li>
+        </ul>
+    </nav>
+
+    <div class="profile-container">
+        <a href="sub.html" class="back-btn">◀ 목록으로 돌아가기</a>
+
+        <div class="profile-content">
+            <div class="profile-left">
+                <img id="pImg" src="" onerror="this.src='https://i.imgur.com/3SPL075.png'">
+                <div class="profile-status" id="pStateBadge">생존</div>
+            </div>
+
+            <div class="profile-right">
+                <h1 id="pName">이름 로딩중...</h1>
+                <h3 id="pRole">직업/역할</h3>
+                <hr style="border: 0.5px solid #555; margin: 20px 0;">
+                
+                <div class="profile-detail-box">
+                    <p><strong>특이사항:</strong> <span id="pDesc">내용 없음</span></p>
+                    <p style="margin-top:20px;"><strong>최근 활동 기록:</strong></p>
+                    <ul class="activity-log">
+                        <li>2026.01.15 - 의뢰 게시판 접속 확인</li>
+                        <li>2026.01.12 - 식량 창고에서 목격됨</li>
+                        </ul>
+                </div>
+
+                <div class="profile-actions">
+                    <button onclick="alert('준비 중인 기능입니다 (쪽지 보내기)')">📩 쪽지 보내기</button>
+                    <button onclick="alert('준비 중인 기능입니다 (친구 추가)')">🤝 동료 요청</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ★ sub.html에 있는 명단과 똑같은 데이터를 가져와야 합니다.
+        // (나중에는 DB 하나로 관리하겠지만, 지금은 복사해서 씁니다)
+        const survivors = [
+            { name: "관리자", role: "총괄 리더", state: "생존", img: "image/admin.png", desc: "이 구역의 관리자입니다. 모든 권한을 가지고 있습니다." },
+            { name: "러너1", role: "수색대", state: "생존", img: "image/runner1.jpg", desc: "발이 빠르고 지리에 밝음. 주로 낮 시간에 활동함." },
+            { name: "러너2", role: "전투원", state: "부상", img: "image/fighter.jpg", desc: "현재 다리를 다쳐 치료 중. 전투력은 높으나 이동 불가." },
+            { name: "닥터K", role: "의무병", state: "생존", img: "", desc: "응급 처치 전문가. B동 101호에 거주 중." },
+            { name: "쉐프", role: "조리장", state: "생존", img: "image/cook.png", desc: "통조림 요리의 달인. 식량 배급 담당." },
+            // ... sub.html과 똑같이 나머지 사람들도 추가해주세요 ...
+            { name: "생존자1", role: "일반 시민", state: "생존", img: "image/user1.png", desc: "특별한 특이사항 없음." }
+        ];
+
+        // 1. 주소창에서 ?name=누구 인지 알아내기
+        const params = new URLSearchParams(window.location.search);
+        const targetName = params.get('name');
+
+        // 2. 명단에서 그 사람 찾기
+        const person = survivors.find(p => p.name === targetName);
+
+        // 3. 화면에 뿌리기
+        if (person) {
+            document.getElementById('pName').innerText = person.name;
+            document.getElementById('pRole').innerText = person.role;
+            document.getElementById('pDesc').innerText = person.desc;
+            document.getElementById('pImg').src = person.img;
+            
+            // 상태 뱃지 색상 및 텍스트 설정
+            const badge = document.getElementById('pStateBadge');
+            badge.innerText = person.state;
+            if(person.state === "부상") badge.style.backgroundColor = "orange";
+            else if(person.state === "사망") badge.style.backgroundColor = "red";
+        } else {
+            alert("존재하지 않는 생존자입니다.");
+            location.href = "sub.html";
+        }
+
+        function logout() {
+            localStorage.removeItem("loginStatus");
+            location.href = "index.html";
+        }
+    </script>
+</body>
+</html>

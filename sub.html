@@ -87,34 +87,40 @@
         }
 
         function renderSurvivors() {
-            const list = document.getElementById('survivorList');
-            list.innerHTML = ""; // 초기화
+    const list = document.getElementById('survivorList');
+    list.innerHTML = ""; 
 
-            survivors.forEach(person => {
-                const card = document.createElement('div');
-                card.className = 'survivor-card';
+    survivors.forEach(person => {
+        // [수정됨] div 대신 a 태그를 사용하여 클릭 시 이동하도록 변경
+        const card = document.createElement('a'); 
+        card.className = 'survivor-card';
+        
+        // 클릭하면 profile.html로 이동하면서 ?name=누구 정보를 넘김
+        card.href = `profile.html?name=${encodeURIComponent(person.name)}`;
+        
+        // 링크 밑줄 제거를 위해 스타일 추가
+        card.style.textDecoration = "none";
+        card.style.display = "block"; 
 
-                // 상태에 따른 색상 변경
-                let stateColor = "#00ff00"; // 생존(초록)
-                if (person.state === "부상") stateColor = "orange";
-                if (person.state === "사망" || person.state === "실종") stateColor = "red";
+        let stateColor = "#00ff00"; 
+        if (person.state === "부상") stateColor = "orange";
+        if (person.state === "사망" || person.state === "실종") stateColor = "red";
 
-                // ★ 핵심: onerror 부분이 이미지가 깨졌을 때 기본 이미지를 보여줍니다
-                card.innerHTML = `
-                    <div class="survivor-img-box">
-                        <img src="${person.img}" 
-                             alt="${person.name}" 
-                             onerror="this.src='https://i.imgur.com/3SPL075.png'"> 
-                    </div>
-                    <div class="survivor-info">
-                        <h3>${person.name} <span style="font-size:12px; color:${stateColor}; border:1px solid ${stateColor}; padding:2px 4px; border-radius:4px;">${person.state}</span></h3>
-                        <p class="role">${person.role}</p>
-                        <p class="desc">${person.desc}</p>
-                    </div>
-                `;
-                list.appendChild(card);
-            });
-        }
+        card.innerHTML = `
+            <div class="survivor-img-box">
+                <img src="${person.img}" 
+                     alt="${person.name}" 
+                     onerror="this.src='https://i.imgur.com/3SPL075.png'"> 
+            </div>
+            <div class="survivor-info">
+                <h3>${person.name} <span style="font-size:12px; color:${stateColor}; border:1px solid ${stateColor}; padding:2px 4px; border-radius:4px;">${person.state}</span></h3>
+                <p class="role">${person.role}</p>
+                <p class="desc">${person.desc}</p>
+            </div>
+        `;
+        list.appendChild(card);
+    });
+}
     </script>
 </body>
 </html>
