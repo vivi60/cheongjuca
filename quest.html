@@ -163,26 +163,25 @@ const firebaseConfig = {
         const cards = document.querySelectorAll('.quest-card');
         
         cards.forEach(card => {
-            const questId = card.id;      // 예: q1
-            const questInfo = data[questId]; // DB에 저장된 정보 (누가 수락했는지)
+            const questId = card.id;      
+            const questInfo = data[questId]; // DB 정보
 
             if (questInfo && questInfo.status === 'accepted') {
-                // 누군가 이미 수락한 경우
+                // 누군가 수락한 상태
                 updateCardToTaken(card, questInfo.takenBy);
             } else {
-                // 아무도 수락 안 한 경우 (초기화)
+                // 아무도 수락 안 함 (또는 포기함) -> 초기화
                 resetCard(card);
             }
         });
     });
 
-    // 3. [기능] 수락 버튼을 눌렀을 때 (서버에 알림)
+    // 3. [기능] 수락하기 (DB에 등록)
     function acceptQuest(button) {
         const card = button.closest('.quest-card');
         const questId = card.id;
 
         if (confirm("이 의뢰를 수락하시겠습니까? (모두에게 알려집니다)")) {
-            // Firebase에 "내가 찜했음" 하고 저장
             database.ref('questStatus/' + questId).set({
                 status: 'accepted',
                 takenBy: myNick,
@@ -191,11 +190,16 @@ const firebaseConfig = {
         }
     }
 
-    // 4. [기능] 거절 버튼 (나한테만 안 보이게 할지, 아니면 버튼을 없앨지 선택)
-    // 공유 퀘스트에서는 함부로 거절(삭제)하면 다른 사람도 못 하게 되므로
-    // 보통은 '거절' 버튼을 숨기거나 비활성화하는 게 좋습니다.
-    function removeCard(button) {
-        alert("공동 의뢰는 거절할 수 없습니다. 누군가는 해야 하니까요...");
+    // 4. [기능] 포기하기 (DB에서 삭제) - 새로 추가된 기능!
+    function giveUpQuest(button) {
+        const card = button.closest('.quest-card');
+        const questId = card.id;
+
+        if (confirm("정말 의뢰를 포기하시겠습니까? (다른 생존자가 다시 수락할 수 있게 됩니다)")) {
+            // Firebase에서 해당 퀘스트 정보 삭제 -> 즉시 '초기화' 상태로 공유됨
+            database.ref('questStatus/' + questId).remove();
+            alert("의뢰를 포기했습니다.");
+        }
     }
 
     // 5. [화면처리] 카드를 '수행 중' 상태로 바꾸는 함수
@@ -203,41 +207,57 @@ const firebaseConfig = {
         const acceptBtn = card.querySelector('.btn-accept');
         const declineBtn = card.querySelector('.btn-decline');
 
-        // 수락 버튼 스타일 변경
-        acceptBtn.style.background = "#222"; 
-        acceptBtn.style.color = "#ff4444"; // 붉은 글씨
-        acceptBtn.style.border = "1px solid #555";
-        
-        // 텍스트 변경 (핵심 기능!)
-        if (ownerName === myNick) {
-            acceptBtn.innerText = "내가 수행 중";
-        } else {
-            acceptBtn.innerText = `[${ownerName}] 진행 중`;
-        }
-
-        acceptBtn.disabled = true;       // 버튼 못 누르게 잠금
-        acceptBtn.style.cursor = "not-allowed";
-        
-        // 거절 버튼은 숨김
+        // 거절 버튼은 무조건 숨김
         if(declineBtn) declineBtn.style.display = 'none';
+
+        // ★ 핵심 로직: 내가 주인인가? 남이 주인인가?
+        if (ownerName === myNick) {
+            // [내 퀘스트] -> "포기하기" 버튼으로 변신
+            acceptBtn.innerText = "포기하기 🏳️";
+            acceptBtn.style.background = "#555";     // 회색 (포기 느낌)
+            acceptBtn.style.color = "#fff";
+            acceptBtn.style.cursor = "pointer";
+            acceptBtn.disabled = false;              // 클릭 가능하게 품!
+            
+            // 기존 수락 함수(onclick)를 제거하고 포기 함수로 교체
+            acceptBtn.setAttribute("onclick", "giveUpQuest(this)");
+
+        } else {
+            // [남의 퀘스트] -> "잠금" 상태
+            acceptBtn.innerText = `[${ownerName}] 진행 중`;
+            acceptBtn.style.background = "#222";     // 검은색 (잠김)
+            acceptBtn.style.color = "#ff4444";       // 붉은 글씨
+            acceptBtn.style.cursor = "not-allowed";
+            acceptBtn.disabled = true;               // 클릭 불가능
+        }
         
-        // 카드 전체를 약간 어둡게 처리 (선택사항)
-        card.style.opacity = "0.8";
+        card.style.opacity = "0.9";
     }
 
-    // 6. [화면처리] 카드를 다시 원상복구 (혹시 취소 기능 넣을 때 대비)
+    // 6. [화면처리] 카드를 다시 '수락 가능' 상태로 원상복구
     function resetCard(card) {
         const acceptBtn = card.querySelector('.btn-accept');
         const declineBtn = card.querySelector('.btn-decline');
 
+        // 버튼 디자인 원상복구
         acceptBtn.style.background = "#ab0000";
         acceptBtn.style.color = "white";
         acceptBtn.innerText = "수락";
         acceptBtn.disabled = false;
         acceptBtn.style.cursor = "pointer";
-        card.style.opacity = "1";
         
+        // 함수도 다시 '수락'으로 연결
+        acceptBtn.setAttribute("onclick", "acceptQuest(this)");
+        
+        // 거절 버튼 다시 보이기
         if(declineBtn) declineBtn.style.display = "inline-block";
+        
+        card.style.opacity = "1";
+    }
+    
+    // 7. [기능] 거절 버튼 (개인적 숨김 없음, 공용 퀘스트라 막음)
+    function removeCard(button) {
+        alert("공동 의뢰는 개인이 삭제할 수 없습니다.");
     }
 </script>
 </body>
