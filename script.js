@@ -19,6 +19,6 @@ function checkLogin() {
     // 저장된 로그인 정보를 지웁니다.
     localStorage.removeItem("loginStatus");
     alert("로그아웃 되었습니다.");
-    window.location.href = "login.html"; // 로그인 페이지로 튕겨내기
+    window.location.href = "index.html"; // 로그인 페이지로 튕겨내기
 }
 }

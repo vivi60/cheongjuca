@@ -12,7 +12,7 @@
     // 로그인 체크 로직 (기존 수정본 유지)
     if (status !== "success" && status !== "admin") {
         alert("로그인이 필요한 페이지입니다.");
-        window.location.href = "login.html"; 
+        window.location.href = "index.html"; 
     }
 
     // 관리자 배지 제어 (추가된 부분)
@@ -28,7 +28,7 @@
         function logout() {
             localStorage.removeItem("loginStatus");
             alert("로그아웃 되었습니다.");
-            window.location.href = "login.html";
+            window.location.href = "index.html";
         }
     </script>
 </head>
