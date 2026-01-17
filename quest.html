@@ -119,21 +119,24 @@
 
             // --- [버튼 로직의 핵심] ---
             let buttonsHtml = "";
-            let statusBadge = ""; // 카드 위에 띄울 상태 메시지
+            let statusBadge = ""; 
 
-            // 1) 내가 작성자(A)인가?
             const isAuthor = (quest.author === myNick);
-            // 2) 내가 수행자(B)인가?
             const isRunner = (quest.takenBy === myNick);
 
             if (quest.status === 'open') {
-                // [상태: 의뢰 중] -> 누구나 수락 가능
-                buttonsHtml = `<button class="btn-accept" onclick="acceptQuest('${key}')">수락하기</button>`;
+                // [상태: 의뢰 중] 
+                if (isAuthor) {
+                    // ★ 수정된 부분: 내 의뢰면 수락 버튼 대신 '대기중' 표시
+                    buttonsHtml = `<button class="btn-accept" disabled style="background:#333; color:#777; cursor:default; border:1px solid #555;">내 의뢰 (생존자 기다리는 중)</button>`;
+                } else {
+                    // 남의 의뢰면 수락 가능
+                    buttonsHtml = `<button class="btn-accept" onclick="acceptQuest('${key}')">수락하기</button>`;
+                }
             
             } else if (quest.status === 'accepted') {
                 // [상태: 진행 중]
                 if (isRunner) {
-                    // B: "다 했어요!" 보고 버튼
                     buttonsHtml = `
                         <button class="btn-accept" onclick="requestApproval('${key}')" 
                                 style="background:#222; border:2px solid #ab0000; color:#ab0000; font-weight:bold;">
@@ -143,14 +146,12 @@
                                 style="background:#555; color:white; margin-left:5px;">포기</button>
                     `;
                 } else {
-                    // A & 제3자: 진행 중 표시
                     buttonsHtml = `<button class="btn-accept" disabled style="background:#222; color:#ff4444; cursor:not-allowed;">[${quest.takenBy}] 수행중...</button>`;
                 }
 
             } else if (quest.status === 'pending') {
-                // [상태: 검토 대기] -> B가 완료 버튼을 누름
+                // [상태: 검토 대기]
                 if (isAuthor) {
-                    // ★ A에게만 보임: "확인 도장 찍기"
                     statusBadge = "<div style='color:#00ff00; font-size:14px; margin-bottom:5px;'>★ 상대방이 완료했습니다!</div>";
                     buttonsHtml = `
                         <button class="btn-accept" onclick="approveQuest('${key}')" 
@@ -159,17 +160,14 @@
                         </button>
                     `;
                 } else if (isRunner) {
-                    // B: 의뢰자의 확인을 기다리는 중
                     buttonsHtml = `<button class="btn-accept" disabled style="background:#444; color:white;">의뢰자 확인 대기중...</button>`;
                 } else {
-                    // 제3자
                     buttonsHtml = `<button class="btn-accept" disabled style="background:#222; color:#888;">검토 진행 중</button>`;
                 }
 
             } else if (quest.status === 'completed') {
-                // [상태: 최종 완료] -> A가 도장을 찍음
+                // [상태: 최종 완료]
                 if (isRunner) {
-                    // ★ B에게만 보임: "보상 받으세요"
                     statusBadge = "<div style='color:gold; font-size:14px; margin-bottom:5px;'>★ 의뢰자가 확인했습니다!</div>";
                     buttonsHtml = `
                         <button class="btn-accept" onclick="finishAndGetReward('${key}')" 
@@ -178,8 +176,7 @@
                         </button>
                     `;
                 } else {
-                    // A & 제3자: 이미 완료된 건이니 숨김 (또는 완료됨 표시)
-                    card.style.display = 'none'; // 목록에서 사라짐
+                    card.style.display = 'none'; 
                     return; 
                 }
             }
@@ -190,7 +187,6 @@
                 deleteBtnHtml = `<button class="btn-delete-quest" onclick="deleteQuest('${key}')">X</button>`;
             }
 
-            // HTML 조립
             card.innerHTML = `
                 ${deleteBtnHtml}
                 <div class="quest-profile">
@@ -212,9 +208,7 @@
         });
     });
 
-    // --- [기능 함수들] ---
-
-    // 1. 의뢰 등록
+    // --- [기능 함수들 (기존과 동일)] ---
     function writeQuest() {
         const img = document.getElementById('qImg').value;
         const title = document.getElementById('qTitle').value;
@@ -226,54 +220,46 @@
         const newQuest = {
             image: img, title: title, desc: desc, reward: reward,
             author: myNick,
-            status: 'open', // 초기 상태
+            status: 'open', 
             timestamp: new Date().toLocaleString()
         };
         database.ref('requests').push(newQuest);
         
-        // 입력창 비우기
         document.getElementById('qImg').value = '';
         document.getElementById('qTitle').value = '';
         document.getElementById('qDesc').value = '';
         document.getElementById('qReward').value = '';
     }
 
-    // 2. 수락하기 (B의 행동)
     function acceptQuest(key) {
         if (confirm("의뢰를 수락하시겠습니까?")) {
             database.ref('requests/' + key).update({ status: 'accepted', takenBy: myNick });
         }
     }
 
-    // 3. 완료 보고하기 (B -> A) : "저 다 했어요!"
     function requestApproval(key) {
         if (confirm("임무를 완수했습니까? 의뢰자에게 확인을 요청합니다.")) {
             database.ref('requests/' + key).update({ status: 'pending' });
         }
     }
 
-    // 4. 완료 승인하기 (A -> B) : "확인했어. 보상 가져가."
     function approveQuest(key) {
         if (confirm("수행 내용을 확인하셨습니까? 승인하면 상대방에게 보상 알림이 뜹니다.")) {
             database.ref('requests/' + key).update({ status: 'completed' });
         }
     }
 
-    // 5. 보상 수령 및 삭제 (B의 행동) : "감사합니다!" (목록에서 삭제)
     function finishAndGetReward(key) {
         alert("보상을 획득했습니다! 수고하셨습니다.");
-        // 기록을 남기고 싶으면 상태를 'archived'로 바꾸고, 없애고 싶으면 remove()
         database.ref('requests/' + key).remove(); 
     }
 
-    // 6. 포기하기
     function giveUpQuest(key) {
         if (confirm("정말 포기하시겠습니까?")) {
             database.ref('requests/' + key).update({ status: 'open', takenBy: null });
         }
     }
 
-    // 7. 삭제하기
     function deleteQuest(key) {
         if (confirm("정말 삭제하시겠습니까?")) {
             database.ref('requests/' + key).remove();
