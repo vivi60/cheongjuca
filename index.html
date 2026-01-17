@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <title>생존자 로그인</title>
     <link rel="stylesheet" href="style.css">
+    
+    <script>
+        (function() {
+            // 1. 저장된 로그인 증명서(localStorage) 확인
+            const status = localStorage.getItem("loginStatus");
+            
+            // 2. 증명서가 유효하면(success 또는 admin) 바로 메인으로 이동!
+            if (status === "success" || status === "admin") {
+                // alert("기존 세션으로 자동 접속합니다."); // (원하시면 주석을 풀어 알림을 띄우세요)
+                window.location.href = "main.html"; 
+            }
+        })();
+    </script>
 </head>
 <body class="login-page">
     <div class="login-container">
