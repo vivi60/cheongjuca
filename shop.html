@@ -34,15 +34,18 @@
 </head>
 <body style="background-color: #111;">
 
-    <nav class="navbar">
-        <div class="logo">OUT BREAK <span id="userBadge"></span></div>
-        <ul class="nav-links">
-            <li><a href="main.html">홈</a></li>
-            <li><a href="shop.html">상점</a></li>
-            <li><a href="game.html">낚시터</a></li>
-            <li><a href="#" onclick="logout()">로그아웃</a></li>
-        </ul>
-    </nav>
+<nav class="navbar">
+    <div class="logo">
+        OUT BREAK 
+        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
+    </div>
+    <ul class="nav-links">
+        <li><a href="main.html">홈</a></li>
+        <li><a href="shop.html">상점</a></li>
+        <li><a href="game.html">낚시터</a></li>
+        <li><a href="#" onclick="logout()">로그아웃</a></li>
+    </ul>
+</nav>
 
     <div class="shop-container">
         <div class="header-info">
@@ -81,6 +84,24 @@
     </div>
 
     <script>
+
+        // shop.html의 <script> 태그 안 최상단에 추가하세요.
+window.addEventListener('load', function() {
+    const nick = localStorage.getItem("userNick");
+    const status = localStorage.getItem("loginStatus");
+    const badge = document.getElementById("userBadge");
+    
+    if (badge && nick) {
+        if (status === "admin") {
+            badge.innerText = `[관리자 모드]`;
+            badge.style.color = "#ff0000";
+        } else {
+            badge.innerText = `[${nick}]`;
+            badge.style.color = "#cccccc";
+        }
+        badge.style.display = "inline";
+    }
+});
         const nick = localStorage.getItem("userNick");
         if(!nick) location.href='index.html';
         document.getElementById('myNick').innerText = nick;

@@ -60,7 +60,10 @@
 <body class="game-page" style="background-color: #111;">
 
     <nav class="navbar">
-        <div class="logo">OUT BREAK <span id="userBadge"></span></div>
+        <div class="logo">
+        OUT BREAK 
+        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
+    </div>
         <ul class="nav-links">
             <li><a href="main.html">홈</a></li>
             <li><a href="shop.html">상점</a></li>
@@ -137,6 +140,24 @@
             document.getElementById('baitCountNormal').innerText = currentBait;
             document.getElementById('baitCountHigh').innerText = baitHigh;
         });
+
+        // game.html의 <script> 태그 안 기존 데이터 연동 코드 근처에 추가하세요.
+window.addEventListener('load', function() {
+    const nick = localStorage.getItem("userNick");
+    const status = localStorage.getItem("loginStatus");
+    const badge = document.getElementById("userBadge");
+    
+    if (badge && nick) {
+        if (status === "admin") {
+            badge.innerText = `[관리자 모드]`;
+            badge.style.color = "#ff0000";
+        } else {
+            badge.innerText = `[${nick}]`;
+            badge.style.color = "#cccccc";
+        }
+        badge.style.display = "inline";
+    }
+});
 
         // 메인 버튼 조작 핸들러
         function handlePress(pressed) {
