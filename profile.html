@@ -105,26 +105,61 @@ function updateMyProfile() {
     });
 }
 
-        function renderInventory(invData) {
-            const grid = document.getElementById('pInventoryGrid');
-            grid.innerHTML = "";
-            
-            const items = Object.values(invData);
-            if (items.length === 0) {
-                grid.innerHTML = "<p style='color:#666; grid-column: 1/-1; text-align:center;'>가방이 비어있습니다.</p>";
-                return;
-            }
+     // 아이템별 회복량 설정
+const ITEM_EFFECTS = {
+    "초코우유": { hp: 20 },
+    "에너지드링크": { hp: 10 },
+    "구급상자": { hp: 50 }
+};
 
-            items.forEach(item => {
-                const div = document.createElement('div');
-                div.style = "background: #222; border: 1px solid #444; padding: 10px; text-align: center; border-radius: 8px;";
-                div.innerHTML = `
-                    <div style="font-size: 30px; margin-bottom:5px;">${item.icon || '📦'}</div>
-                    <div style="font-size: 14px; color: #ddd;">${item.name}</div>
-                `;
-                grid.appendChild(div);
-            });
+function renderInventory(invData) {
+    const grid = document.getElementById('pInventoryGrid');
+    grid.innerHTML = "";
+    
+    // 데이터베이스의 키값(id)을 함께 보관하여 삭제 시 사용합니다.
+    Object.entries(invData).forEach(([key, item]) => {
+        const div = document.createElement('div');
+        div.className = "inventory-item"; 
+        div.style = "background: #222; border: 1px solid #444; padding: 10px; text-align: center; border-radius: 8px; cursor: pointer;";
+        
+        // 클릭하면 아이템을 사용하는 함수 호출
+        div.onclick = () => useItem(key, item.name);
+        
+        div.innerHTML = `
+            <div style="font-size: 30px; margin-bottom:5px;">${item.icon || '📦'}</div>
+            <div style="font-size: 14px; color: #ddd;">${item.name}</div>
+        `;
+        grid.appendChild(div);
+    });
+}
+
+function useItem(itemKey, itemName) {
+    const myID = localStorage.getItem("loginID");
+    if (!myID) return;
+
+    if (!confirm(`${itemName}을(를) 사용하시겠습니까?`)) return;
+
+    // 1. 현재 체력 상태를 먼저 가져옵니다.
+    database.ref('users/' + myID).once('value', (snapshot) => {
+        const userData = snapshot.val();
+        let currentHP = userData.hp || 100;
+        
+        // 2. 아이템 효과 적용
+        const effect = ITEM_EFFECTS[itemName];
+        if (effect && effect.hp) {
+            currentHP = Math.min(100, currentHP + effect.hp); // 최대 체력 100 제한
         }
+
+        // 3. Firebase 업데이트: 체력은 늘리고, 아이템은 삭제합니다.
+        const updates = {};
+        updates[`users/${myID}/hp`] = currentHP;
+        updates[`users/${myID}/inventory/${itemKey}`] = null; // null로 설정하면 해당 항목이 삭제됩니다.
+
+        database.ref().update(updates).then(() => {
+            alert(`${itemName}을(를) 사용하여 체력이 ${currentHP}가 되었습니다!`);
+        });
+    });
+}
 
         function logout() {
             localStorage.removeItem("loginStatus");
