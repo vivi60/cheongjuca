@@ -4,17 +4,33 @@
     <meta charset="UTF-8">
     <title>생존자 상세 정보</title>
     <link rel="stylesheet" href="style.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+
     <script>
-        // 로그인 체크 및 닉네임 표시 (이 부분이 빠져있었습니다!)
+        // 2. Firebase 설정 (보내주신 game.html의 설정값을 적용했습니다)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
+            authDomain: "cheongjuca.firebaseapp.com",
+            databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
+            projectId: "cheongjuca",
+            storageBucket: "cheongjuca.firebasestorage.app",
+            messagingSenderId: "455437421321",
+            appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8",
+            measurementId: "G-9XG7JRFM3D"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 로그인 체크 및 상단 바 설정
         (function() {
             const status = localStorage.getItem("loginStatus");
             const nick = localStorage.getItem("userNick");
 
-            // 로그인 안 했으면 쫓아내기
             if (!status) { location.href = "index.html"; }
 
             window.addEventListener('load', function() {
-                // 1. 네비게이션 바에 내 이름 표시하기
                 const badge = document.getElementById("userBadge");
                 if (badge && nick) {
                     if (status === "admin") {
@@ -26,114 +42,170 @@
                     }
                     badge.style.display = "inline";
                 }
-
-                // 2. 프로필 정보 불러오기 실행
-                loadProfile();
+                loadProfile(); // 프로필 데이터 불러오기 시작
             });
         })();
+
+
+// 상단에 userDB 명단 추가 (아이디와 닉네임을 매칭하기 위함)
+const userDB = {
+    "13reaking_news":    { nick: "관리자" },
+    "runner1":  { nick: "러너1" },
+    "13reaking_system":  { nick: "시스템" }
+};
+
+
+function loadProfile() {
+    const params = new URLSearchParams(window.location.search);
+    const targetID = params.get('name'); 
+    const myNick = localStorage.getItem("userNick");
+
+    if (!targetID) return;
+
+    database.ref('users/' + targetID).on('value', (snapshot) => {
+        const displayData = snapshot.val() || { money: 0, hp: 100, infection: 0, inventory: {}, desc: "기록 없음" };
+        
+        // userDB에 정보가 없더라도 오류가 나지 않도록 수정
+        const nickName = (userDB[targetID] ? userDB[targetID].nick : targetID);
+        document.getElementById('pName').innerText = nickName;
+        
+        document.getElementById('pMoney').innerText = displayData.money || 0;
+        document.getElementById('pHP').innerText = displayData.hp || 100;
+        document.getElementById('pInf').innerText = displayData.infection || 0;
+        document.getElementById('pDesc').innerText = displayData.desc || "특별한 특이사항 없음.";
+        
+        // 본인 확인 조건 수정 (localStorage에 저장된 닉네임과 비교하거나 script.js의 아이디와 비교)
+        if (userDB[targetID] && userDB[targetID].nick === myNick) {
+            document.getElementById('myEditZone').style.display = "block";
+            document.getElementById('editDescInput').value = displayData.desc || "";
+        }
+
+        renderInventory(displayData.inventory || {});
+    });
+}
+
+       // profile.html 내부의 updateMyProfile 함수 수정
+function updateMyProfile() {
+    // userNick 대신 loginID를 가져옵니다.
+    const myID = localStorage.getItem("loginID"); 
+    const newDesc = document.getElementById('editDescInput').value;
+    
+    if (!myID) {
+        alert("로그인 정보가 없습니다. 다시 로그인해주세요.");
+        return;
+    }
+
+    // 이제 users/13reaking_system 경로에 정확히 업데이트됩니다.
+    database.ref('users/' + myID).update({
+        desc: newDesc
+    }).then(() => {
+        alert("프로필 기록이 수정되었습니다.");
+    }).catch((error) => {
+        console.error("수정 실패:", error);
+    });
+}
+
+        function renderInventory(invData) {
+            const grid = document.getElementById('pInventoryGrid');
+            grid.innerHTML = "";
+            
+            const items = Object.values(invData);
+            if (items.length === 0) {
+                grid.innerHTML = "<p style='color:#666; grid-column: 1/-1; text-align:center;'>가방이 비어있습니다.</p>";
+                return;
+            }
+
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.style = "background: #222; border: 1px solid #444; padding: 10px; text-align: center; border-radius: 8px;";
+                div.innerHTML = `
+                    <div style="font-size: 30px; margin-bottom:5px;">${item.icon || '📦'}</div>
+                    <div style="font-size: 14px; color: #ddd;">${item.name}</div>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem("loginStatus");
+            localStorage.removeItem("userNick");
+            location.href = "index.html";
+        }
     </script>
+
+    <style>
+        .profile-card {
+            background: rgba(30, 30, 30, 0.9);
+            border: 2px solid #444;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .stat-item { font-size: 1.2rem; margin: 10px 0; }
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+            height: 80px;
+            background: #111;
+            color: #fff;
+            border: 1px solid #ab0000;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'DaraeHandwriting';
+            resize: none;
+        }
+    </style>
 </head>
 <body class="profile-page">
     
     <nav class="navbar">
         <div class="logo">
-            OUT BREAK
+            OUT BREAK 
             <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
         </div>
         <ul class="nav-links">
             <li><a href="main.html">홈</a></li>
             <li><a href="sub.html">생존자목록</a></li>
-            <li><a href="board.html">익명게시판</a></li>
+            <li><a href="board.html">자유게시판</a></li>
             <li><a href="quest.html">의뢰게시판</a></li>
             <li><a href="game.html">낚시터</a></li>
+            <li><a href="vending.html">자판기</a></li>
             <li><a href="#" onclick="logout()">로그아웃</a></li>
         </ul>
     </nav>
 
-    <div class="profile-container">
-        <a href="sub.html" class="back-btn">◀ 목록으로 돌아가기</a>
-
-        <div class="profile-content">
-            <div class="profile-left">
-                <img id="pImg" src="" onerror="this.src='https://i.imgur.com/3SPL075.png'">
-                <div class="profile-status" id="pStateBadge">생존</div>
-            </div>
-
-            <div class="profile-right">
-                <h1 id="pName">이름 로딩중...</h1>
-                <h3 id="pRole">직업/역할</h3>
-                <hr style="border: 0.5px solid #555; margin: 20px 0;">
-                
-                <div class="profile-detail-box">
-                    <p><strong>특이사항:</strong> <span id="pDesc">내용 없음</span></p>
-                    <p style="margin-top:20px;"><strong>최근 활동 기록:</strong></p>
-                    <ul class="activity-log">
-                        <li>2026.01.15 - 의뢰 게시판 접속 확인</li>
-                        <li>2026.01.12 - 식량 창고에서 목격됨</li>
-                    </ul>
-                </div>
-
-                <div class="profile-actions">
-                    <button onclick="alert('준비 중인 기능입니다 (쪽지 보내기)')">📩 쪽지 보내기</button>
-                    <button onclick="alert('준비 중인 기능입니다 (친구 추가)')">🤝 동료 요청</button>
-                </div>
-            </div>
+    <div class="profile-card">
+        <div style="text-align: center; margin-bottom: 20px;">
+    <img id="pImg" src="https://i.imgur.com/3SPL075.png" style="width: 150px; height: 150px; border-radius: 50%; border: 3px solid #ab0000; object-fit: cover;">
+</div>
+        <h1 id="pName" style="color: #ab0000; margin-bottom: 5px;">로딩 중...</h1>
+        <hr style="border: 0.5px solid #444;">
+        
+        <div class="stat-item" style="color: gold;">💰 소지금: <span id="pMoney">0</span> G</div>
+        <div class="stat-item" style="color: #ff4444;">❤️ 체력: <span id="pHP">100</span></div>
+        <div class="stat-item" style="color: #00ff00;">🧪 감염도: <span id="pInf">0</span>%</div>
+        
+        <div style="margin-top: 20px; background: #252525; padding: 15px; border-radius: 10px;">
+            <h3 style="margin-top: 0; color: #888;">생존 기록</h3>
+            <p id="pDesc" style="line-height: 1.5;"></p>
+            
+        <div id="myEditZone" style="display: none; border-top: 1px dashed #444; padding-top: 15px; margin-top: 15px;">
+            <textarea id="editDescInput" placeholder="당신의 기록을 남기세요..."></textarea>
+            <button onclick="updateMyProfile()" style="margin-top:10px; width:100%; background:#ab0000; color:white; border:none; padding:10px; cursor:pointer; border-radius:5px;">기록 갱신</button>
         </div>
+
+        <h3 style="margin-top: 30px;">소지품 가방</h3>
+        <div id="pInventoryGrid" class="inventory-grid"></div>
     </div>
 
-    <script>
-        // sub.html과 동일한 데이터 (나중엔 통합 예정)
-        const survivors = [
-            { name: "관리자", role: "총괄 리더", state: "생존", img: "image/admin.png", desc: "이 구역의 관리자입니다. 모든 권한을 가지고 있습니다." },
-            { name: "러너1", role: "수색대", state: "생존", img: "image/runner1.jpg", desc: "발이 빠르고 지리에 밝음. 주로 낮 시간에 활동함." },
-            { name: "러너2", role: "전투원", state: "부상", img: "image/fighter.jpg", desc: "현재 다리를 다쳐 치료 중. 전투력은 높으나 이동 불가." },
-            { name: "닥터K", role: "의무병", state: "생존", img: "", desc: "응급 처치 전문가. B동 101호에 거주 중." },
-            { name: "쉐프", role: "조리장", state: "생존", img: "image/cook.png", desc: "통조림 요리의 달인. 식량 배급 담당." },
-            { name: "생존자1", role: "일반 시민", state: "생존", img: "image/user1.png", desc: "특별한 특이사항 없음." }
-        ];
-
-        // 20명 더미 데이터 생성 (sub.html과 똑같이 맞춰야 에러가 안 납니다)
-        for(let i=2; i<=15; i++) {
-            survivors.push({
-                name: `생존자${i}`,
-                role: "일반 시민",
-                state: "생존",
-                img: `image/user${i}.png`, 
-                desc: "특별한 특이사항 없음."
-            });
-        }
-
-        function loadProfile() {
-            // 1. 주소창에서 ?name=누구 인지 알아내기
-            const params = new URLSearchParams(window.location.search);
-            const targetName = params.get('name');
-
-            if (!targetName) return; // 이름이 없으면 중단
-
-            // 2. 명단에서 그 사람 찾기
-            const person = survivors.find(p => p.name === targetName);
-
-            // 3. 화면에 뿌리기
-            if (person) {
-                document.getElementById('pName').innerText = person.name;
-                document.getElementById('pRole').innerText = person.role;
-                document.getElementById('pDesc').innerText = person.desc;
-                document.getElementById('pImg').src = person.img;
-                
-                const badge = document.getElementById('pStateBadge');
-                badge.innerText = person.state;
-                if(person.state === "부상") badge.style.backgroundColor = "orange";
-                else if(person.state === "사망") badge.style.backgroundColor = "red";
-            } else {
-                alert("존재하지 않는 생존자입니다.");
-                location.href = "sub.html";
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem("loginStatus");
-            location.href = "index.html";
-        }
-    </script>
 </body>
 </html>

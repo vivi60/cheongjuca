@@ -31,7 +31,7 @@
                 }
                 
                 // 생존자 목록 생성 실행
-                renderSurvivors();
+                renderSurvivorList();
             });
         })();
 
@@ -41,7 +41,8 @@
         }
     </script>
 </head>
-<body class="sub-page"> <nav class="navbar">
+<body class="sub-page"> 
+    <nav class="navbar">
         <div class="logo">
             OUT BREAK 
             <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
@@ -49,7 +50,7 @@
         <ul class="nav-links">
             <li><a href="main.html">홈</a></li>
             <li><a href="sub.html">생존자목록</a></li>
-            <li><a href="board.html">익명게시판</a></li>
+            <li><a href="board.html">자유게시판</a></li>
             <li><a href="quest.html">의뢰게시판</a></li>
             <li><a href="game.html">낚시터</a></li>
             <li><a href="vending.html">자판기</a></li>
@@ -67,63 +68,42 @@
     </div>
 
     <script>
-        // ★ 여기에 생존자 정보를 입력하세요! (이미지가 없으면 자동으로 기본 이미지가 뜹니다)
-        const survivors = [
-            { name: "관리자", role: "총괄 리더", state: "생존", img: "image/admin.png", desc: "이 구역의 관리자입니다." },
-            { name: "러너1", role: "수색대", state: "생존", img: "image/runner1.jpg", desc: "발이 빠르고 지리에 밝음." },
-            { name: "러너2", role: "전투원", state: "부상", img: "image/fighter.jpg", desc: "현재 다리를 다쳐 치료 중." },
-            { name: "닥터K", role: "의무병", state: "생존", img: "", desc: "응급 처치 전문가." }, // 이미지 없음 테스트
-            { name: "쉐프", role: "조리장", state: "생존", img: "image/cook.png", desc: "통조림 요리의 달인." },
-            // ... 계속 추가 가능 ...
-        ];
+    // sub.html 내부 스크립트
+const userDB = {
+    "13reaking_news":    { nick: "관리자" },
+    "runner1":  { nick: "러너1" },
+    "13reaking_system":  { nick: "시스템" }
+};
 
-        // 20명 채우기용 더미 데이터 (테스트용)
-        for(let i=1; i<=15; i++) {
-            survivors.push({
-                name: `생존자${i}`,
-                role: "일반 시민",
-                state: "생존",
-                img: `image/user${i}.png`, 
-                desc: "특별한 특이사항 없음."
-            });
-        }
+// sub.html 내부의 renderSurvivorList 함수 수정
+/* sub.html 내 renderSurvivorList 함수 수정 */
 
-        function renderSurvivors() {
-    const list = document.getElementById('survivorList');
-    list.innerHTML = ""; 
+function renderSurvivorList() {
+    const container = document.getElementById('survivorList'); 
+    container.innerHTML = "";
 
-    survivors.forEach(person => {
-        // [수정됨] div 대신 a 태그를 사용하여 클릭 시 이동하도록 변경
-        const card = document.createElement('a'); 
-        card.className = 'survivor-card';
+    Object.keys(userDB).forEach(id => {
+        const user = userDB[id];
+        const div = document.createElement('div');
+        // survivor-item을 survivor-card로 변경 (기존 style.css와 맞춤)
+        div.className = 'survivor-card'; 
         
-        // 클릭하면 profile.html로 이동하면서 ?name=누구 정보를 넘김
-        card.href = `profile.html?name=${encodeURIComponent(person.name)}`;
+        div.onclick = () => { location.href = `profile.html?name=${id}`; };
         
-        // 링크 밑줄 제거를 위해 스타일 추가
-        card.style.textDecoration = "none";
-        card.style.display = "block"; 
-
-        let stateColor = "#00ff00"; 
-        if (person.state === "부상") stateColor = "orange";
-        if (person.state === "사망" || person.state === "실종") stateColor = "red";
-
-        card.innerHTML = `
+        // 기존 스타일을 유지하기 위해 내부 HTML 구조 복구
+        div.innerHTML = `
             <div class="survivor-img-box">
-                <img src="${person.img}" 
-                     alt="${person.name}" 
-                     onerror="this.src='https://i.imgur.com/3SPL075.png'"> 
+                <img src="https://i.imgur.com/3SPL075.png" alt="프로필">
             </div>
             <div class="survivor-info">
-                <h3>${person.name} <span style="font-size:12px; color:${stateColor}; border:1px solid ${stateColor}; padding:2px 4px; border-radius:4px;">${person.state}</span></h3>
-                <p class="role">${person.role}</p>
-                <p class="desc">${person.desc}</p>
+                <h3>${user.nick}</h3>
+                <p class="role">생존자</p>
+                <p class="desc">생존자 목록에서 상세 정보를 확인하세요.</p>
             </div>
         `;
-        list.appendChild(card);
+        container.appendChild(div);
     });
 }
     </script>
 </body>
-
 </html>

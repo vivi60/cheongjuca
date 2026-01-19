@@ -50,8 +50,28 @@
         .stop-btn { background: #444; }
 
         #bait-selector { display:none; background:rgba(0,0,0,0.9); padding:20px; border-radius:15px; margin-bottom:15px; border:2px solid #555; }
-        .bait-btn { background:#333; color:white; border:1px solid #555; padding:10px 20px; border-radius:8px; cursor:pointer; font-family:'SchoolSafeBoardMarker'; font-size:18px; flex:1; }
-        .bait-btn:hover:not(:disabled) { border-color: #ab0000; background:#444; }
+       /* game.html의 <style> 내 .bait-btn 부분을 아래 내용으로 교체 */
+.bait-btn { 
+    background: #333; 
+    color: white; 
+    border: 1px solid #555; /* 두 버튼 모두 회색 테두리로 통일 */
+    padding: 10px 20px; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-family: 'SchoolSafeBoardMarker'; 
+    font-size: 18px; 
+    flex: 1; 
+}
+/* 마우스를 올렸을 때 두 버튼 모두 동일하게 빨간색 테두리로 변합니다 */
+.bait-btn:hover:not(:disabled) { 
+    border-color: #ab0000; 
+    background: #444; 
+}
+
+.bait-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
     </style>
 </head>
 <body class="game-page" style="background-color: #111;">
@@ -95,10 +115,10 @@
             <div style="margin-bottom:15px; font-size:18px;">사용할 미끼를 선택하세요</div>
             <div style="display:flex; gap:10px; justify-content:center;">
                 <button class="bait-btn" id="pick-normal" onclick="selectBait('normal')">🐛 일반 미끼</button>
-                <button class="bait-btn" id="pick-high" onclick="selectBait('high')" style="border-color:#ffd700; color:#ffd700;">🪱 고급 미끼</button>
-            </div>
+                <button class="bait-btn" id="pick-high" onclick="selectBait('high')">🪱 고급 미끼</button>
+    </div>
             <button onclick="toggleBaitSelector(false)" style="background:none; border:none; color:#888; margin-top:15px; cursor:pointer;">[취소]</button>
-        </div>
+</div>
 
         <div class="btn-group">
             <button id="btn" class="action-btn" 

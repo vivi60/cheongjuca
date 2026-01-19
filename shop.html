@@ -55,6 +55,14 @@
             <span style="color:#ffcc00;">🪱 고급: <span id="myBaitHigh">0</span></span>
         </div>
 
+        <div id="adminPanel" style="display:none; width: 100%; background: #300; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 2px dashed #ff0000; text-align: center;">
+    <h3 style="color: #ff4444; margin-top: 0;">🛠️ 관리자 자산 통제</h3>
+    <input type="text" id="targetNick" placeholder="대상 닉네임" style="padding: 8px; border-radius: 5px; border: none;">
+    <input type="number" id="targetAmount" placeholder="금액(G)" style="padding: 8px; border-radius: 5px; border: none; width: 100px;">
+    <button onclick="adminSetMoney()" style="padding: 8px 15px; background: #ff0000; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: 'SchoolSafeBoardMarker';">지급/차압</button>
+    <div style="font-size: 12px; color: #aaa; margin-top: 10px;">* 닉네임을 정확히 입력하고 금액을 적은 뒤 버튼을 누르세요.</div>
+        </div>
+        
         <div class="shop-section">
             <h2 style="color:#ab0000; text-align:center;">🛒 생존 보급소</h2>
             <div style="display: grid; gap: 10px;">
@@ -90,7 +98,11 @@ window.addEventListener('load', function() {
     const nick = localStorage.getItem("userNick");
     const status = localStorage.getItem("loginStatus");
     const badge = document.getElementById("userBadge");
-    
+    const adminPanel = document.getElementById("adminPanel");
+
+    if (status === "admin") {
+        adminPanel.style.display = "block";
+    }
     if (badge && nick) {
         if (status === "admin") {
             badge.innerText = `[관리자 모드]`;
@@ -102,6 +114,32 @@ window.addEventListener('load', function() {
         badge.style.display = "inline";
     }
 });
+// 관리자 전용 돈 수정 함수
+function adminSetMoney() {
+    const tNick = document.getElementById('targetNick').value.trim();
+    const tAmount = parseInt(document.getElementById('targetAmount').value);
+
+    if (!tNick || isNaN(tAmount)) {
+        return alert("닉네임과 금액을 모두 올바르게 입력해주세요.");
+    }
+
+    // 해당 닉네임의 유저 데이터를 확인 후 업데이트
+    database.ref('users/' + tNick).once('value', (snapshot) => {
+        if (!snapshot.exists()) {
+            alert("존재하지 않는 러너입니다.");
+        } else {
+            if (confirm(`${tNick}님의 자산을 ${tAmount}G로 수정하시겠습니까?`)) {
+                database.ref('users/' + tNick).update({
+                    money: tAmount
+                }).then(() => {
+                    alert("수정이 완료되었습니다.");
+                    document.getElementById('targetAmount').value = "";
+                });
+            }
+        }
+    });
+}
+
         const nick = localStorage.getItem("userNick");
         if(!nick) location.href='index.html';
         document.getElementById('myNick').innerText = nick;
