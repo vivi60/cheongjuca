@@ -32,10 +32,41 @@ function checkLogin() {
     }
 }
 
+// script.js 내의 logout 함수
 function logout() {
     if (confirm("정말로 로그아웃 하시겠습니까?")) {
-        localStorage.clear(); // 모든 정보(상태, 닉네임 등) 삭제
+        // 모든 로컬 저장소 정보를 삭제하여 로그인 세션을 완전히 종료합니다.
+        localStorage.clear(); 
         alert("로그아웃 되었습니다.");
         window.location.href = "index.html";
+    }
+}
+
+// script.js 수정 버전
+/* script.js 수정 버전 */
+async function postToMastodon(message) {
+    // 1. API 기본 경로 설정 (알려주신 대로 api/v1을 포함합니다)
+    const API_BASE = "https://planet.moe/api/v1"; 
+    const accessToken = "85ZTzpmUp0BRskvE9uOXZ_9NnjBOJSCbyGQ3pAXr0Ag"; // 기존 토큰 유지
+
+    try {
+        // 2. 최종 호출 주소는 API_BASE 뒤에 /statuses를 붙인 형태가 됩니다.
+        const response = await fetch(`${API_BASE}/statuses`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: message })
+        });
+
+        if (response.ok) {
+            console.log("✅ 마스토돈 시스템 툿 게시 성공!");
+        } else {
+            const errorData = await response.json();
+            console.error("❌ 마스토돈 에러:", errorData);
+        }
+    } catch (err) {
+        console.error("🌐 서버 연결 실패:", err);
     }
 }

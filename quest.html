@@ -55,6 +55,8 @@
             location.href = "index.html";
         }
     </script>
+
+   
 </head>
 <body class="quest-page">
     <nav class="navbar">
@@ -81,192 +83,229 @@
         <div class="quest-grid" id="questListArea">
             </div>
 
-        <div class="quest-form-box">
-            <h3 style="color: #ab0000; font-family: 'SchoolSafeBoardMarker'; text-align: center;">새 의뢰 등록</h3>
-            <div class="form-row">
-                <input type="text" id="qImg" placeholder="이미지 주소 (링크)">
-                <input type="text" id="qTitle" placeholder="의뢰 제목 (예: 식량 부족)">
-            </div>
-            <textarea id="qDesc" rows="2" placeholder="의뢰 내용 (상세히 적어주세요)"></textarea>
-            <div class="form-row">
-                <input type="text" id="qReward" placeholder="보상 (예: 통조림 1개)">
-                <button onclick="writeQuest()">의뢰 등록하기</button>
-            </div>
-        </div>
+       <div class="quest-form-box">
+    <h3 style="color: #ab0000; font-family: 'SchoolSafeBoardMarker'; text-align: center; font-size: 24px; margin-bottom: 20px;">
+        새 의뢰 등록
+    </h3>
+    
+    <div class="form-row-top">
+        <input type="text" id="qImg" placeholder="이미지 주소 (링크)">
+        <input type="text" id="qTitle" placeholder="의뢰 제목 (예: 식량 부족)">
     </div>
 
-<script>
-    const myNick = localStorage.getItem("userNick");
+    <textarea id="qDesc" placeholder="의뢰 내용 (상세히 적어주세요)"></textarea>
+
+    <div class="form-row-bottom">
+        <select id="qRewardSelect">
+            <option value="">보상으로 줄 아이템 선택 (내 가방)</option>
+        </select>
+        <input type="number" id="qRewardMoney" placeholder="금액 (100원 단위)" step="100" min="0">
+        <button class="btn-write" onclick="writeQuest()">의뢰 등록</button>
+    </div>
+</div>
+
+<script src="script.js"></script> <script>
+    // 1. 필요한 기본 변수 정의 (localStorage 기반)
+    const myID = localStorage.getItem("loginID"); 
+    const myNick = localStorage.getItem("userNick") || "생존자";
     const isAdmin = localStorage.getItem("loginStatus") === "admin";
 
-    // 1. [실시간] Firebase 감시 및 화면 그리기
+    // 2. 실시간 의뢰 목록 감시 및 카드 렌더링
     database.ref('requests').on('value', (snapshot) => {
         const questListArea = document.getElementById('questListArea');
         const data = snapshot.val();
-
-        questListArea.innerHTML = ""; // 화면 초기화
+        questListArea.innerHTML = ""; 
 
         if (!data) {
             questListArea.innerHTML = "<p style='color:white; width:100%; text-align:center;'>등록된 의뢰가 없습니다.</p>";
             return;
         }
 
-        // 최신순 정렬
-        const entries = Object.entries(data).reverse();
-
-        entries.forEach(([key, quest]) => {
+        Object.entries(data).reverse().forEach(([key, quest]) => {
             const card = document.createElement('div');
             card.className = 'quest-card';
-            card.id = key;
-
-            // --- [버튼 로직의 핵심] ---
+            
             let buttonsHtml = "";
             let statusBadge = ""; 
-
-            const isAuthor = (quest.author === myNick);
+            const isAuthor = (quest.authorID === myID);
             const isRunner = (quest.takenBy === myNick);
 
+            // 상태별 버튼 로직
             if (quest.status === 'open') {
-                // [상태: 의뢰 중] 
-                if (isAuthor) {
-                    // ★ 수정된 부분: 내 의뢰면 수락 버튼 대신 '대기중' 표시
-                    buttonsHtml = `<button class="btn-accept" disabled style="background:#333; color:#777; cursor:default; border:1px solid #555;">내 의뢰 (생존자 기다리는 중)</button>`;
-                } else {
-                    // 남의 의뢰면 수락 가능
-                    buttonsHtml = `<button class="btn-accept" onclick="acceptQuest('${key}')">수락하기</button>`;
-                }
-            
+                buttonsHtml = isAuthor ? 
+                    `<button onclick="cancelQuest('${key}')" style="background:#ab0000; color:white;">의뢰 취소 (물자회수)</button>` : 
+                    `<button class="btn-accept" onclick="acceptQuest('${key}')">수락하기</button>`;
             } else if (quest.status === 'accepted') {
-                // [상태: 진행 중]
-                if (isRunner) {
-                    buttonsHtml = `
-                        <button class="btn-accept" onclick="requestApproval('${key}')" 
-                                style="background:#222; border:2px solid #ab0000; color:#ab0000; font-weight:bold;">
-                            임무 완료 보고 (V)
-                        </button>
-                        <button class="btn-decline" onclick="giveUpQuest('${key}')" 
-                                style="background:#555; color:white; margin-left:5px;">포기</button>
-                    `;
-                } else {
-                    buttonsHtml = `<button class="btn-accept" disabled style="background:#222; color:#ff4444; cursor:not-allowed;">[${quest.takenBy}] 수행중...</button>`;
-                }
-
+                buttonsHtml = isRunner ? 
+                    `<button class="btn-accept" onclick="requestApproval('${key}')" style="background:#222; border:2px solid #ab0000; color:#ab0000;">임무 완료 보고</button>` : 
+                    `<button class="btn-accept" disabled style="background:#222; color:#ff4444;">[${quest.takenBy}] 수행중...</button>`;
             } else if (quest.status === 'pending') {
-                // [상태: 검토 대기]
                 if (isAuthor) {
                     statusBadge = "<div style='color:#00ff00; font-size:14px; margin-bottom:5px;'>★ 상대방이 완료했습니다!</div>";
-                    buttonsHtml = `
-                        <button class="btn-accept" onclick="approveQuest('${key}')" 
-                                style="background:#006400; color:white; font-weight:bold; border:2px solid #00ff00;">
-                            완료 확인 (보상 지급)
-                        </button>
-                    `;
-                } else if (isRunner) {
-                    buttonsHtml = `<button class="btn-accept" disabled style="background:#444; color:white;">의뢰자 확인 대기중...</button>`;
+                    buttonsHtml = `<button class="btn-accept" onclick="approveQuest('${key}')" style="background:#006400; border:2px solid #00ff00;">완료 확인 (보상 지급)</button>`;
                 } else {
-                    buttonsHtml = `<button class="btn-accept" disabled style="background:#222; color:#888;">검토 진행 중</button>`;
+                    buttonsHtml = `<button class="btn-accept" disabled style="background:#444;">의뢰자 확인 대기중...</button>`;
                 }
-
             } else if (quest.status === 'completed') {
-                // [상태: 최종 완료]
                 if (isRunner) {
                     statusBadge = "<div style='color:gold; font-size:14px; margin-bottom:5px;'>★ 의뢰자가 확인했습니다!</div>";
-                    buttonsHtml = `
-                        <button class="btn-accept" onclick="finishAndGetReward('${key}')" 
-                                style="background:gold; color:black; font-weight:bold; border:2px solid orange;">
-                            보상 수령 (목록에서 삭제)
-                        </button>
-                    `;
-                } else {
-                    card.style.display = 'none'; 
-                    return; 
-                }
-            }
-
-            // 삭제 버튼 (작성자 또는 관리자)
-            let deleteBtnHtml = "";
-            if (isAuthor || isAdmin || myNick === "관리자") {
-                deleteBtnHtml = `<button class="btn-delete-quest" onclick="deleteQuest('${key}')">X</button>`;
+                    buttonsHtml = `<button class="btn-accept" onclick="finishAndGetReward('${key}')" style="background:gold; color:black; font-weight:bold; border:2px solid orange;">보상 수령 (목록에서 삭제)</button>`;
+                } else { card.style.display = 'none'; return; }
             }
 
             card.innerHTML = `
-                ${deleteBtnHtml}
-                <div class="quest-profile">
-                    <img src="${quest.image || 'https://i.imgur.com/3SPL075.png'}" alt="이미지" onerror="this.src='https://i.imgur.com/3SPL075.png'">
-                </div>
+                <div class="quest-profile"><img src="${quest.image || 'https://i.imgur.com/3SPL075.png'}" onerror="this.src='https://i.imgur.com/3SPL075.png'"></div>
                 <h3 class="quest-title">[${quest.title}]</h3>
                 <p class="quest-desc">${quest.desc}</p>
-                <div class="quest-reward">
-                    <span>보상</span>
-                    <strong>${quest.reward}</strong>
-                </div>
+                <div class="quest-reward"><span>보상</span><strong>${quest.reward}</strong></div>
                 <div style="font-size:12px; color:#666; margin-bottom:5px;">의뢰자: ${quest.author}</div>
                 ${statusBadge}
-                <div class="quest-buttons">
-                    ${buttonsHtml}
-                </div>
+                <div class="quest-buttons">${buttonsHtml}</div>
             `;
             questListArea.appendChild(card);
         });
     });
 
-    // --- [기능 함수들 (기존과 동일)] ---
-    function writeQuest() {
-        const img = document.getElementById('qImg').value;
-        const title = document.getElementById('qTitle').value;
-        const desc = document.getElementById('qDesc').value;
-        const reward = document.getElementById('qReward').value;
+    // 3. 내 인벤토리 불러오기 (보상 선택창)
+    function loadMyInventoryForQuest() {
+        const rewardSelect = document.getElementById('qRewardSelect');
+        if (!myID) return;
 
-        if (!title || !desc || !reward) return alert("내용을 모두 입력해주세요.");
+        // 경로는 반드시 users/ID/inventory 여야 합니다.
+        database.ref(`users/${myID}/inventory`).on('value', (snapshot) => {
+            const inv = snapshot.val();
+            rewardSelect.innerHTML = '<option value="">보상으로 줄 아이템 선택 (내 가방)</option>';
+            if (inv) {
+                Object.entries(inv).forEach(([key, item]) => {
+                    const opt = document.createElement('option');
+                    opt.value = JSON.stringify({ key: key, name: item.name, icon: item.icon, price: item.price || 0 });
+                    opt.innerText = `${item.icon} ${item.name}`;
+                    rewardSelect.appendChild(opt);
+                });
+            }
+        });
+    }
+
+    /* quest.html - 돈과 아이템 통합 보상 로직 */
+
+/* quest.html 내 writeQuest 함수 수정 */
+async function writeQuest() {
+    const myID = localStorage.getItem("loginID");
+    const rewardMoneyInput = document.getElementById('qRewardMoney').value;
+    const rewardMoney = parseInt(rewardMoneyInput) || 0;
+    const rewardRaw = document.getElementById('qRewardSelect').value;
+    const title = document.getElementById('qTitle').value;
+    const desc = document.getElementById('qDesc').value;
+
+    if (!title || !desc) return alert("의뢰 제목과 내용을 입력해주세요.");
+    
+    // [추가] 100원 단위 검사 로직
+    if (rewardMoney > 0 && rewardMoney % 100 !== 0) {
+        return alert("돈 보상은 100원 단위로만 설정 가능합니다. (예: 100, 200, 1000...)");
+    }
+
+    if (rewardMoney <= 0 && !rewardRaw) return alert("보상(돈 또는 아이템)을 설정해주세요.");
+
+    // 파이어베이스에서 내 잔액 확인
+    const userSnapshot = await database.ref(`users/${myID}`).once('value');
+    const userData = userSnapshot.val();
+    const currentMoney = userData.money || 0;
+
+    if (rewardMoney > currentMoney) return alert("보유한 돈이 부족합니다.");
+
+    const rewardObj = rewardRaw ? JSON.parse(rewardRaw) : null;
+    let rewardText = "";
+    if (rewardMoney > 0) rewardText += `${rewardMoney}원`;
+    if (rewardObj) rewardText += ` ${rewardObj.icon}${rewardObj.name}`;
+
+    if (confirm(`보상으로 [${rewardText.trim()}]을(를) 걸겠습니까?`)) {
+        // 돈 차감
+        await database.ref(`users/${myID}`).update({ money: currentMoney - rewardMoney });
+
+        // 아이템 차감 (있는 경우만)
+        if (rewardObj) {
+            await database.ref(`users/${myID}/inventory/${rewardObj.key}`).remove();
+        }
 
         const newQuest = {
-            image: img, title: title, desc: desc, reward: reward,
-            author: myNick,
-            status: 'open', 
-            timestamp: new Date().toLocaleString()
+            image: document.getElementById('qImg').value,
+            title: title, desc: desc,
+            reward: rewardText.trim(),
+            rewardMoney: rewardMoney,
+            rewardData: rewardObj,
+            author: myNick, authorID: myID,
+            status: 'open', timestamp: new Date().toLocaleString()
         };
-        database.ref('requests').push(newQuest);
+
+        await database.ref('requests').push(newQuest);
         
-        document.getElementById('qImg').value = '';
-        document.getElementById('qTitle').value = '';
-        document.getElementById('qDesc').value = '';
-        document.getElementById('qReward').value = '';
-    }
-
-    function acceptQuest(key) {
-        if (confirm("의뢰를 수락하시겠습니까?")) {
-            database.ref('requests/' + key).update({ status: 'accepted', takenBy: myNick });
+        // 마스토돈 알림 (줄바꿈 포함)
+        if (typeof postToMastodon === "function") {
+            await postToMastodon(`📜 [새 의뢰] ${myNick}님이 '${title}' 게시!\n보상: ${newQuest.reward} `);
         }
+        
+        alert("의뢰가 등록되었습니다.");
+        location.reload();
     }
+}
 
-    function requestApproval(key) {
-        if (confirm("임무를 완수했습니까? 의뢰자에게 확인을 요청합니다.")) {
-            database.ref('requests/' + key).update({ status: 'pending' });
+// 2. 의뢰 취소 (돈/아이템 회수)
+function cancelQuest(key) {
+    if (!confirm("취소 시 보상으로 걸었던 돈과 아이템을 모두 돌려받습니다.")) return;
+
+    database.ref('requests/' + key).once('value', async (snapshot) => {
+        const quest = snapshot.val();
+        const userSnap = await database.ref(`users/${myID}`).once('value');
+        const currentMoney = userSnap.val().money || 0;
+
+        // 돈 복구
+        await database.ref(`users/${myID}`).update({ money: currentMoney + (quest.rewardMoney || 0) });
+
+        // 아이템 복구
+        if (quest.rewardData) {
+            await database.ref(`users/${myID}/inventory`).push(quest.rewardData);
         }
-    }
 
-    function approveQuest(key) {
-        if (confirm("수행 내용을 확인하셨습니까? 승인하면 상대방에게 보상 알림이 뜹니다.")) {
-            database.ref('requests/' + key).update({ status: 'completed' });
+        await database.ref('requests/' + key).remove();
+        alert("의뢰가 취소되어 자산이 회수되었습니다.");
+    });
+}
+
+// 3. 보상 수령 (수행자에게 돈/아이템 지급)
+/* finishAndGetReward 함수 수정 */
+async function finishAndGetReward(key) {
+    database.ref('requests/' + key).once('value', async (snapshot) => {
+        const quest = snapshot.val();
+        if (!quest) return; // 데이터가 없으면 종료
+
+        const userSnap = await database.ref(`users/${myID}`).once('value');
+        const currentMoney = userSnap.val().money || 0;
+
+        // 돈 지급
+        if (quest.rewardMoney > 0) {
+            await database.ref(`users/${myID}`).update({ money: currentMoney + quest.rewardMoney });
         }
-    }
 
-    function finishAndGetReward(key) {
-        alert("보상을 획득했습니다! 수고하셨습니다.");
-        database.ref('requests/' + key).remove(); 
-    }
-
-    function giveUpQuest(key) {
-        if (confirm("정말 포기하시겠습니까?")) {
-            database.ref('requests/' + key).update({ status: 'open', takenBy: null });
+        // 아이템 지급
+        if (quest.rewardData) {
+            await database.ref(`users/${myID}/inventory`).push(quest.rewardData);
         }
-    }
 
-    function deleteQuest(key) {
-        if (confirm("정말 삭제하시겠습니까?")) {
-            database.ref('requests/' + key).remove();
+        // [수정] quest.title로 데이터 참조
+        if (typeof postToMastodon === "function") {
+            await postToMastodon(`🎊 [의뢰 완료] ${myNick}님이 '${quest.title}' 의뢰를 완료했습니다!`);
         }
-    }
+        
+        alert(`${quest.reward} 보상을 획득했습니다!`);
+        database.ref('requests/' + key).remove();
+    });
+}
+
+    function acceptQuest(key) { database.ref('requests/'+key).update({status:'accepted', takenBy:myNick}); }
+    function requestApproval(key) { database.ref('requests/'+key).update({status:'pending'}); }
+    function approveQuest(key) { database.ref('requests/'+key).update({status:'completed'}); }
+
+    window.onload = loadMyInventoryForQuest;
 </script>
 </body>
 </html>

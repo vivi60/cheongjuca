@@ -81,17 +81,21 @@
 <body>
 
 <nav class="navbar">
-        <div class="logo">OUT BREAK</div>
-        <ul class="nav-links">
-            <li><a href="main.html">홈</a></li>
-            <li><a href="sub.html">생존자목록</a></li>
-            <li><a href="board.html">자유게시판</a></li>
-            <li><a href="quest.html">의뢰게시판</a></li>
-            <li><a href="game.html">낚시터</a></li>
-            <li><a href="vending.html">자판기</a></li>
-            <li><a href="#" onclick="logout()">로그아웃</a></li>
-        </ul>
-    </nav>
+    <div class="logo">
+        OUT BREAK 
+        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;">
+        </span>
+    </div>
+    <ul class="nav-links">
+        <li><a href="main.html">홈</a></li>
+        <li><a href="sub.html">생존자목록</a></li>
+        <li><a href="board.html">자유게시판</a></li>
+        <li><a href="quest.html">의뢰게시판</a></li>
+        <li><a href="game.html">낚시터</a></li>
+        <li><a href="vending.html">자판기</a></li>
+        <li><a href="#" onclick="logout()">로그아웃</a></li>
+    </ul>
+</nav>
 
 <div class="profile-wrapper">
     <div class="portrait-section">
@@ -130,16 +134,16 @@
         <div class="section-title">STATISTICS</div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px;">
             <div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 15px;">
-                <span>근력 (STR)</span> <div class="stat-bars" id="stat-str"></div>
+                <span>근력</span> <div class="stat-bars" id="stat-str"></div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 15px;">
-                <span>민첩 (AGI)</span> <div class="stat-bars" id="stat-agi"></div>
+                <span>민첩</span> <div class="stat-bars" id="stat-agi"></div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 15px;">
-                <span>대인 (SOC)</span> <div class="stat-bars" id="stat-soc"></div>
+                <span>대인관계</span> <div class="stat-bars" id="stat-soc"></div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 15px;">
-                <span>행운 (LUK)</span> <div class="stat-bars" id="stat-luk"></div>
+                <span>행운</span> <div class="stat-bars" id="stat-luk"></div>
             </div>
         </div>
         
@@ -179,6 +183,12 @@
             <div class="form-group"><label>두상 이미지 (URL)</label><input type="text" id="editHead"></div>
         </div>
         <div class="form-row">
+    <div class="form-group">
+        <label>이름</label>
+        <input type="text" id="editNickname" placeholder="예: 강나리">
+    </div>
+</div>  
+        <div class="form-row">
             <div class="form-group"><label>캐치프레이즈</label><input type="text" id="editCatch"></div>
             <div class="form-group"><label>한마디</label><input type="text" id="editOne"></div>
         </div>
@@ -194,7 +204,7 @@
         <div class="form-row">
             <div class="form-group"><label>근력</label><input type="number" id="editStr" min="0" max="10"></div>
             <div class="form-group"><label>민첩</label><input type="number" id="editAgi" min="0" max="10"></div>
-            <div class="form-group"><label>대인</label><input type="number" id="editSoc" min="0" max="10"></div>
+            <div class="form-group"><label>대인관계</label><input type="number" id="editSoc" min="0" max="10"></div>
             <div class="form-group"><label>행운</label><input type="number" id="editLuk" min="0" max="10"></div>
         </div>
         <div class="form-group"><label>성격</label><textarea id="editPersonality"></textarea></div>
@@ -293,6 +303,7 @@ if (myID === targetID) {
     function openEditModal() {
         database.ref('users/' + targetID).once('value', (snapshot) => {
             const d = snapshot.val() || {};
+            document.getElementById('editNickname').value = d.nickname || "";
             document.getElementById('editFullBody').value = d.fullBodyImg || "";
             document.getElementById('editHead').value = d.img || "";
             document.getElementById('editCatch').value = d.catchphrase || "";
@@ -317,6 +328,7 @@ if (myID === targetID) {
 
     function saveProfile() {
         const updates = {
+            nickname: document.getElementById('editNickname').value,
             fullBodyImg: document.getElementById('editFullBody').value,
             img: document.getElementById('editHead').value,
             catchphrase: document.getElementById('editCatch').value,
@@ -434,6 +446,12 @@ async function processTransfer(targetId, targetName) {
             alert(`🎁 [${itemData.name}] 선물을 전달했습니다!`);
         }
     }
+}
+
+// 각 파일의 script 태그 안에 있는 logout 함수를 이 코드로 교체하세요.
+function logout() { 
+    localStorage.clear(); 
+    location.href = "index.html"; 
 }
 </script>
 </body>

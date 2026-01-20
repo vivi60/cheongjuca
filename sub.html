@@ -4,106 +4,160 @@
     <meta charset="UTF-8">
     <title>생존자 목록</title>
     <link rel="stylesheet" href="style.css">
-    <script>
-        // 로그인 체크
-        (function() {
-            const status = localStorage.getItem("loginStatus");
-            const nick = localStorage.getItem("userNick");
-
-            if (!status || (status !== "success" && status !== "admin")) {
-                if (!window.location.href.includes("index.html")) {
-                    alert("생존자만 접근할 수 있습니다.");
-                    window.location.href = "index.html";
-                }
-            }
-
-            window.addEventListener('load', function() {
-                const badge = document.getElementById("userBadge");
-                if (badge && nick) {
-                    if (status === "admin") {
-                        badge.innerText = `[관리자 모드]`;
-                        badge.style.color = "#ff0000";
-                    } else {
-                        badge.innerText = `[${nick}]`;
-                        badge.style.color = "#cccccc";
-                    }
-                    badge.style.display = "inline";
-                }
-                
-                // 생존자 목록 생성 실행
-                renderSurvivorList();
-            });
-        })();
-
-        function logout() {
-            localStorage.removeItem("loginStatus");
-            location.href = "index.html";
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    
+    <style>
+        /* 1. 전체 컨테이너 너비 확장 */
+        .survivor-container {
+            max-width: 1200px; /* 전체 너비를 충분히 확보 */
+            margin: 40px auto;
+            padding: 0 20px;
         }
+
+        /* 2. 그리드 설정 수정 (가로 배치 핵심) */
+        .survivor-grid {
+            display: grid;
+            /* 한 줄에 들어갈 카드의 너비를 200px 정도로 줄여 가로 배치를 유도합니다 */
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+            gap: 25px; /* 카드 사이 간격 */
+            justify-content: center; /* 내용물을 중앙 정렬 */
+        }
+
+        /* 3. 카드 디자인 (정사각형 두상 + 이름 오버레이) */
+        .survivor-card {
+            position: relative;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s, border-color 0.3s;
+            aspect-ratio: 1 / 1; /* 정사각형 비율 고정 */
+        }
+
+        .survivor-card:hover {
+            transform: translateY(-8px);
+            border-color: #ab0000;
+            box-shadow: 0 10px 20px rgba(171, 0, 0, 0.4);
+        }
+
+        /* 이미지 설정 */
+        .card-photo {
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 이미지가 찌그러지지 않게 채움 */
+        }
+
+        /* 닉네임 오버레이 (하단 겹침) */
+        .card-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(transparent, rgba(0,0,0,0.85) 70%); /* 아래쪽 어둡게 처리 */
+            padding: 20px 10px 10px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .card-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+        }
+    </style>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
+            authDomain: "cheongjuca.firebaseapp.com",
+            databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
+            projectId: "cheongjuca",
+            storageBucket: "cheongjuca.firebasestorage.app",
+            messagingSenderId: "455437421321",
+            appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        window.onload = function() {
+            const nick = localStorage.getItem("userNick");
+            const badge = document.getElementById("userBadge");
+            if (badge && nick) {
+                badge.innerText = `[${nick}]`;
+                badge.style.display = "inline";
+            }
+            renderSurvivorList();
+        };
+
+        function renderSurvivorList() {
+            const container = document.getElementById('survivorList');
+            database.ref('users').on('value', (snapshot) => {
+                container.innerHTML = "";
+                const users = snapshot.val();
+                if (!users) return;
+
+                /* sub.html - renderSurvivorList 함수 내부 */
+Object.keys(users).forEach(id => {
+    const d = users[id];
+    const div = document.createElement('div');
+    div.className = 'survivor-card';
+    div.onclick = () => { location.href = `profile.html?name=${id}`; };
+
+    const userImg = d.img || 'https://i.imgur.com/3SPL075.png';
+    // 13reaking_news(ID) 대신 데이터베이스의 nickname(강나리)을 우선 표시
+    const userNick = d.nickname || id; 
+
+    div.innerHTML = `
+        <div class="card-photo">
+            <img src="${userImg}" alt="${userNick}">
+        </div>
+        <div class="card-info">
+            <div class="card-name">${userNick}</div>
+        </div>
+    `;
+    container.appendChild(div);
+});
+            });
+        }
+        // 각 파일의 script 태그 안에 있는 logout 함수를 이 코드로 교체하세요.
+function logout() { 
+    localStorage.clear(); 
+    location.href = "index.html"; 
+}
     </script>
 </head>
-<body class="sub-page"> 
-    <nav class="navbar">
-        <div class="logo">
-            OUT BREAK 
-            <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
-        </div>
-        <ul class="nav-links">
-            <li><a href="main.html">홈</a></li>
-            <li><a href="sub.html">생존자목록</a></li>
-            <li><a href="board.html">자유게시판</a></li>
-            <li><a href="quest.html">의뢰게시판</a></li>
-            <li><a href="game.html">낚시터</a></li>
-            <li><a href="vending.html">자판기</a></li>
-            <li><a href="#" onclick="logout()">로그아웃</a></li>
-        </ul>
-    </nav>
+<body style="background-color: #111; color: #eee; margin: 0; padding: 0;">
+
+     <nav class="navbar">
+    <div class="logo">
+        OUT BREAK 
+        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;">
+        </span>
+    </div>
+    <ul class="nav-links">
+        <li><a href="main.html">홈</a></li>
+        <li><a href="sub.html">생존자목록</a></li>
+        <li><a href="board.html">자유게시판</a></li>
+        <li><a href="quest.html">의뢰게시판</a></li>
+        <li><a href="game.html">낚시터</a></li>
+        <li><a href="vending.html">자판기</a></li>
+        <li><a href="#" onclick="logout()">로그아웃</a></li>
+    </ul>
+</nav>
 
     <div class="survivor-container">
-        <h2 style="font-family: 'SchoolSafeBoardMarker'; color: #ab0000; text-align: center; font-size: 40px; margin-bottom: 30px; text-shadow: 2px 2px 0 #000;">
-            등록된 생존자 명단
-        </h2>
-
+        <h2 style="color: #ab0000; text-align: center; font-size: 2.5rem; margin-bottom: 40px; font-family: 'Black Han Sans', sans-serif;">등록된 생존자 명단</h2>
         <div class="survivor-grid" id="survivorList">
             </div>
     </div>
 
-    <script>
-    // sub.html 내부 스크립트
-const userDB = {
-    "13reaking_news":    { nick: "관리자" },
-    "runner1":  { nick: "러너1" },
-    "13reaking_system":  { nick: "시스템" }
-};
-
-// sub.html 내부의 renderSurvivorList 함수 수정
-/* sub.html 내 renderSurvivorList 함수 수정 */
-
-function renderSurvivorList() {
-    const container = document.getElementById('survivorList'); 
-    container.innerHTML = "";
-
-    Object.keys(userDB).forEach(id => {
-        const user = userDB[id];
-        const div = document.createElement('div');
-        // survivor-item을 survivor-card로 변경 (기존 style.css와 맞춤)
-        div.className = 'survivor-card'; 
-        
-        div.onclick = () => { location.href = `profile.html?name=${id}`; };
-        
-        // 기존 스타일을 유지하기 위해 내부 HTML 구조 복구
-        div.innerHTML = `
-            <div class="survivor-img-box">
-                <img src="https://i.imgur.com/3SPL075.png" alt="프로필">
-            </div>
-            <div class="survivor-info">
-                <h3>${user.nick}</h3>
-                <p class="role">생존자</p>
-                <p class="desc">생존자 목록에서 상세 정보를 확인하세요.</p>
-            </div>
-        `;
-        container.appendChild(div);
-    });
-}
-    </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>익명 게시판</title>
+    <title>자유 게시판</title>
     <link rel="stylesheet" href="style.css">
 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
@@ -151,7 +151,7 @@ const firebaseConfig = {
 </nav>
 
     <div class="board-container">
-        <h2 style="font-family: 'SchoolSafeBoardMarker'; color: #ab0000;">익명 게시판</h2>
+        <h2 style="font-family: 'SchoolSafeBoardMarker'; color: #ab0000;">자유 게시판</h2>
         
         <div class="post-form">
             <input type="text" id="postTitle" placeholder="제목">
@@ -168,10 +168,11 @@ const firebaseConfig = {
 
     <script src="board.js"></script>
     <script>
-        function logout() {
-            localStorage.removeItem("loginStatus");
-            location.href = "index.html";
-        }
+        // 각 파일의 script 태그 안에 있는 logout 함수를 이 코드로 교체하세요.
+function logout() { 
+    localStorage.clear(); 
+    location.href = "index.html"; 
+}
     </script>
 </body>
 </html>
