@@ -7,7 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <script>
-      // 기존 Firebase 설정
+      // 1. Firebase 설정 (기존 설정 유지)
       const firebaseConfig = {
         apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
         authDomain: "cheongjuca.firebaseapp.com",
@@ -26,15 +26,12 @@
         .vending-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .vending-item { background: #333; border: 2px solid #555; border-radius: 10px; padding: 15px; cursor: pointer; transition: 0.2s; }
         .vending-item:hover { border-color: #00ff00; transform: scale(1.02); }
-        .vending-item.disabled { opacity: 0.5; cursor: not-allowed; }
         .price-tag { color: gold; font-size: 14px; margin-top: 5px; }
     </style>
 </head>
+<body style="background-color: #111;">
     <nav class="navbar">
-        <div class="logo">
-            OUT BREAK 
-            <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
-        </div>
+        <div class="logo">OUT BREAK</div>
         <ul class="nav-links">
             <li><a href="main.html">홈</a></li>
             <li><a href="sub.html">생존자목록</a></li>
@@ -45,49 +42,78 @@
             <li><a href="#" onclick="logout()">로그아웃</a></li>
         </ul>
     </nav>
-<body style="background-color: #111;">
+
     <div class="vending-container">
         <h1 style="color: #888; margin-top: 0;">🥫 노후된 자동판매기</h1>
         <div class="machine-screen">
             소지 금액: <span id="displayMoney">0</span> G<br>
             <span style="font-size: 14px;">[ 잔액 확인 완료... 선택 대기 중 ]</span>
         </div>
+        
         <div class="vending-grid">
-            <div class="vending-item" onclick="buyVending('에너지 드링크', '🥤', 50, 20)">
+            <div class="vending-item" onclick="buyVending('에너지드링크', '🥤', 5)">
                 <div style="font-size: 30px;">🥤</div>
-                <div>에너지 드링크</div>
-                <div class="price-tag">50 G</div>
+                <div>에너지드링크</div>
+                <div class="price-tag">5 G</div>
             </div>
-            <div class="vending-item" onclick="buyVending('방사능 정화제', '💊', 120, 50)">
-                <div style="font-size: 30px;">💊</div>
-                <div>방사능 정화제</div>
-                <div class="price-tag">120 G</div>
+            <div class="vending-item" onclick="buyVending('초코우유', '🍫', 15)">
+                <div style="font-size: 30px;">🍫</div>
+                <div>초코우유</div>
+                <div class="price-tag">15 G</div>
+            </div>
+            <div class="vending-item" onclick="buyVending('구급상자', '📦', 50)">
+                <div style="font-size: 30px;">📦</div>
+                <div>구급상자</div>
+                <div class="price-tag">50 G</div>
             </div>
         </div>
         <button onclick="location.href='main.html'" style="margin-top: 30px; background: none; border: 1px solid #555; color: #888; cursor: pointer;">[ 돌아가기 ]</button>
     </div>
 
     <script>
-        const myNick = localStorage.getItem("userNick");
+        // 닉네임 대신 로그인 시 저장된 ID를 사용합니다
+        const myID = localStorage.getItem("loginID") || localStorage.getItem("userNick");
         let money = 0;
 
         // 실시간 돈 정보 로드
-        database.ref('users/' + myNick).on('value', (snapshot) => {
-            money = snapshot.val()?.money || 0;
-            document.getElementById('displayMoney').innerText = money;
-        });
+        if (myID) {
+            database.ref('users/' + myID).on('value', (snapshot) => {
+                money = snapshot.val()?.money || 0;
+                document.getElementById('displayMoney').innerText = money;
+            });
+        }
 
-        function buyVending(name, icon, price, sellPrice) {
+        function buyVending(name, icon, price) {
+            if (!myID) return alert("로그인이 필요합니다.");
             if (money < price) return alert("잔액이 부족합니다.");
+            
             if (confirm(`[${name}]을(를) 구매하시겠습니까?`)) {
-                // 돈 차감
-                database.ref('users/' + myNick).update({ money: money - price });
-                // 인벤토리에 추가 (마스토돈 봇과 호환되는 규격)
-                database.ref('users/' + myNick + '/inventory').push({
-                    name: name, icon: icon, price: sellPrice, source: "자판기"
+                // 1. 인벤토리에 추가할 아이템 객체 (봇 연동 규격)
+                const newItem = {
+                    name: name,
+                    icon: icon,
+                    type: "소비",
+                    source: "웹자판기"
+                };
+
+                // 2. 돈 차감 및 인벤토리 추가를 동시에 처리
+                const updates = {};
+                updates[`users/${myID}/money`] = money - price;
+
+                // Firebase의 push를 사용하여 인벤토리에 새 아이템을 추가합니다
+                database.ref(`users/${myID}/inventory`).push(newItem).then(() => {
+                    database.ref().update(updates);
+                    alert(`${name} 구매 완료!`);
+                }).catch(err => {
+                    alert("구매 중 오류가 발생했습니다.");
+                    console.error(err);
                 });
-                alert(`${name} 구매 완료!`);
             }
+        }
+
+        function logout() {
+            localStorage.clear();
+            location.href = "index.html";
         }
     </script>
 </body>
