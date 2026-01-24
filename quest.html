@@ -104,13 +104,15 @@
     </div>
 </div>
 
-<script src="script.js"></script> <script>
-    // 1. 필요한 기본 변수 정의 (localStorage 기반)
+<script src="script.js"></script> 
+<script>
+    // 1. 기본 변수 정의
     const myID = localStorage.getItem("loginID"); 
     const myNick = localStorage.getItem("userNick") || "생존자";
+    // [복구됨] 관리자 여부 확인
     const isAdmin = localStorage.getItem("loginStatus") === "admin";
 
-    // 2. 실시간 의뢰 목록 감시 및 카드 렌더링
+    // 2. 실시간 의뢰 목록 감시 및 렌더링
     database.ref('requests').on('value', (snapshot) => {
         const questListArea = document.getElementById('questListArea');
         const data = snapshot.val();
@@ -150,9 +152,18 @@
                 if (isRunner) {
                     statusBadge = "<div style='color:gold; font-size:14px; margin-bottom:5px;'>★ 의뢰자가 확인했습니다!</div>";
                     buttonsHtml = `<button class="btn-accept" onclick="finishAndGetReward('${key}')" style="background:gold; color:black; font-weight:bold; border:2px solid orange;">보상 수령 (목록에서 삭제)</button>`;
-                } else { card.style.display = 'none'; return; }
+                } else { 
+                    card.style.display = 'none'; return; 
+                }
             }
 
+            // [복구됨] 관리자용 강제 삭제 버튼 생성
+            let adminBtnHtml = "";
+            if (isAdmin) {
+                adminBtnHtml = `<button onclick="forceDeleteQuest('${key}')" style="background:black; color:red; border:1px solid red; margin-top:5px; width:100%; font-size:12px;">[관리자] 강제 삭제</button>`;
+            }
+
+            // 카드 HTML 조립
             card.innerHTML = `
                 <div class="quest-profile"><img src="${quest.image || 'https://i.imgur.com/3SPL075.png'}" onerror="this.src='https://i.imgur.com/3SPL075.png'"></div>
                 <h3 class="quest-title">[${quest.title}]</h3>
@@ -161,17 +172,24 @@
                 <div style="font-size:12px; color:#666; margin-bottom:5px;">의뢰자: ${quest.author}</div>
                 ${statusBadge}
                 <div class="quest-buttons">${buttonsHtml}</div>
+                ${adminBtnHtml}
             `;
             questListArea.appendChild(card);
         });
     });
 
-    // 3. 내 인벤토리 불러오기 (보상 선택창)
+    // --- 관리자 기능: 강제 삭제 ---
+    window.forceDeleteQuest = function(key) {
+        if(confirm("관리자 권한으로 이 의뢰를 영구 삭제하시겠습니까?\n(경고: 보상은 누구에게도 돌아가지 않습니다.)")) {
+            database.ref('requests/' + key).remove();
+            alert("삭제되었습니다.");
+        }
+    }
+
+    // --- 나머지 기능들 (기존과 동일) ---
     function loadMyInventoryForQuest() {
         const rewardSelect = document.getElementById('qRewardSelect');
         if (!myID) return;
-
-        // 경로는 반드시 users/ID/inventory 여야 합니다.
         database.ref(`users/${myID}/inventory`).on('value', (snapshot) => {
             const inv = snapshot.val();
             rewardSelect.innerHTML = '<option value="">보상으로 줄 아이템 선택 (내 가방)</option>';
@@ -186,120 +204,79 @@
         });
     }
 
-    /* quest.html - 돈과 아이템 통합 보상 로직 */
+    async function writeQuest() {
+        const rewardMoneyInput = document.getElementById('qRewardMoney').value;
+        const rewardMoney = parseInt(rewardMoneyInput) || 0;
+        const rewardRaw = document.getElementById('qRewardSelect').value;
+        const title = document.getElementById('qTitle').value;
+        const desc = document.getElementById('qDesc').value;
 
-/* quest.html 내 writeQuest 함수 수정 */
-async function writeQuest() {
-    const myID = localStorage.getItem("loginID");
-    const rewardMoneyInput = document.getElementById('qRewardMoney').value;
-    const rewardMoney = parseInt(rewardMoneyInput) || 0;
-    const rewardRaw = document.getElementById('qRewardSelect').value;
-    const title = document.getElementById('qTitle').value;
-    const desc = document.getElementById('qDesc').value;
+        if (!title || !desc) return alert("의뢰 제목과 내용을 입력해주세요.");
+        if (rewardMoney > 0 && rewardMoney % 100 !== 0) return alert("돈 보상은 100원 단위로만 가능합니다.");
+        if (rewardMoney <= 0 && !rewardRaw) return alert("보상을 설정해주세요.");
 
-    if (!title || !desc) return alert("의뢰 제목과 내용을 입력해주세요.");
-    
-    // [추가] 100원 단위 검사 로직
-    if (rewardMoney > 0 && rewardMoney % 100 !== 0) {
-        return alert("돈 보상은 100원 단위로만 설정 가능합니다. (예: 100, 200, 1000...)");
+        const userSnapshot = await database.ref(`users/${myID}`).once('value');
+        const userData = userSnapshot.val();
+        const currentMoney = userData.money || 0;
+
+        if (rewardMoney > currentMoney) return alert("보유한 돈이 부족합니다.");
+
+        const rewardObj = rewardRaw ? JSON.parse(rewardRaw) : null;
+        let rewardText = "";
+        if (rewardMoney > 0) rewardText += `${rewardMoney}원`;
+        if (rewardObj) rewardText += ` ${rewardObj.icon}${rewardObj.name}`;
+
+        if (confirm(`보상으로 [${rewardText.trim()}]을(를) 걸겠습니까?`)) {
+            await database.ref(`users/${myID}`).update({ money: currentMoney - rewardMoney });
+            if (rewardObj) {
+                await database.ref(`users/${myID}/inventory/${rewardObj.key}`).remove();
+            }
+
+            const newQuest = {
+                image: document.getElementById('qImg').value,
+                title: title, desc: desc,
+                reward: rewardText.trim(),
+                rewardMoney: rewardMoney,
+                rewardData: rewardObj,
+                author: myNick, authorID: myID,
+                status: 'open', timestamp: new Date().toLocaleString()
+            };
+
+            await database.ref('requests').push(newQuest);
+            if (typeof postToMastodon === "function") {
+                await postToMastodon(`📜 [새 의뢰] ${myNick}님이 '${title}' 게시!\n보상: ${newQuest.reward} `);
+            }
+            alert("의뢰가 등록되었습니다.");
+            location.reload();
+        }
     }
 
-    if (rewardMoney <= 0 && !rewardRaw) return alert("보상(돈 또는 아이템)을 설정해주세요.");
-
-    // 파이어베이스에서 내 잔액 확인
-    const userSnapshot = await database.ref(`users/${myID}`).once('value');
-    const userData = userSnapshot.val();
-    const currentMoney = userData.money || 0;
-
-    if (rewardMoney > currentMoney) return alert("보유한 돈이 부족합니다.");
-
-    const rewardObj = rewardRaw ? JSON.parse(rewardRaw) : null;
-    let rewardText = "";
-    if (rewardMoney > 0) rewardText += `${rewardMoney}원`;
-    if (rewardObj) rewardText += ` ${rewardObj.icon}${rewardObj.name}`;
-
-    if (confirm(`보상으로 [${rewardText.trim()}]을(를) 걸겠습니까?`)) {
-        // 돈 차감
-        await database.ref(`users/${myID}`).update({ money: currentMoney - rewardMoney });
-
-        // 아이템 차감 (있는 경우만)
-        if (rewardObj) {
-            await database.ref(`users/${myID}/inventory/${rewardObj.key}`).remove();
-        }
-
-        const newQuest = {
-            image: document.getElementById('qImg').value,
-            title: title, desc: desc,
-            reward: rewardText.trim(),
-            rewardMoney: rewardMoney,
-            rewardData: rewardObj,
-            author: myNick, authorID: myID,
-            status: 'open', timestamp: new Date().toLocaleString()
-        };
-
-        await database.ref('requests').push(newQuest);
-        
-        // 마스토돈 알림 (줄바꿈 포함)
-        if (typeof postToMastodon === "function") {
-            await postToMastodon(`📜 [새 의뢰] ${myNick}님이 '${title}' 게시!\n보상: ${newQuest.reward} `);
-        }
-        
-        alert("의뢰가 등록되었습니다.");
-        location.reload();
+    function cancelQuest(key) {
+        if (!confirm("취소 시 보상으로 걸었던 돈과 아이템을 모두 돌려받습니다.")) return;
+        database.ref('requests/' + key).once('value', async (snapshot) => {
+            const quest = snapshot.val();
+            const userSnap = await database.ref(`users/${myID}`).once('value');
+            const currentMoney = userSnap.val().money || 0;
+            await database.ref(`users/${myID}`).update({ money: currentMoney + (quest.rewardMoney || 0) });
+            if (quest.rewardData) await database.ref(`users/${myID}/inventory`).push(quest.rewardData);
+            await database.ref('requests/' + key).remove();
+            alert("의뢰가 취소되어 자산이 회수되었습니다.");
+        });
     }
-}
 
-// 2. 의뢰 취소 (돈/아이템 회수)
-function cancelQuest(key) {
-    if (!confirm("취소 시 보상으로 걸었던 돈과 아이템을 모두 돌려받습니다.")) return;
-
-    database.ref('requests/' + key).once('value', async (snapshot) => {
-        const quest = snapshot.val();
-        const userSnap = await database.ref(`users/${myID}`).once('value');
-        const currentMoney = userSnap.val().money || 0;
-
-        // 돈 복구
-        await database.ref(`users/${myID}`).update({ money: currentMoney + (quest.rewardMoney || 0) });
-
-        // 아이템 복구
-        if (quest.rewardData) {
-            await database.ref(`users/${myID}/inventory`).push(quest.rewardData);
-        }
-
-        await database.ref('requests/' + key).remove();
-        alert("의뢰가 취소되어 자산이 회수되었습니다.");
-    });
-}
-
-// 3. 보상 수령 (수행자에게 돈/아이템 지급)
-/* finishAndGetReward 함수 수정 */
-async function finishAndGetReward(key) {
-    database.ref('requests/' + key).once('value', async (snapshot) => {
-        const quest = snapshot.val();
-        if (!quest) return; // 데이터가 없으면 종료
-
-        const userSnap = await database.ref(`users/${myID}`).once('value');
-        const currentMoney = userSnap.val().money || 0;
-
-        // 돈 지급
-        if (quest.rewardMoney > 0) {
-            await database.ref(`users/${myID}`).update({ money: currentMoney + quest.rewardMoney });
-        }
-
-        // 아이템 지급
-        if (quest.rewardData) {
-            await database.ref(`users/${myID}/inventory`).push(quest.rewardData);
-        }
-
-        // [수정] quest.title로 데이터 참조
-        if (typeof postToMastodon === "function") {
-            await postToMastodon(`🎊 [의뢰 완료] ${myNick}님이 '${quest.title}' 의뢰를 완료했습니다!`);
-        }
-        
-        alert(`${quest.reward} 보상을 획득했습니다!`);
-        database.ref('requests/' + key).remove();
-    });
-}
+    async function finishAndGetReward(key) {
+        database.ref('requests/' + key).once('value', async (snapshot) => {
+            const quest = snapshot.val();
+            if (!quest) return;
+            const userSnap = await database.ref(`users/${myID}`).once('value');
+            const currentMoney = userSnap.val().money || 0;
+            if (quest.rewardMoney > 0) await database.ref(`users/${myID}`).update({ money: currentMoney + quest.rewardMoney });
+            if (quest.rewardData) await database.ref(`users/${myID}/inventory`).push(quest.rewardData);
+            if (typeof postToMastodon === "function") await postToMastodon(`🎊 [의뢰 완료] ${myNick}님이 '${quest.title}' 의뢰를 완료했습니다!`);
+            alert(`${quest.reward} 보상을 획득했습니다!`);
+            database.ref('requests/' + key).remove();
+        });
+    }
 
     function acceptQuest(key) { database.ref('requests/'+key).update({status:'accepted', takenBy:myNick}); }
     function requestApproval(key) { database.ref('requests/'+key).update({status:'pending'}); }

@@ -1,43 +1,39 @@
 // script.js
 
-// 1. 생존자 명단 (여기만 수정하면 인원을 계속 추가할 수 있습니다)
+// 1. 회원 명단 (비밀번호 관리)
 const userDB = {
-    "13reaking_news":    { pw: "admin0303", nick: "관리자",   role: "admin" },
-    "13reaking_system": { pw:"1234", nick: "시스템", role: "user"},
-    "runner1":  { pw: "run1",      nick: "러너1",    role: "user" }
+    "13reaking_news": { pw: "admin0303", nick: "관리자", role: "admin" }, // 관리자 계정
+    "13reaking_system": { pw: "1234",      nick: "러너1",  role: "user" },
+    "runner1":        { pw: "run1",      nick: "러너2",  role: "user" }
 };
 
+// 2. 로그인 체크 함수 (index.html에서 사용)
 function checkLogin() {
     const id = document.getElementById('username').value;
     const pw = document.getElementById('password').value;
 
-    // 명단에 아이디가 있고, 비밀번호가 맞는지 확인
     if (userDB[id] && userDB[id].pw === pw) {
-        
-        // 로그인 성공! 정보 저장
+        // 정보 가져오기
         const userInfo = userDB[id];
         
-        // 1. 권한 저장 (기존 코드 호환성을 위해 admin 또는 success로 저장)
-        localStorage.setItem("loginStatus", userInfo.role === "admin" ? "admin" : "success");
+        // ★ 핵심: 관리자인지 확인하여 상태 저장
+        const status = userInfo.role === "admin" ? "admin" : "success";
         
-        // 2. 아이디, 닉네임 저장 (화면에 보여줄 이름)
-        localStorage.setItem("userNick", userInfo.nick);
-        localStorage.setItem("loginID", id); // 👈 이 줄을 꼭 추가하세요! (id는 13reaking_system 같은 값입니다)
+        localStorage.setItem("loginStatus", status); // "admin" 또는 "success"
+        localStorage.setItem("loginID", id);         // "13reaking_news"
+        localStorage.setItem("userNick", userInfo.nick); // "관리자"
 
-        alert(`${userInfo.nick}님, 생존을 환영합니다.`);
+        alert(`[${userInfo.nick}]님, 접속 승인되었습니다.`);
         window.location.href = "main.html"; // 메인으로 이동
-
     } else {
-        alert("신원 확인 불가. 아이디 또는 비밀번호를 확인하세요.");
+        alert("아이디 또는 비밀번호가 일치하지 않습니다.");
     }
 }
 
-// script.js 내의 logout 함수
+// 3. 로그아웃 함수
 function logout() {
-    if (confirm("정말로 로그아웃 하시겠습니까?")) {
-        // 모든 로컬 저장소 정보를 삭제하여 로그인 세션을 완전히 종료합니다.
-        localStorage.clear(); 
-        alert("로그아웃 되었습니다.");
+    if(confirm("로그아웃 하시겠습니까?")) {
+        localStorage.clear();
         window.location.href = "index.html";
     }
 }

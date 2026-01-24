@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>생존자 프로필 - 상세 정보</title>
+    <title>생존자 프로필</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
@@ -13,21 +13,17 @@
         
         body { background-color: var(--bg-dark); color: white; margin: 0; padding: 0; font-family: 'Noto Sans KR', sans-serif; overflow-x: hidden; }
 
-        /* 네비게이션 */
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 0 50px; background: rgba(0, 0, 0, 0.9); border-bottom: 1px solid var(--accent-color); height: 60px; position: fixed; top: 0; width: 100%; z-index: 1000; box-sizing: border-box; font-family: var(--nav-font); }
         .nav-links { list-style: none; display: flex; gap: 20px; margin: 0; padding: 0; }
         .nav-links a { color: white; text-decoration: none; font-size: 1.1rem; }
 
-        /* 레이아웃 */
         .profile-wrapper { display: flex; width: 100vw; height: calc(100vh - 60px); margin-top: 60px; }
         .portrait-section { width: 40%; height: 100%; background: #000; display: flex; align-items: flex-start; justify-content: center; border-right: 2px solid var(--accent-color); overflow: hidden; }
         .portrait-section img { width: auto; height: 100%; object-fit: contain; }
         .info-section { width: 60%; height: 100%; overflow-y: auto; padding: 60px; box-sizing: border-box; background: #151515; position: relative; }
 
-        /* 편집 버튼 */
         #editBtn { position: absolute; top: 20px; right: 20px; background: var(--accent-color); color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; display: none; z-index: 10; }
 
-        /* 표 및 섹션 디자인 */
         .info-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; border-top: 2px solid var(--accent-color); }
         .info-table td { padding: 15px; border-bottom: 1px solid #333; }
         .label { color: var(--accent-color); font-weight: bold; width: 80px; font-size: 0.9rem; }
@@ -35,7 +31,6 @@
         .head-img { width: 120px; height: 120px; border-radius: 10px; border: 2px solid var(--accent-color); object-fit: cover; background: #222; }
         .section-title { font-size: 1.2rem; color: var(--accent-color); border-bottom: 1px solid #444; margin: 30px 0 15px; padding-bottom: 5px; font-family: var(--nav-font); }
 
-        /* 스탯 및 인벤토리 */
         .stat-bars { display: flex; gap: 4px; }
         .bar { width: 14px; height: 16px; background: #333; border-radius: 2px; }
         .bar.fill { background: var(--accent-color); box-shadow: 0 0 5px var(--accent-color); }
@@ -43,7 +38,6 @@
         .inv-item { background: #222; padding: 15px 10px; border-radius: 8px; text-align: center; border: 1px solid #333; transition: 0.3s; cursor: pointer; }
         .inv-item:hover { border-color: var(--accent-color); background: #2a2a2a; }
 
-        /* 모달 스타일 */
         #editModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; overflow-y: auto; padding: 50px 0; }
         .modal-content { width: 90%; max-width: 850px; margin: auto; background: #1a1a1a; padding: 40px; border-radius: 15px; border: 1px solid var(--accent-color); }
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
@@ -51,31 +45,25 @@
         .form-group label { color: var(--accent-color); font-weight: bold; font-size: 0.85rem; }
         .form-group input, .form-group textarea { padding: 10px; background: #0a0a0a; border: 1px solid #333; color: white; border-radius: 5px; }
         
-        /* 상호작용 버튼 호버 효과 */
-#myInteractionSection button:hover {
-    filter: brightness(1.3); /* 더 밝은 빨간색으로 강조 */
-    transform: translateY(-2px); /* 살짝 위로 떠오름 */
-    box-shadow: 0 4px 15px rgba(171, 0, 0, 0.4); /* 붉은색 그림자 */
-}
+        #myInteractionSection button:hover { filter: brightness(1.3); transform: translateY(-2px); box-shadow: 0 4px 15px rgba(171, 0, 0, 0.4); }
 
-/* 유저 선택 리스트 아이템 스타일 */
-.user-select-item {
-    padding: 12px; 
-    border-bottom: 1px solid #333; 
-    cursor: pointer; 
-    display: flex; 
-    align-items: center; 
-    gap: 12px;
-    transition: all 0.2s ease; /* 부드러운 전환 효과 */
-    background: transparent;
-}
+        /* 알림 버튼 및 리스트 스타일 */
+        .noti-btn {
+            position: absolute; top: 20px; right: 140px; 
+            background: #333; color: #ddd; border: 1px solid #555;
+            padding: 10px 15px; cursor: pointer; border-radius: 5px; font-weight: bold;
+            display: none; z-index: 10;
+        }
+        .noti-btn:hover { background: #444; color: white; }
+        .noti-btn.new-alert { border-color: #ff0000; color: #ffcccc; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); } }
 
-/* 유저 목록 마우스 호버 시 강조 */
-.user-select-item:hover {
-    background: linear-gradient(90deg, #2a0000 0%, #1a1a1a 100%); /* 그라데이션 강조 */
-    border-left: 4px solid var(--accent-color); /* 왼쪽에 붉은 선 추가 */
-    padding-left: 8px; /* 선이 생기면서 살짝 밀리는 효과 */
-}
+        #notificationList {
+            display: none; margin-bottom: 20px; background: #111; border: 1px solid #444; border-radius: 8px; max-height: 300px; overflow-y: auto; box-shadow: inset 0 0 20px #000;
+        }
+        .noti-item { padding: 12px 15px; border-bottom: 1px solid #333; font-size: 0.9rem; color: #aaa; display: flex; justify-content: space-between; }
+        .noti-item.unread { background: rgba(171, 0, 0, 0.1); color: #fff; border-left: 3px solid var(--accent-color); }
+        .noti-time { font-size: 0.75rem; color: #666; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -83,8 +71,7 @@
 <nav class="navbar">
     <div class="logo">
         OUT BREAK 
-        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;">
-        </span>
+        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
     </div>
     <ul class="nav-links">
         <li><a href="main.html">홈</a></li>
@@ -103,8 +90,11 @@
     </div>
 
     <div class="info-section">
+        <button id="notiBtn" class="noti-btn" onclick="toggleNotifications()">🔔 알림</button>
         <button id="editBtn" onclick="openEditModal()">📝 정보 수정</button>
         
+        <div id="notificationList"></div>
+
         <div id="pCatchphrase" style="color: var(--accent-color); font-size: 1.2rem; margin-bottom: 5px; opacity: 0.8;"></div>
         <div id="pOneLiner" style="font-size: 2.8rem; font-weight: bold; margin-bottom: 35px; line-height: 1.2;"></div>
 
@@ -157,22 +147,20 @@
         <div id="inventoryList" class="inventory-grid"></div>
         
         <div id="myInteractionSection" style="display: none; margin-top: 30px; border-top: 1px solid var(--accent-color); padding-top: 20px;">
-    <div style="display: flex; gap: 10px;">
-        <button onclick="openUserSelectModal('money')" style="flex: 1; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s;">💰 돈 송금하기</button>
-        <button onclick="openUserSelectModal('item')" style="flex: 1; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s;">🎁 아이템 선물하기</button>
-    </div>
-</div>
-
-<div id="userSelectModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:3000;">
-    <div style="width:90%; max-width:400px; margin:100px auto; background:#1a1a1a; border:1px solid var(--accent-color); padding:20px; border-radius:10px;">
-        <h3 id="modalTitle" style="color:var(--accent-color); margin-top:0;">대상을 선택하세요</h3>
-        <div id="userListContainer" style="max-height:300px; overflow-y:auto; margin-bottom:20px;">
+            <div style="display: flex; gap: 10px;">
+                <button onclick="openUserSelectModal('money')" style="flex: 1; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s;">💰 돈 송금하기</button>
+                <button onclick="openUserSelectModal('item')" style="flex: 1; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s;">🎁 아이템 선물하기</button>
             </div>
-        <button onclick="closeUserModal()" style="width:100%; padding:10px; background:#444; color:white; border:none; border-radius:5px; cursor:pointer;">취소</button>
-    </div>
-</div>
+        </div>
 
-    
+        <div id="userSelectModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:3000;">
+            <div style="width:90%; max-width:400px; margin:100px auto; background:#1a1a1a; border:1px solid var(--accent-color); padding:20px; border-radius:10px;">
+                <h3 id="modalTitle" style="color:var(--accent-color); margin-top:0;">대상을 선택하세요</h3>
+                <div id="userListContainer" style="max-height:300px; overflow-y:auto; margin-bottom:20px;"></div>
+                <button onclick="closeUserModal()" style="width:100%; padding:10px; background:#444; color:white; border:none; border-radius:5px; cursor:pointer;">취소</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="editModal">
@@ -183,11 +171,8 @@
             <div class="form-group"><label>두상 이미지 (URL)</label><input type="text" id="editHead"></div>
         </div>
         <div class="form-row">
-    <div class="form-group">
-        <label>이름</label>
-        <input type="text" id="editNickname" placeholder="예: 강나리">
-    </div>
-</div>  
+            <div class="form-group"><label>이름</label><input type="text" id="editNickname"></div>
+        </div>  
         <div class="form-row">
             <div class="form-group"><label>캐치프레이즈</label><input type="text" id="editCatch"></div>
             <div class="form-group"><label>한마디</label><input type="text" id="editOne"></div>
@@ -286,18 +271,82 @@
                 div.innerHTML = `<div style="font-size: 24px;">${item.icon || '📦'}</div><div style="font-size: 12px;">${item.name}</div>`;
                 invList.appendChild(div);
             });
-
-            if (myID === targetID) document.getElementById('editBtn').style.display = 'block';
         });
 
-        // loadProfile 함수 내 권한 확인 로직
-if (myID === targetID) {
-    document.getElementById('editBtn').style.display = 'block';
-    document.getElementById('myInteractionSection').style.display = 'block'; // 본인일 때만 노출
-} else {
-    document.getElementById('myInteractionSection').style.display = 'none'; // 타인 프로필에선 숨김
-}
+        // [권한 확인 로직]
+        const isAdmin = localStorage.getItem("loginStatus") === "admin";
 
+        // 1. 수정 버튼: 나 자신이거나 관리자면 보임
+        if (myID === targetID || isAdmin) {
+            document.getElementById('editBtn').style.display = 'block'; 
+            
+            // 2. 알림/송금: 관리자라도 남의 것은 볼 필요 없으므로 '본인'일 때만 보임
+            if (myID === targetID) {
+                document.getElementById('notiBtn').style.display = 'block';
+                document.getElementById('myInteractionSection').style.display = 'block';
+                loadMyNotifications();
+            } else {
+                document.getElementById('notiBtn').style.display = 'none';
+                document.getElementById('myInteractionSection').style.display = 'none';
+            }
+        } else {
+            // 아무 권한도 없으면 다 숨김
+            document.getElementById('editBtn').style.display = 'none';
+            document.getElementById('notiBtn').style.display = 'none';
+            document.getElementById('myInteractionSection').style.display = 'none';
+        }
+    }
+
+    function loadMyNotifications() {
+        const listDiv = document.getElementById('notificationList');
+        const notiBtn = document.getElementById('notiBtn');
+
+        database.ref('users/' + myID + '/notifications').on('value', (snap) => {
+            const notis = snap.val();
+            listDiv.innerHTML = "";
+            let unreadCount = 0;
+
+            if (!notis) {
+                listDiv.innerHTML = '<div style="padding:15px; color:#666; text-align:center;">알림이 없습니다.</div>';
+                notiBtn.innerText = `🔔 알림 (0)`;
+                notiBtn.classList.remove('new-alert');
+                return;
+            }
+
+            const sortedKeys = Object.keys(notis).sort((a,b) => notis[b].timestamp - notis[a].timestamp);
+
+            sortedKeys.forEach(key => {
+                const n = notis[key];
+                if (!n.read) unreadCount++;
+
+                const div = document.createElement('div');
+                div.className = `noti-item ${n.read ? '' : 'unread'}`;
+                
+                const time = new Date(n.timestamp).toLocaleDateString();
+                div.innerHTML = `<span>${n.message}</span><span class="noti-time">${time}</span>`;
+                listDiv.appendChild(div);
+            });
+
+            notiBtn.innerText = `🔔 알림 (${unreadCount})`;
+            if (unreadCount > 0) notiBtn.classList.add('new-alert');
+            else notiBtn.classList.remove('new-alert');
+        });
+    }
+
+    function toggleNotifications() {
+        const listDiv = document.getElementById('notificationList');
+        const isClosed = listDiv.style.display === "none" || listDiv.style.display === "";
+        
+        if (isClosed) {
+            listDiv.style.display = "block"; 
+            database.ref('users/' + myID + '/notifications').once('value', snap => {
+                snap.forEach(child => {
+                    if (child.val().read === false) child.ref.update({ read: true });
+                });
+            });
+        } else {
+            listDiv.style.display = "none";
+        }
     }
 
     function openEditModal() {
@@ -365,94 +414,91 @@ if (myID === targetID) {
         });
     }
 
-    function logout() { localStorage.clear(); location.href = "index.html"; }
-    window.onload = loadProfile;
+    let currentAction = ""; 
+    function openUserSelectModal(action) {
+        currentAction = action;
+        const container = document.getElementById('userListContainer');
+        container.innerHTML = '<p style="text-align:center; color:#888;">유저 목록 로딩 중...</p>';
+        document.getElementById('userSelectModal').style.display = 'block';
 
+        database.ref('users').once('value', (snapshot) => {
+            container.innerHTML = '';
+            snapshot.forEach((child) => {
+                const userData = child.val();
+                const userId = child.key;
+                if (userId === myID) return;
 
-   let currentAction = ""; // 'money' 또는 'item' 저장
+                const div = document.createElement('div');
+                div.className = "user-select-item";
+                div.onclick = () => processTransfer(userId, userData.nickname || userId);
 
-// 유저 선택 모달 열기
-function openUserSelectModal(action) {
-    currentAction = action;
-    const container = document.getElementById('userListContainer');
-    container.innerHTML = '<p style="text-align:center; color:#888;">유저 목록 로딩 중...</p>';
-    document.getElementById('userSelectModal').style.display = 'block';
-
-    // 전체 유저 목록 불러오기
-    database.ref('users').once('value', (snapshot) => {
-        container.innerHTML = '';
-        snapshot.forEach((child) => {
-            const userData = child.val();
-            const userId = child.key;
-            
-            // 본인은 목록에서 제외
-            if (userId === myID) return;
-
-            const div = document.createElement('div');
-            div.style = "padding:12px; border-bottom:1px solid #333; cursor:pointer; display:flex; align-items:center; gap:10px;";
-            div.onmouseover = () => div.style.background = "#2a0000";
-            div.onmouseout = () => div.style.background = "transparent";
-            div.onclick = () => processTransfer(userId, userData.nickname || userId);
-
-            div.innerHTML = `
-                <img src="${userData.img || 'https://i.imgur.com/3SPL075.png'}" style="width:30px; height:30px; border-radius:50%; border:1px solid var(--accent-color);">
-                <span>${userData.nickname || userId}</span>
-            `;
-            container.appendChild(div);
+                div.innerHTML = `
+                    <img src="${userData.img || 'https://i.imgur.com/3SPL075.png'}" style="width:30px; height:30px; border-radius:50%; border:1px solid var(--accent-color);">
+                    <span>${userData.nickname || userId}</span>
+                `;
+                container.appendChild(div);
+            });
         });
-    });
-}
+    }
 
-function closeUserModal() { document.getElementById('userSelectModal').style.display = 'none'; }
+    function closeUserModal() { document.getElementById('userSelectModal').style.display = 'none'; }
 
-// 실제 전송 프로세스
-async function processTransfer(targetId, targetName) {
-    closeUserModal();
+    async function processTransfer(targetId, targetName) {
+        closeUserModal();
+        const senderName = document.getElementById('pName').innerText; 
 
-    if (currentAction === 'money') {
-        const amount = parseInt(prompt(`${targetName} 님에게 송금할 금액을 입력하세요:`));
-        if (isNaN(amount) || amount <= 0) return;
+        if (currentAction === 'money') {
+            const amount = parseInt(prompt(`${targetName} 님에게 송금할 금액을 입력하세요:`));
+            if (isNaN(amount) || amount <= 0) return;
 
-        const mySnap = await database.ref('users/' + myID).once('value');
-        const myMoney = mySnap.val().money || 0;
+            const mySnap = await database.ref('users/' + myID).once('value');
+            const myMoney = mySnap.val().money || 0;
 
-        if (myMoney < amount) return alert("잔액이 부족합니다.");
+            if (myMoney < amount) return alert("잔액이 부족합니다.");
 
-        if (confirm(`${targetName} 님에게 ${amount}G를 보낼까요?`)) {
-            await database.ref('users/' + myID).update({ money: myMoney - amount });
-            const targetSnap = await database.ref('users/' + targetId).once('value');
-            const targetMoney = targetSnap.val().money || 0;
-            await database.ref('users/' + targetId).update({ money: targetMoney + amount });
-            alert(`✅ ${targetName} 님에게 송금 완료!`);
-        }
-    } else {
-        // 아이템 선물 로직
-        const myInvSnap = await database.ref('users/' + myID + '/inventory').once('value');
-        const myInv = myInvSnap.val();
-        if (!myInv) return alert("선물할 아이템이 가방에 없습니다.");
+            if (confirm(`${targetName} 님에게 ${amount}G를 보낼까요?`)) {
+                await database.ref('users/' + myID).update({ money: myMoney - amount });
+                const targetSnap = await database.ref('users/' + targetId).once('value');
+                const targetMoney = targetSnap.val().money || 0;
+                await database.ref('users/' + targetId).update({ money: targetMoney + amount });
+                
+                sendNotification(targetId, `💰 ${senderName}님이 ${amount}G를 송금했습니다.`);
+                alert(`✅ ${targetName} 님에게 송금 완료!`);
+            }
+        } else {
+            const myInvSnap = await database.ref('users/' + myID + '/inventory').once('value');
+            const myInv = myInvSnap.val();
+            if (!myInv) return alert("선물할 아이템이 가방에 없습니다.");
 
-        const items = Object.entries(myInv);
-        let msg = `${targetName} 님에게 보낼 아이템 번호를 선택하세요:\n`;
-        items.forEach(([key, val], i) => msg += `${i + 1}. ${val.name}\n`);
+            const items = Object.entries(myInv);
+            let msg = `${targetName} 님에게 보낼 아이템 번호를 선택하세요:\n`;
+            items.forEach(([key, val], i) => msg += `${i + 1}. ${val.name}\n`);
 
-        const choice = parseInt(prompt(msg)) - 1;
-        if (isNaN(choice) || !items[choice]) return;
+            const choice = parseInt(prompt(msg)) - 1;
+            if (isNaN(choice) || !items[choice]) return;
 
-        const [itemKey, itemData] = items[choice];
+            const [itemKey, itemData] = items[choice];
 
-        if (confirm(`${targetName} 님에게 [${itemData.name}]을 선물할까요?`)) {
-            await database.ref(`users/${myID}/inventory/${itemKey}`).remove();
-            await database.ref(`users/${targetId}/inventory`).push(itemData);
-            alert(`🎁 [${itemData.name}] 선물을 전달했습니다!`);
+            if (confirm(`${targetName} 님에게 [${itemData.name}]을 선물할까요?`)) {
+                await database.ref(`users/${myID}/inventory/${itemKey}`).remove();
+                await database.ref(`users/${targetId}/inventory`).push(itemData);
+                
+                sendNotification(targetId, `🎁 ${senderName}님이 [${itemData.name}]을 선물했습니다.`);
+                alert(`🎁 [${itemData.name}] 선물을 전달했습니다!`);
+            }
         }
     }
-}
 
-// 각 파일의 script 태그 안에 있는 logout 함수를 이 코드로 교체하세요.
-function logout() { 
-    localStorage.clear(); 
-    location.href = "index.html"; 
-}
+    function sendNotification(targetId, message) {
+        database.ref('users/' + targetId + '/notifications').push({
+            message: message,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            read: false
+        });
+    }
+
+    function logout() { localStorage.clear(); location.href = "index.html"; }
+    window.onload = loadProfile;
 </script>
 </body>
 </html>

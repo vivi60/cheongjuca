@@ -2,227 +2,227 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>생존자 교역소</title>
-    <link rel="stylesheet" href="style.css">
+    <title>뒷골목 환전소</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
-    <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
-        authDomain: "cheongjuca.firebaseapp.com",
-        databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
-        projectId: "cheongjuca",
-        storageBucket: "cheongjuca.firebasestorage.app",
-        messagingSenderId: "455437421321",
-        appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8",
-        measurementId: "G-9XG7JRFM3D"
-      };
-      firebase.initializeApp(firebaseConfig);
-      const database = firebase.database();
-    </script>
     <style>
-        .shop-container { width: 90%; max-width: 1000px; margin: 30px auto; color: white; font-family: 'SchoolSafeBoardMarker'; display: flex; gap: 20px; flex-wrap: wrap; }
-        .shop-section { flex: 1; background: rgba(0,0,0,0.8); border: 2px solid #555; border-radius: 10px; padding: 20px; min-width: 300px; }
-        .header-info { width: 100%; text-align: center; margin-bottom: 20px; background: #222; padding: 15px; border-radius: 10px; font-size: 20px; border: 1px solid #ab0000; }
-        .item-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; }
-        .item-card { background: #333; border: 1px solid #444; border-radius: 5px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
-        .item-card:hover { border-color: gold; transform: translateY(-2px); }
-        .item-icon { font-size: 40px; }
-        .item-price { color: gold; font-size: 14px; margin-top: 5px; }
-        .owned-tag { position: absolute; top: 5px; right: 5px; background: #ab0000; font-size: 10px; padding: 2px 4px; border-radius: 3px; }
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap');
+
+        body {
+            background-color: #111;
+            background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://www.transparenttextures.com/patterns/dark-brick-wall.png');
+            color: #d0d0d0;
+            font-family: 'Courier Prime', monospace;
+            margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            cursor: url(http://www.rw-designer.com/cursor-extern.php?id=88921), auto !important;
+        }
+
+        .navbar {
+            width: 100%; background: #000; border-bottom: 2px solid #333; padding: 15px 0; text-align: center; margin-bottom: 30px;
+        }
+        .nav-links a {
+            color: #888; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0 15px; transition: 0.3s;
+        }
+        .nav-links a:hover { color: #fff; text-shadow: 0 0 5px #fff; }
+
+        .shop-container { width: 90%; max-width: 1000px; display: flex; gap: 20px; flex-wrap: wrap; }
+        .shop-section {
+            background: #222; border: 2px solid #444; border-radius: 8px; padding: 20px; flex: 1; min-width: 300px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+        }
+        .section-title {
+            margin-top: 0; border-bottom: 2px dashed #555; padding-bottom: 10px; margin-bottom: 20px; font-size: 18px; color: #aaa; font-weight: bold; text-transform: uppercase;
+        }
+
+        .user-panel {
+            width: 100%; background: #1a1a1a; border: 1px solid #ab0000; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-around; align-items: center; font-size: 16px;
+        }
+
+        .buy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
+        .buy-card {
+            background: #333; border: 1px solid #555; border-radius: 5px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative;
+        }
+        .buy-card:hover { border-color: #f0d090; background: #444; transform: translateY(-3px); }
+        .item-icon { font-size: 35px; margin-bottom: 10px; }
+        .item-name { font-size: 12px; margin-bottom: 5px; color: #fff; }
+        .item-price { color: #f0d090; font-weight: bold; font-size: 14px; }
+        .tag { position: absolute; top: 5px; right: 5px; font-size: 10px; padding: 2px 5px; border-radius: 3px; }
+        .tag-owned { background: #4caf50; color: #fff; }
+
+        .inventory-list {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto;
+        }
+        .sell-card {
+            background: #2a2a2a; border: 1px solid #444; border-radius: 5px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s;
+        }
+        .sell-card:hover { border-color: #ab0000; background: #333; }
+        .sell-price { color: #888; font-size: 11px; margin-top: 3px; }
+
+        button.nav-btn { background: transparent; border: none; color: #888; font-family: 'Courier Prime'; cursor: pointer; font-size: 14px; font-weight: bold; }
+        button.nav-btn:hover { color: #fff; text-shadow: 0 0 5px #fff; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #222; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
     </style>
 </head>
-<body style="background-color: #111;">
+<body>
 
-<nav class="navbar">
-    <div class="logo">
-        OUT BREAK 
-        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
-    </div>
-    <ul class="nav-links">
-        <li><a href="main.html">홈</a></li>
-        <li><a href="shop.html">상점</a></li>
-        <li><a href="game.html">낚시터</a></li>
-        <li><a href="#" onclick="logout()">로그아웃</a></li>
-    </ul>
-</nav>
+    <nav class="navbar">
+        <div class="nav-links">
+            <a href="main.html">MAIN SYSTEM</a> | 
+            <a href="shop.html" style="color: #fff; border-bottom: 1px solid #fff;">EXCHANGE</a> | 
+            <a href="game.html">VENDING MACHINE</a> | 
+            <button class="nav-btn" onclick="logout()">LOGOUT</button>
+        </div>
+    </nav>
 
     <div class="shop-container">
-        <div class="header-info">
-            👤 <span id="myNick">...</span>님의 자산<br>
-            <span style="color:gold;">💵 <span id="myMoney">0</span> G</span> | 
-            <span style="color:#00ff00;">🐛 일반: <span id="myBait">0</span></span> | 
-            <span style="color:#ffcc00;">🪱 고급: <span id="myBaitHigh">0</span></span>
+        
+        <div class="user-panel">
+            <div>👤 <span id="myNick" style="color:#fff;">Guest</span></div>
+            <div class="asset-info">
+                <span>💵 가진 돈: <span id="myMoney" style="color:#f0d090;">loading...</span></span>
+            </div>
         </div>
 
-        <div id="adminPanel" style="display:none; width: 100%; background: #300; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 2px dashed #ff0000; text-align: center;">
-    <h3 style="color: #ff4444; margin-top: 0;">🛠️ 관리자 자산 통제</h3>
-    <input type="text" id="targetNick" placeholder="대상 닉네임" style="padding: 8px; border-radius: 5px; border: none;">
-    <input type="number" id="targetAmount" placeholder="금액(G)" style="padding: 8px; border-radius: 5px; border: none; width: 100px;">
-    <button onclick="adminSetMoney()" style="padding: 8px 15px; background: #ff0000; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: 'SchoolSafeBoardMarker';">지급/차압</button>
-    <div style="font-size: 12px; color: #aaa; margin-top: 10px;">* 닉네임을 정확히 입력하고 금액을 적은 뒤 버튼을 누르세요.</div>
-        </div>
-        
         <div class="shop-section">
-            <h2 style="color:#ab0000; text-align:center;">🛒 생존 보급소</h2>
-            <div style="display: grid; gap: 10px;">
-                <div class="item-card" onclick="buyItem('bait', 10, '일반 미끼')">
-                    <div class="item-icon">🐛</div>
-                    <div>일반 미끼</div>
-                    <div class="item-price">10 G</div>
-                </div>
-                <div class="item-card" onclick="buyItem('bait_high', 35, '고급 미끼')">
-                    <div class="item-icon">🪱</div>
-                    <div>고급 미끼 (대어 확률UP)</div>
-                    <div class="item-price">35 G</div>
-                </div>
-                <div class="item-card" id="rodCard" onclick="buyRod()">
+            <h3 class="section-title">🔨 장비 구매</h3>
+            <div class="buy-grid">
+                <div class="buy-card" id="rodCard" onclick="buyRod()">
                     <div id="rodTag"></div>
-                    <div class="item-icon">🎣</div>
-                    <div>카본 낚싯대 (성능 향상)</div>
+                    <div class="item-icon">🔨</div>
+                    <div class="item-name">무거운 망치</div>
+                    <div style="font-size:10px; color:#888;">효과적인 타격 (성능UP)</div>
                     <div class="item-price" id="rodPriceDisplay">500 G</div>
                 </div>
             </div>
         </div>
 
         <div class="shop-section">
-            <h2 style="color:#4caf50; text-align:center;">🎒 내 가방 (판매)</h2>
-            <div class="item-list" id="inventoryGrid"></div>
+            <h3 class="section-title" style="color:#ab0000;">🎒 잡동사니 판매 (로컬 저장소)</h3>
+            <div class="inventory-list" id="inventoryGrid">
+                <div style="color:#555; text-align:center; padding:20px; grid-column: span 3;">
+                    가방을 확인하는 중...
+                </div>
+            </div>
         </div>
+
     </div>
 
     <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
+            authDomain: "cheongjuca.firebaseapp.com",
+            databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
+            projectId: "cheongjuca",
+            storageBucket: "cheongjuca.firebasestorage.app",
+            messagingSenderId: "455437421321",
+            appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-        // shop.html의 <script> 태그 안 최상단에 추가하세요.
-window.addEventListener('load', function() {
-    const nick = localStorage.getItem("userNick");
-    const status = localStorage.getItem("loginStatus");
-    const badge = document.getElementById("userBadge");
-    const adminPanel = document.getElementById("adminPanel");
+        // [핵심 수정] 닉네임이 아니라 'loginID'를 가져와야 합니다!
+        const loginID = localStorage.getItem("loginID");
+        const nickDisplay = localStorage.getItem("userNick");
 
-    if (status === "admin") {
-        adminPanel.style.display = "block";
-    }
-    if (badge && nick) {
-        if (status === "admin") {
-            badge.innerText = `[관리자 모드]`;
-            badge.style.color = "#ff0000";
-        } else {
-            badge.innerText = `[${nick}]`;
-            badge.style.color = "#cccccc";
+        if(!loginID) {
+            alert("로그인 정보가 없습니다.");
+            location.href='index.html';
         }
-        badge.style.display = "inline";
-    }
-});
-// 관리자 전용 돈 수정 함수
-function adminSetMoney() {
-    const tNick = document.getElementById('targetNick').value.trim();
-    const tAmount = parseInt(document.getElementById('targetAmount').value);
 
-    if (!tNick || isNaN(tAmount)) {
-        return alert("닉네임과 금액을 모두 올바르게 입력해주세요.");
-    }
+        // 화면에는 닉네임 보여주기
+        document.getElementById('myNick').innerText = nickDisplay || loginID;
 
-    // 해당 닉네임의 유저 데이터를 확인 후 업데이트
-    database.ref('users/' + tNick).once('value', (snapshot) => {
-        if (!snapshot.exists()) {
-            alert("존재하지 않는 러너입니다.");
-        } else {
-            if (confirm(`${tNick}님의 자산을 ${tAmount}G로 수정하시겠습니까?`)) {
-                database.ref('users/' + tNick).update({
-                    money: tAmount
-                }).then(() => {
-                    alert("수정이 완료되었습니다.");
-                    document.getElementById('targetAmount').value = "";
-                });
-            }
-        }
-    });
-}
+        let money = 0, rodLevel = 1;
 
-        const nick = localStorage.getItem("userNick");
-        if(!nick) location.href='index.html';
-        document.getElementById('myNick').innerText = nick;
-
-        let money = 0, bait = 0, baitHigh = 0, rodLevel = 1;
-
-        // 1. 데이터 실시간 로드
-        database.ref('users/' + nick).on('value', (snapshot) => {
+        // [핵심 수정] DB 조회 시 loginID 사용 (users/runner1 등)
+        database.ref('users/' + loginID).on('value', (snapshot) => {
             const data = snapshot.val() || {};
+            
+            // 데이터가 없으면 초기화
             if (data.money === undefined) {
-                database.ref('users/' + nick).update({ money: 100, bait: 3, rod_level: 1 });
+                database.ref('users/' + loginID).update({ money: 100, rod_level: 1 });
                 return;
             }
 
             money = data.money;
-            bait = data.bait || 0;
-            baitHigh = data.bait_high || 0;
             rodLevel = data.rod_level || 1;
 
             document.getElementById('myMoney').innerText = money;
-            document.getElementById('myBait').innerText = bait;
-            document.getElementById('myBaitHigh').innerText = baitHigh;
 
-            // 낚싯대 소지 여부 표시
+            // 장비 상태 업데이트
             if(rodLevel >= 2) {
-                document.getElementById('rodTag').innerHTML = '<span class="owned-tag">보유중</span>';
-                document.getElementById('rodPriceDisplay').innerText = "SOLD OUT";
+                document.getElementById('rodTag').innerHTML = '<span class="tag tag-owned">보유중</span>';
+                document.getElementById('rodPriceDisplay').innerText = "매진";
+                document.getElementById('rodCard').style.opacity = "0.5";
             }
-
-            renderInventory(data.inventory || {});
         });
 
-        // 2. 미끼 구매
-        function buyItem(type, price, name) {
-            if (money < price) return alert("자금이 부족합니다!");
-            if (confirm(`${name}을(를) 구매하시겠습니까?`)) {
-                let updates = { money: money - price };
-                if(type === 'bait') updates.bait = bait + 1;
-                if(type === 'bait_high') updates.bait_high = baitHigh + 1;
-                database.ref('users/' + nick).update(updates);
-            }
-        }
+        // 로컬 인벤토리 로드
+        renderLocalInventory();
 
-        // 3. 낚싯대 구매
         function buyRod() {
-            if (rodLevel >= 2) return alert("이미 최고급 낚싯대를 보유하고 있습니다.");
-            if (money < 500) return alert("돈이 부족합니다. 낚시로 돈을 더 모으세요!");
-            if (confirm("카본 낚싯대를 구매하시겠습니까?\n(게이지 조절이 쉬워지고 진행도가 빨리 오릅니다)")) {
-                database.ref('users/' + nick).update({
+            if (rodLevel >= 2) return alert("이미 망치를 가지고 있습니다.");
+            if (money < 500) return alert("돈이 부족합니다.");
+            
+            if (confirm("무거운 망치를 500G에 구매하시겠습니까?")) {
+                database.ref('users/' + loginID).update({
                     money: money - 500,
                     rod_level: 2
                 });
-                alert("장비 업그레이드 완료!");
+                alert("장비를 획득했습니다!");
             }
         }
 
-        function renderInventory(invData) {
+        function renderLocalInventory() {
             const grid = document.getElementById('inventoryGrid');
             grid.innerHTML = "";
-            Object.entries(invData).reverse().forEach(([key, item]) => {
-                const div = document.createElement('div');
-                div.className = 'item-card';
-                div.innerHTML = `<div class="item-icon">${item.icon}</div><div style="font-size:12px;">${item.name}</div><div class="item-price">+ ${item.price} G</div>`;
-                div.onclick = () => sellItem(key, item.name, item.price);
-                grid.appendChild(div);
-            });
+            
+            const savedInv = localStorage.getItem("myInventory");
+            const inventory = savedInv ? JSON.parse(savedInv) : {};
+            
+            let hasItem = false;
+            for (const [key, count] of Object.entries(inventory)) {
+                // _price나 _icon은 메타데이터이므로 건너뜀
+                if (!key.includes('_price') && !key.includes('_icon') && count > 0) {
+                    hasItem = true;
+                    const price = inventory[key + "_price"] || 0;
+                    const icon = inventory[key + "_icon"] || '📦';
+                    
+                    const div = document.createElement('div');
+                    div.className = 'sell-card';
+                    div.innerHTML = `
+                        <div class="item-icon">${icon}</div>
+                        <div style="font-size:11px; margin-bottom:5px;">${key} (${count}개)</div>
+                        <div class="sell-price">+ ${price} G</div>
+                    `;
+                    div.onclick = () => sellItem(key, price, inventory);
+                    grid.appendChild(div);
+                }
+            }
+            if(!hasItem) grid.innerHTML = '<div style="color:#555; text-align:center; padding:20px; grid-column: span 3;">가방이 비었습니다.</div>';
         }
 
-        function sellItem(key, name, price) {
-            if (price <= 0) {
-                if(confirm(`${name}은(는) 가치가 없습니다. 버리시겠습니까?`)) database.ref('users/' + nick + '/inventory/' + key).remove();
-                return;
-            }
-            if (confirm(`${name}을(를) ${price}G에 판매하시겠습니까?`)) {
-                database.ref('users/' + nick).update({ money: money + price });
-                database.ref('users/' + nick + '/inventory/' + key).remove();
+        function sellItem(itemName, price, inventory) {
+            if (confirm(`${itemName}을(를) ${price}G에 환전하시겠습니까?`)) {
+                
+                // 1. 로컬 데이터 수정
+                inventory[itemName] -= 1;
+                if(inventory[itemName] <= 0) {
+                    delete inventory[itemName];
+                    delete inventory[itemName + "_price"];
+                    delete inventory[itemName + "_icon"];
+                }
+                localStorage.setItem("myInventory", JSON.stringify(inventory));
+                renderLocalInventory(); 
+
+                // 2. 서버 돈 추가 [핵심 수정: loginID 사용]
+                database.ref('users/' + loginID).update({ money: money + price });
             }
         }
-        // 각 파일의 script 태그 안에 있는 logout 함수를 이 코드로 교체하세요.
-function logout() { 
-    localStorage.clear(); 
-    location.href = "index.html"; 
-}
+
+        function logout() { localStorage.clear(); location.href = "index.html"; }
     </script>
 </body>
 </html>
