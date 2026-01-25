@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>PROJECT: OUTBREAK</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
     <style>
@@ -241,6 +242,21 @@
     </style>
 </head>
 <body>
+    <nav class="navbar">
+    <div class="logo">
+        OUT BREAK 
+        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
+    </div>
+    <ul class="nav-links">
+        <li><a href="main.html">홈</a></li>
+        <li><a href="sub.html">생존자목록</a></li>
+        <li><a href="board.html">자유게시판</a></li>
+        <li><a href="quest.html">의뢰게시판</a></li>
+        <li><a href="game.html">낚시터</a></li>
+        <li><a href="vending.html">자판기</a></li>
+        <li><a href="#" onclick="logout()">로그아웃</a></li>
+    </ul>
+    </nav>
     <div class="desk-layer">
         <img src="https://i.ibb.co/5x12kJGs/pngegg-2.png" class="blood-stain" alt="blood stain">
         <img src="https://i.ibb.co/ZRCc408R/pngegg-1.png" class="film-strip-bg" alt="film">
@@ -295,6 +311,34 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+
+        window.onload = function() {
+            // 로그인 상태 체크
+            const status = localStorage.getItem("loginStatus");
+            if (!status || (status !== "success" && status !== "admin")) {
+                alert("로그인이 필요합니다.");
+                location.href = "index.html";
+                return;
+            }
+
+            // 뱃지 표시 로직 수정 (수정된 부분)
+            const nick = localStorage.getItem("userNick");
+            const badge = document.getElementById("userBadge");
+            if (badge && nick) {
+                if (status === "admin") {
+                    badge.innerText = `[관리자 모드]`;
+                    badge.style.color = "#ff0000"; // 빨간 글씨
+                } else {
+                    badge.innerText = `[${nick}]`;
+                    badge.style.color = "#cccccc";
+                }
+                badge.style.display = "inline";
+            }
+
+            loadRandomSurvivor();
+            updateInfo();
+        };
+        
         async function loadRandomSurvivor() {
             const imgEl = document.getElementById('survivorImage');
             try {
@@ -320,7 +364,6 @@
         }
 
         function logout() { localStorage.clear(); location.href='index.html'; }
-        window.onload = () => { loadRandomSurvivor(); updateInfo(); };
     </script>
 </body>
 </html>

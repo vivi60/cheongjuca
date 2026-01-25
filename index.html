@@ -1,26 +1,13 @@
-
-    
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <title>BOOKING</title>
-
-    <script>
-        (function() {
-            // 1. 저장된 로그인 증명서(localStorage) 확인
-            const status = localStorage.getItem("loginStatus");
-            
-            // 2. 증명서가 유효하면(success 또는 admin) 바로 메인으로 이동!
-            if (status === "success" || status === "admin") {
-                // alert("기존 세션으로 자동 접속합니다."); // (원하시면 주석을 풀어 알림을 띄우세요)
-                window.location.href = "main.html"; 
-            }
-        })();
-    </script>
-
+    <script src="script.js"></script> 
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap');
 
         body {
             background-color: #1a1a1a;
@@ -30,193 +17,122 @@
             height: 100vh;
             margin: 0;
             font-family: 'Courier Prime', monospace;
-            /* 쿠키 클리커 마우스 커서 적용 */
             cursor: url(http://www.rw-designer.com/cursor-extern.php?id=88921), auto !important;
         }
 
-        /* 영화 티켓 박스 */
-        .ticket-box {
-            background: #f0f0f0;
-            width: 380px;
-            border: 4px solid #ab0000;
+        .ticket {
+            background-color: #fdfbf7;
+            color: #333;
+            width: 650px;
+            height: 300px;
+            display: flex;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 5px;
+            overflow: hidden;
             position: relative;
-            box-shadow: 15px 15px 0 #000;
         }
 
-        /* 티켓 상단 (영화 로고 영역) */
-        .ticket-header {
-            background: #ab0000;
-            color: #fff;
-            padding: 15px;
-            text-align: center;
-            border-bottom: 2px dashed #f0f0f0;
-        }
-
-        .ticket-header h1 {
-            margin: 0;
-            font-size: 20px;
-            letter-spacing: 2px;
-        }
-
-        /* 티켓 본체 */
-        .ticket-body {
-            padding: 30px 20px;
+        .stub {
+            background-color: #ab0000;
+            width: 180px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            border-right: 2px dashed #333;
+            position: relative;
         }
 
-        .input-group {
+        .stub::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background-color: #1a1a1a;
+            border-radius: 50%;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            justify-content: center;
+            position: relative;
         }
 
+        .input-group { margin-bottom: 15px; }
         .input-group label {
-            font-weight: bold;
+            display: block;
             font-size: 12px;
-            color: #000;
+            margin-bottom: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #555;
         }
-
-        input {
-            background: #fff;
-            border: 2px solid #000;
+        
+        /* script.js의 checkLogin()이 찾는 ID인 username, password로 통일 */
+        .input-group input {
+            width: 90%;
             padding: 10px;
-            font-family: 'Courier Prime', monospace;
+            border: 2px solid #333;
+            background: transparent;
+            font-family: 'Courier Prime';
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
             outline: none;
         }
 
-        /* 예매 확인 버튼 (Login) */
-        .login-btn {
-            background: #000;
-            color: #fff;
-            border: 2px solid #ab0000;
+        .btn-login {
+            margin-top: 10px;
             padding: 12px;
+            background: #333;
+            color: white;
+            border: none;
+            font-family: 'Courier Prime';
             font-weight: bold;
             cursor: pointer;
-            transition: 0.2s;
-            margin-top: 10px;
-            text-transform: uppercase;
+            transition: 0.3s;
+            width: 50%;
         }
-
-        .login-btn:hover {
-            background: #ab0000;
-            color: #fff;
-        }
-
-        /* 티켓 하단 (바코드 & 절취선) */
-        .ticket-footer {
-            border-top: 3px dashed #ab0000;
-            padding: 20px;
-            text-align: center;
-            position: relative;
-        }
-
-        /* 티켓 특유의 양옆 동그란 홈 */
-        .ticket-box::before, .ticket-box::after {
-            content: '';
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: #1a1a1a;
-            border-radius: 50%;
-            bottom: 65px;
-        }
-        .ticket-box::before { left: -18px; }
-        .ticket-box::after { right: -18px; }
-
-        .barcode {
-            font-family: 'Libre Barcode 39', cursive; /* 구글 폰트 바코드 사용 가능 */
-            font-size: 40px;
-            color: #000;
-            margin-bottom: 5px;
-        }
-
-        .notice {
-            font-size: 10px;
-            color: #666;
-            line-height: 1.4;
-        }
+        .btn-login:hover { background: #ab0000; }
     </style>
+    
+    <script>
+        // 페이지 로드 시 자동 로그인 체크
+        window.onload = function() {
+            const status = localStorage.getItem("loginStatus");
+            // success(일반) 또는 admin(관리자)이면 메인으로
+            if (status === "success" || status === "admin") {
+                window.location.href = "main.html"; 
+            }
+        };
+    </script>
 </head>
 <body>
-
-    <div class="ticket-box">
-        <div class="ticket-header">
-            <h1>CINEMA ADMISSION</h1>
-            <span style="font-size: 10px;">THE ZOMBIE SHOW / LIVE BROADCAST</span>
+    <div class="ticket">
+        <div class="stub">
+            <h2 style="transform: rotate(-90deg); white-space: nowrap; font-size: 32px;">TICKET</h2>
         </div>
-
-        <div class="ticket-body">
+        <div class="main-content">
+            <h1 style="font-family: 'Black Ops One'; font-size: 36px; margin: 0 0 20px 0;">OUTBREAK</h1>
+            
             <div class="input-group">
-                <label>ACTOR NICKNAME :</label>
-                <input type="text" id="loginNick" placeholder="ENTER NAME">
+                <label>OPERATOR ID</label>
+                <input type="text" id="username" placeholder="Enter ID">
             </div>
             <div class="input-group">
-                <label>ACCESS CODE (PW) :</label>
-                <input type="password" id="loginPw" placeholder="********">
+                <label>ACCESS CODE</label>
+                <input type="password" id="password" placeholder="Enter Password">
             </div>
-            <button class="login-btn" onclick="tryLogin()">BOOKING CONFIRM</button>
-        </div>
-
-        <div class="ticket-footer">
-            <div class="barcode">|||| || ||||| |||</div>
-            <div class="notice">
-                * THIS IS A LIVE RECORDING SITE.<br>
-                * NO EXIT WITHOUT PERMISSION.
-            </div>
+            
+            <button class="btn-login" onclick="checkLogin()">CONFIRM ENTRY</button>
         </div>
     </div>
-
-    <script>
-   // 1. 생존자 명단 (데이터베이스 역할)
-const userDB = {
-    "13reaking_news":   { pw: "admin0303", nick: "관리자", role: "admin" },
-    "13reaking_system": { pw: "1234",       nick: "시스템", role: "user" },
-    "runner1":          { pw: "run1",       nick: "러너1",  role: "user" }
-};
-
-function tryLogin() {
-    const inputID = document.getElementById('loginNick').value; // 입력한 아이디
-    const inputPW = document.getElementById('loginPw').value;   // 입력한 비밀번호
-
-    // 1. 빈칸 검사
-    if (!inputID || !inputPW) {
-        return alert("티켓을 발권하려면 아이디와 액세스 코드가 필요합니다.");
-    }
-
-    // 2. 명단(userDB)에 아이디가 있는지 확인
-    const userData = userDB[inputID];
-
-    if (userData) {
-        // 3. 아이디가 있다면 비밀번호가 일치하는지 확인
-        if (inputPW === userData.pw) {
-            // [성공] 로그인 정보 저장 및 입장
-            localStorage.setItem("loginStatus", "success");
-            localStorage.setItem("loginID", inputID);       // 실제 DB 키값 저장
-            localStorage.setItem("userNick", userData.nick); // 닉네임 저장
-            localStorage.setItem("userRole", userData.role); // 역할 저장 (관리자/일반)
-
-            alert(`예매가 완료되었습니다.\n[${userData.nick}] 배우님, 촬영장으로 입장합니다.`);
-            location.href = "main.html";
-        } else {
-            // 비밀번호 불일치
-            alert("승인되지 않은 배우입니다.\n액세스 코드가 일치하지 않습니다.");
-            document.getElementById('loginPw').value = "";
-            document.getElementById('loginPw').focus();
-        }
-    } else {
-        // 명단에 아이디 자체가 없음
-        alert("등록되지 않은 배우 명단입니다.\n아이디를 다시 확인하거나 감독에게 문의하십시오.");
-        document.getElementById('loginNick').focus();
-    }
-}
-    </script>
-
-    <script src="script.js"></script> 
-
-
 </body>
 </html>
-
-    

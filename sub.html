@@ -90,14 +90,28 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        
         // 로그인한 내 ID 가져오기
         const myID = localStorage.getItem("loginID") || localStorage.getItem("userNick");
 
-        window.onload = function() {
+        window.onload = function() { // 또는 페이지 로드 시 실행되는 함수 내부
+            // ... (기존 로직)
+
+            // 뱃지 표시 로직 수정/추가
+            const status = localStorage.getItem("loginStatus"); // loginStatus 확인
+            const nick = localStorage.getItem("userNick");
             const badge = document.getElementById("userBadge");
-            if (badge && myID) {
-                badge.innerText = `[${myID}]`;
-                badge.style.display = "inline";
+
+            if (badge && nick) {
+                if (status === "admin") { // 관리자인 경우
+                    badge.innerText = `[관리자 모드]`;
+                    badge.style.color = "#ff0000"; // 빨간색 적용
+                    badge.style.fontWeight = "bold"; // 굵게 (선택 사항)
+                } else { // 일반 유저인 경우
+                    badge.innerText = `[${nick}]`;
+                    badge.style.color = "#cccccc"; // 기존 색상 유지 (또는 원하는 색상)
+                }
+                badge.style.display = "inline"; // badge 보이기
             }
             renderSurvivorList();
         };

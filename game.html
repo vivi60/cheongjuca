@@ -2,260 +2,222 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>고장난 자판기 (Fixed Hit)</title>
+    <title>리듬 자판기 (4-KEY)</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap');
-        
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+
         body {
-            background-color: #1a1a1a;
+            background-color: #111;
             color: #d0d0d0;
             font-family: 'Courier Prime', monospace;
             display: flex; flex-direction: column; align-items: center;
-            margin: 0; padding: 20px; min-height: 100vh; box-sizing: border-box;
-            cursor: url(http://www.rw-designer.com/cursor-extern.php?id=88921), auto !important;
+            margin: 0; padding: 20px; min-height: 100vh;
             user-select: none;
+            overflow: hidden; /* 스크롤 방지 */
         }
 
-        .game-container {
-            background: #222; border: 4px solid #444; border-radius: 10px;
-            width: 90%; max-width: 800px; padding: 20px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            display: flex; flex-direction: column; gap: 15px; position: relative;
+        /* --- 네비게이션 (공통) --- */
+        .navbar { width: 100%; background: rgba(0,0,0,0.9); border-bottom: 1px solid #ab0000; height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 50px; box-sizing: border-box; position: fixed; top: 0; z-index: 1000; }
+        .logo { color: #ab0000; font-family: 'Black Ops One'; font-size: 24px; }
+        .nav-links { list-style: none; display: flex; gap: 20px; }
+        .nav-links a { color: white; text-decoration: none; }
+
+        /* --- 메인 컨테이너 --- */
+        .game-wrapper {
+            margin-top: 80px;
+            display: flex; gap: 20px;
+            width: 100%; max-width: 1000px;
+            height: 80vh;
         }
 
-        .top-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px dashed #555; padding-bottom: 10px; font-size: 14px; flex-wrap: wrap; gap:10px;
-        }
-        .user-info span { color: #f0d090; font-weight: bold; margin-right: 10px; }
-        .retro-btn {
-            padding: 5px 10px; border: 1px solid #666; background: #333; color: #aaa; cursor: pointer;
-            font-family: 'Courier Prime'; transition: 0.2s;
-        }
-        .retro-btn:hover { color: #fff; border-color: #fff; }
-
-        /* --- 아이템 진열장 UI --- */
-        #shelfZone {
-            background: #111; border: 5px solid #333; border-radius: 5px;
-            padding: 15px; position: relative;
-            box-shadow: inset 0 0 50px #000;
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;
-        }
-        
-        #shelfZone::after {
-            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
-            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0.05) 100%);
-            pointer-events: none; z-index: 10;
-        }
-
-        .shelf-slot {
-            background: #222; border: 2px solid #444; border-radius: 5px;
-            padding: 10px; display: flex; flex-direction: column; align-items: center;
-            cursor: pointer; transition: 0.2s; position: relative;
-        }
-        .shelf-slot:hover { border-color: #888; background: #2a2a2a; }
-        .shelf-slot.selected { 
-            border-color: #00ff00; background: #001100; 
-            box-shadow: 0 0 15px #00ff00; transform: scale(1.05); z-index: 5;
-        }
-
-        .slot-emoji { font-size: 40px; margin-bottom: 5px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
-        .slot-name { font-size: 11px; color: #aaa; text-align: center; margin-bottom: 5px; height: 26px;}
-        .slot-diff { 
-            font-family: 'Black Ops One'; font-size: 12px; color: #ff5555; 
-            background: #000; padding: 2px 5px; border-radius: 3px; border: 1px solid #555;
-        }
-        .btn-select {
-            margin-top: 5px; width: 100%; background: #333; border: 1px solid #555; 
-            color: #ddd; font-size: 10px; cursor: pointer;
-        }
-        .shelf-slot.selected .btn-select { background: #00ff00; color: #000; font-weight: bold; border-color: #00ff00; }
-
-        /* --- 타이밍 게임 오버레이 --- */
-        #gameOverlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 100;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
+        /* 왼쪽: 아이템 진열장 */
+        .shelf-section {
+            flex: 1;
+            background: #1a1a1a;
+            border: 2px solid #444;
             border-radius: 10px;
+            padding: 15px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            align-content: start;
         }
 
-        #hackZone {
-            width: 350px; padding: 20px;
-            background: #0d0d0d; border: 2px solid #444; border-radius: 10px;
-            box-shadow: 0 0 20px #000; text-align: center;
+        .shelf-item {
+            background: #222; border: 1px solid #555; border-radius: 5px;
+            padding: 10px; text-align: center; cursor: pointer; transition: 0.2s;
+        }
+        .shelf-item:hover { border-color: #ab0000; background: #2a2a2a; }
+        .shelf-item.selected { border-color: #0f0; background: #001100; box-shadow: 0 0 10px #0f0; }
+        .item-emoji { font-size: 30px; }
+        .item-info { font-size: 10px; color: #888; margin-top: 5px; }
+        .difficulty-badge { 
+            display: inline-block; background: #000; color: #fff; 
+            font-size: 10px; padding: 2px 5px; border-radius: 3px; margin-top: 3px;
         }
 
-        .hack-header {
-            font-family: 'Black Ops One'; color: #fff; font-size: 20px; margin-bottom: 10px;
-            text-shadow: 0 0 10px #0f0;
+        /* 오른쪽: 리듬게임 스테이지 */
+        .rhythm-section {
+            flex: 1.5;
+            background: #000;
+            border: 4px solid #333;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        /* 목숨 UI */
-        .lives-container { font-size: 24px; margin-bottom: 15px; letter-spacing: 5px; }
-        .heart { color: #ff0000; text-shadow: 0 0 10px #ff0000; transition: 0.3s; }
-        .heart.lost { color: #333; text-shadow: none; filter: grayscale(1); }
-
-        /* 타이밍 바 컨테이너 */
-        .timing-container {
-            position: relative; width: 100%; height: 40px;
-            background: #222; border: 2px solid #555; border-radius: 20px;
-            margin-bottom: 30px; overflow: hidden;
-            box-shadow: inset 0 0 10px #000;
+        /* 게임 UI 정보 */
+        .game-hud {
+            width: 100%; padding: 10px;
+            display: flex; justify-content: space-between;
+            background: rgba(255,255,255,0.05);
+            font-family: 'Black Ops One';
+            z-index: 10;
         }
-        
-        .timing-container::before {
-            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 20; background-size: 100% 2px, 3px 100%; pointer-events: none;
-        }
+        .score-box { color: #ffd700; font-size: 20px; }
+        .hp-bar { width: 150px; height: 20px; background: #333; border: 1px solid #555; }
+        .hp-fill { width: 100%; height: 100%; background: #0f0; transition: 0.2s; }
 
-        /* [수정] 성공 구역 - transform 속성 제거 (좌표 충돌 원인) */
-        .target-zone {
-            position: absolute; top: 0; bottom: 0; left: 0; 
-            width: 60px;
-            background: rgba(0, 255, 0, 0.4);
-            border-left: 2px solid #0f0; border-right: 2px solid #0f0;
-            z-index: 1;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        /* 4키 레인 컨테이너 */
+        .lane-container {
+            position: relative;
+            width: 320px; /* 4키 * 80px */
+            height: 100%;
+            background: linear-gradient(180deg, #000 0%, #111 100%);
+            display: flex;
+            border-left: 2px solid #444; border-right: 2px solid #444;
         }
 
-        .cursor-bar {
-            position: absolute; top: 0; bottom: 0; left: 0; width: 4px;
-            background: #fff; box-shadow: 0 0 10px #fff;
+        .lane {
+            flex: 1;
+            border-right: 1px solid #333;
+            position: relative;
+        }
+        .lane:last-child { border-right: none; }
+
+        /* 판정선 (Receptor) */
+        .receptor-line {
+            position: absolute;
+            bottom: 50px;
+            width: 100%; height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-top: 2px solid #0ff;
+            border-bottom: 2px solid #0ff;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* 키 가이드 (D F J K) */
+        .key-guide {
+            position: absolute; bottom: 10px; width: 100%; display: flex;
+        }
+        .key-label {
+            flex: 1; text-align: center; color: #555; font-weight: bold; font-size: 20px;
+            text-shadow: 0 0 5px #000;
+        }
+        .key-label.active { color: #fff; text-shadow: 0 0 10px #fff; transform: translateY(2px); }
+
+        /* 떨어지는 노트 */
+        .note {
+            position: absolute;
+            width: 90%; left: 5%; height: 20px;
+            background: #ab0000;
+            border: 1px solid #ff5555;
+            border-radius: 4px;
+            box-shadow: 0 0 10px #ab0000;
             z-index: 2;
         }
-        
-        .glitch-flicker { animation: flicker 3s infinite; }
-        @keyframes flicker {
-            0% { opacity: 1; } 90% { opacity: 1; } 92% { opacity: 0.1; } 
-            93% { opacity: 1; } 96% { opacity: 1; } 98% { opacity: 0.1; } 100% { opacity: 1; }
-        }
+        /* 라인별 노트 색상 (D,K는 파랑 / F,J는 흰색 - 디제이맥스 스타일?) */
+        .note.lane-0, .note.lane-3 { background: #0088ff; border-color: #88ccff; box-shadow: 0 0 10px #0088ff; }
+        .note.lane-1, .note.lane-2 { background: #ffffff; border-color: #cccccc; box-shadow: 0 0 10px #ffffff; }
 
-        .progress-dots { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
-        .dot { 
-            width: 15px; height: 15px; background: #333; border-radius: 50%; border: 1px solid #555; 
-            transition: 0.2s;
+        /* 히트 이펙트 */
+        .hit-effect {
+            position: absolute; bottom: 50px; width: 100%; height: 50px;
+            background: linear-gradient(to top, rgba(255,255,255,0.5), transparent);
+            opacity: 0; pointer-events: none; transition: 0.1s;
         }
-        .dot.active { background: #0f0; box-shadow: 0 0 10px #0f0; border-color: #fff; }
+        .hit-effect.flash { opacity: 1; }
 
-        #stopBtnGame {
-            width: 100%; padding: 20px; font-size: 24px; font-family: 'Black Ops One';
-            background: #ab0000; color: #fff; border: none; border-radius: 5px;
-            cursor: pointer; box-shadow: 0 5px 0 #600;
-        }
-        #stopBtnGame:active { transform: translateY(5px); box-shadow: none; }
-
-        #resultMsg {
-            position: absolute; top: 20%; width: 100%; text-align: center;
+        /* 판정 텍스트 */
+        #judgeDisplay {
+            position: absolute; top: 40%; width: 100%; text-align: center;
             font-family: 'Black Ops One'; font-size: 40px; 
-            text-shadow: 0 0 20px #000; pointer-events: none; opacity: 0;
-            transition: 0.2s; z-index: 200;
+            text-shadow: 0 0 10px #000; opacity: 0; transform: scale(0.5); transition: 0.1s; z-index: 20;
         }
 
-        .control-panel {
-            display: flex; justify-content: center; gap: 20px; padding: 15px;
-            background: #222; border-top: 2px solid #333; align-items: center;
+        /* 게임 오버레이 (시작 전/종료 후) */
+        .overlay-msg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 50; text-align: center;
         }
-        #confirmDisplay { color: #888; font-size: 14px; margin-right: 10px; }
-        #startBtn {
-            padding: 15px 40px; font-size: 18px; font-family: 'Black Ops One';
-            background: #ab0000; color: #fff; border: none; border-radius: 5px;
-            cursor: pointer; box-shadow: 0 5px 0 #500; transition: 0.1s;
+        .start-btn {
+            padding: 15px 30px; font-size: 20px; background: #ab0000; color: white;
+            border: none; cursor: pointer; font-family: 'Black Ops One'; margin-top: 20px;
         }
-        #startBtn:active { transform: translateY(5px); box-shadow: none; }
-        #startBtn:disabled { background: #444; color: #888; box-shadow: none; cursor: not-allowed; }
-
-        .bottom-section { display: flex; gap: 10px; height: 150px; }
-        .log-box, .inv-box {
-            flex: 1; background: #1a1a1a; border: 1px solid #444; padding: 10px;
-            overflow-y: auto; font-size: 12px;
-        }
-        .log-item { margin: 2px 0; color: #888; }
-        .log-success { color: #88ff88; }
-        .log-fail { color: #ff8888; }
-        
-        #invGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 5px; }
-        .inv-item { background: #333; border: 1px solid #555; text-align: center; padding: 5px; position: relative; font-size: 18px; }
-        .inv-item span { position: absolute; bottom: 0; right: 0; font-size: 10px; background: rgba(0,0,0,0.8); color: #fff; padding: 0 2px; }
-
-        .damage-shake { animation: shake 0.5s; }
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
-        }
+        .start-btn:disabled { background: #444; cursor: not-allowed; }
 
     </style>
 </head>
 <body>
 
-    <div class="game-container">
-        <div class="top-bar">
-            <div class="user-info">
-                ID: <span id="userIdDisplay">Guest</span> | 
-                💵: <span id="userMoneyDisplay">loading...</span>
-            </div>
-            <div>
-                <button class="retro-btn" onclick="location.href='shop.html'">🎒 교환소</button>
-                <button class="retro-btn" onclick="location.href='main.html'">🏠 메인</button>
-            </div>
+    <nav class="navbar">
+        <div class="logo">
+            RHYTHM HACK
+            <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px;"></span>
         </div>
+        <ul class="nav-links">
+            <li><a href="main.html">홈</a></li>
+            <li><a href="sub.html">생존자목록</a></li>
+            <li><a href="shop.html">상점</a></li>
+            <li><a href="#" onclick="logout()">로그아웃</a></li>
+        </ul>
+    </nav>
 
-        <div id="shelfZone"></div>
-
-        <div class="control-panel">
-            <div id="confirmDisplay">물건을 먼저 선택하세요</div>
-            <button id="startBtn" onclick="startGame()" disabled>START (-10G)</button>
-        </div>
-
-        <div class="bottom-section">
-            <div class="log-box" id="actionLog">
-                <div class="log-item">> 고장난 자판기입니다.</div>
-                <div class="log-item">> 물건을 고르고 [START]를 누르세요.</div>
-                <div class="log-item">> 목표: 흔들리는 초록 구역에 막대를 멈추세요!</div>
+    <div class="game-wrapper">
+        <div class="shelf-section" id="shelfList">
             </div>
-            <div class="inv-box">
-                <div style="border-bottom: 1px dashed #555; margin-bottom: 5px;">내 가방 (로컬)</div>
-                <div id="invGrid"></div>
-            </div>
-        </div>
 
-        <div id="gameOverlay">
-            <div id="hackZone">
-                <div class="hack-header">BYPASS SECURITY...</div>
+        <div class="rhythm-section">
+            <div class="game-hud">
+                <div>SCORE: <span id="scoreVal">0</span> / <span id="targetVal">0</span></div>
+                <div class="hp-bar"><div class="hp-fill" id="hpVal"></div></div>
+            </div>
+
+            <div id="judgeDisplay">PERFECT</div>
+
+            <div class="lane-container" id="laneContainer">
+                <div class="receptor-line"></div>
                 
-                <div class="lives-container" id="livesDisplay">
-                    <span class="heart">❤</span>
-                </div>
+                <div class="lane" id="lane0"><div class="hit-effect" id="eff0"></div></div>
+                <div class="lane" id="lane1"><div class="hit-effect" id="eff1"></div></div>
+                <div class="lane" id="lane2"><div class="hit-effect" id="eff2"></div></div>
+                <div class="lane" id="lane3"><div class="hit-effect" id="eff3"></div></div>
 
-                <div class="progress-dots">
-                    <div class="dot" id="dot1"></div>
-                    <div class="dot" id="dot2"></div>
-                    <div class="dot" id="dot3"></div>
+                <div class="key-guide">
+                    <div class="key-label" id="key0">D</div>
+                    <div class="key-label" id="key1">F</div>
+                    <div class="key-label" id="key2">J</div>
+                    <div class="key-label" id="key3">K</div>
                 </div>
-                
-                <div class="timing-container" id="timingContainer">
-                    <div class="target-zone" id="targetZone"></div>
-                    <div class="cursor-bar" id="cursor"></div>
-                </div>
-
-                <div class="hack-info">Space Bar 또는 버튼을 누르세요</div>
-                <button id="stopBtnGame" onmousedown="hitCheck()">STOP!</button>
             </div>
-            <div id="resultMsg">SUCCESS!</div>
-        </div>
 
+            <div class="overlay-msg" id="msgOverlay">
+                <h2 id="msgTitle" style="color:#ab0000; font-size:30px;">SYSTEM READY</h2>
+                <p id="msgDesc">왼쪽에서 해킹할 물건을 선택하세요.</p>
+                <button class="start-btn" id="startBtn" onclick="startGame()" disabled>START GAME</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -271,291 +233,421 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        const vendingItems = [
-            { id: 0, name: "미지근한 캔커피", emoji: "☕", price: 50, zoneSize: 80, baseSpeed: 5, driftSpeed: 0, desc: "쉬움", lives: 1 },
-            { id: 1, name: "찌그러진 캔음료", emoji: "🥤", price: 80, zoneSize: 70, baseSpeed: 7, driftSpeed: 1, desc: "보통", lives: 1 },
-            { id: 2, name: "유통기한 지난 과자", emoji: "🍪", price: 120, zoneSize: 60, baseSpeed: 9, driftSpeed: 2, desc: "어려움", lives: 1 },
-            { id: 3, name: "녹아내린 초콜릿", emoji: "🍫", price: 200, zoneSize: 50, baseSpeed: 11, driftSpeed: 3, desc: "매우 어려움", lives: 1 },
-            { id: 4, name: "수상한 에너지드링크", emoji: "⚡", price: 500, zoneSize: 40, baseSpeed: 14, driftSpeed: 5, desc: "전압 불안정", lives: 2 },
-            { id: 5, name: "반짝이는 동전 지갑", emoji: "👛", price: 2000, zoneSize: 25, baseSpeed: 18, driftSpeed: 7, desc: "극악", lives: 2 } 
+        // [게임 설정 데이터]
+        // speed: 노트 내려오는 속도 (높을수록 빠름)
+        // target: 클리어 목표 점수
+        // spawnRate: 노트 생성 빈도 (낮을수록 자주 나옴)
+        const items = [
+            { name: "미지근한 캔커피", emoji: "☕", price: 50, speed: 3, target: 500, spawnRate: 60, desc: "EASY" },
+            { name: "찌그러진 캔음료", emoji: "🥤", price: 80, speed: 5, target: 1000, spawnRate: 50, desc: "NORMAL" },
+            { name: "유통기한 지난 과자", emoji: "🍪", price: 120, speed: 7, target: 2000, spawnRate: 40, desc: "HARD" },
+            { name: "녹아내린 초콜릿", emoji: "🍫", price: 200, speed: 9, target: 3500, spawnRate: 30, desc: "VERY HARD" },
+            { name: "수상한 에너지드링크", emoji: "⚡", price: 500, speed: 12, target: 5000, spawnRate: 25, desc: "INSANE" },
+            { name: "반짝이는 동전 지갑", emoji: "👛", price: 2000, speed: 15, target: 8000, spawnRate: 20, desc: "CHAOS" }
         ];
 
         let selectedItemIdx = -1;
-        let currentUser = null;
-        let currentMoney = 0;
-        let rodLevel = 1;
-
         let isPlaying = false;
-        let currentStage = 0; 
-        let currentLives = 1;
+        let score = 0;
+        let hp = 100;
+        let animationFrame;
+        let frameCount = 0;
+        let notes = []; // 현재 화면에 있는 노트들 객체 배열
+        const KEY_MAP = { 'd': 0, 'f': 1, 'j': 2, 'k': 3 }; // 키 매핑
         
-        let cursorX = 0;
-        let cursorDir = 1;
-        
-        let targetX = 0;
-        let targetDir = 1;
-        let targetMaxMove = 0; 
-
-        let animFrame;
-        const PLAY_COST = 10;
-        const CONTAINER_WIDTH = 306; 
+        // 사용자 정보
+        const myID = localStorage.getItem("loginID");
+        const myNick = localStorage.getItem("userNick");
+        let userMoney = 0;
 
         window.onload = function() {
-            currentUser = localStorage.getItem("loginID");
-            if (!currentUser) { alert("로그인 필요"); location.href="index.html"; return; }
-            document.getElementById("userIdDisplay").innerText = currentUser;
+            // 배지 및 로그인 체크
+            const status = localStorage.getItem("loginStatus");
+            if (!status || (status !== "success" && status !== "admin")) {
+                alert("로그인이 필요합니다."); location.href="index.html"; return;
+            }
+            const badge = document.getElementById("userBadge");
+            if(badge && myNick) {
+                if(status === "admin") { badge.innerText="[관리자 모드]"; badge.style.color="red"; }
+                else { badge.innerText=`[${myNick}]`; badge.style.color="#ccc"; }
+                badge.style.display="inline";
+            }
 
-            database.ref(`users/${currentUser}`).on('value', snap => {
-                const data = snap.val() || {};
-                currentMoney = data.money || 0;
-                rodLevel = data.rod_level || 1;
-                document.getElementById("userMoneyDisplay").innerText = currentMoney;
+            // 돈 정보 로드
+            database.ref(`users/${myID}/money`).on('value', snap => {
+                userMoney = snap.val() || 0;
             });
 
-            renderShelves();
-            renderLocalInventory();
-
-            window.addEventListener('keydown', e => {
-                if(isPlaying && e.code === 'Space') hitCheck();
-            });
+            renderShelf();
+            
+            // 키보드 이벤트 리스너
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
         };
 
-        function renderShelves() {
-            const shelf = document.getElementById('shelfZone');
-            shelf.innerHTML = "";
-            vendingItems.forEach((item, idx) => {
+        function renderShelf() {
+            const container = document.getElementById('shelfList');
+            container.innerHTML = "";
+            items.forEach((item, idx) => {
                 const div = document.createElement('div');
-                div.className = `shelf-slot ${idx === selectedItemIdx ? 'selected' : ''}`;
-                const lifeText = item.lives > 1 ? `<span style="color:red">❤x${item.lives}</span>` : "";
+                div.className = `shelf-item ${selectedItemIdx === idx ? 'selected' : ''}`;
                 div.innerHTML = `
-                    <div class="slot-emoji">${item.emoji}</div>
-                    <div class="slot-name">${item.name}</div>
-                    <div class="slot-diff">${item.desc} ${lifeText}</div>
-                    <button class="btn-select">선택</button>
+                    <div class="item-emoji">${item.emoji}</div>
+                    <div style="font-weight:bold;">${item.name}</div>
+                    <div class="difficulty-badge" style="color:${getDiffColor(idx)}">${item.desc}</div>
+                    <div class="item-info">목표: ${item.target}점 | 속도: Lv.${item.speed}</div>
+                    <div class="item-info" style="color:gold;">비용: ${item.price} G</div>
                 `;
                 div.onclick = () => selectItem(idx);
-                shelf.appendChild(div);
+                container.appendChild(div);
             });
+        }
+
+        function getDiffColor(idx) {
+            if(idx < 2) return "#0f0"; // Easy
+            if(idx < 4) return "#ff0"; // Medium
+            return "#f00"; // Hard
         }
 
         function selectItem(idx) {
             if(isPlaying) return;
             selectedItemIdx = idx;
-            renderShelves();
-            const item = vendingItems[idx];
-            document.getElementById('confirmDisplay').innerHTML = 
-                `<span style="color:#fff">${item.name}</span> 선택됨`;
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('startBtn').innerText = `도전하기 (-${PLAY_COST}G)`;
+            renderShelf();
+            
+            const item = items[idx];
+            const msgTitle = document.getElementById('msgTitle');
+            const msgDesc = document.getElementById('msgDesc');
+            const startBtn = document.getElementById('startBtn');
+
+            msgTitle.innerText = item.name;
+            msgTitle.style.color = "#fff";
+            msgDesc.innerHTML = `
+                난이도: <span style="color:${getDiffColor(idx)}">${item.desc}</span><br>
+                필요 비용: <span style="color:gold">${item.price} G</span><br>
+                목표 점수: ${item.target} 점
+            `;
+            startBtn.disabled = false;
+            startBtn.innerText = `해킹 시작 (-${item.price}G)`;
         }
 
+        // 전역 변수 추가 (기존 변수 선언부에 추가해도 되고, 그냥 둬도 됩니다)
+        let nextSpawnAt = 0; 
+
         function startGame() {
-            if (selectedItemIdx === -1) return;
-            if (currentMoney < PLAY_COST) {
-                log("돈이 부족합니다!", "fail");
+            if(selectedItemIdx === -1) return;
+            const item = items[selectedItemIdx];
+
+            if(userMoney < item.price) {
+                alert("돈이 부족합니다!");
                 return;
             }
 
-            database.ref(`users/${currentUser}/money`).set(currentMoney - PLAY_COST);
+            if(!confirm(`${item.price}G를 사용하여 게임을 시작하시겠습니까?`)) return;
 
+            // 돈 차감
+            database.ref(`users/${myID}/money`).set(userMoney - item.price);
+
+            // ★ 바로 시작하지 않고 카운트다운 함수 호출
+            startCountdown();
+        }
+
+        function startCountdown() {
+            const overlay = document.getElementById('msgOverlay');
+            const title = document.getElementById('msgTitle');
+            const desc = document.getElementById('msgDesc');
+            const btn = document.getElementById('startBtn');
+
+            // 1. UI 준비 (버튼 숨기고, 카운트다운 준비)
+            btn.style.display = 'none'; // 버튼 숨김
+            desc.innerText = "SYSTEM BREACHING...";
+            desc.style.color = "#0f0";
+            
+            let count = 5;
+            title.innerText = count;
+            title.style.fontSize = "100px"; // 숫자 크게!
+            title.style.color = "#fff";
+
+            // 2. 1초마다 숫자 줄이기
+            const timer = setInterval(() => {
+                count--;
+                
+                if (count > 0) {
+                    title.innerText = count;
+                } else if (count === 0) {
+                    title.innerText = "HACK!";
+                    title.style.color = "#ff0000"; // 빨간색으로 강조
+                    title.style.textShadow = "0 0 20px red";
+                } else {
+                    // 3. 카운트다운 끝! 게임 시작
+                    clearInterval(timer);
+                    
+                    // 오버레이 숨기기
+                    overlay.style.display = 'none';
+                    
+                    // 스타일 원상복구 (다음 게임을 위해)
+                    title.style.fontSize = "30px"; 
+                    title.style.textShadow = "none";
+                    desc.style.color = "#aaa";
+
+                    // ★ 진짜 게임 로직 실행
+                    initGameAndLoop();
+                }
+            }, 1000); // 1초 간격
+        }
+
+        // 게임 변수 초기화 및 루프 시작 함수 (분리됨)
+        function initGameAndLoop() {
+            const item = items[selectedItemIdx];
+            
             isPlaying = true;
-            currentStage = 0;
-            currentLives = vendingItems[selectedItemIdx].lives;
-            updateLivesUI();
-            resetDots();
+            score = 0;
+            hp = 100;
+            frameCount = 0;
+            nextSpawnAt = 0;
+            notes = [];
+            document.querySelectorAll('.note').forEach(el => el.remove()); 
             
-            document.getElementById('gameOverlay').style.display = "flex";
-            document.getElementById('resultMsg').style.opacity = 0;
-            
-            const item = vendingItems[selectedItemIdx];
-            if(item.driftSpeed > 0) log("경고: 타겟이 움직입니다!", "fail");
-            if(item.baseSpeed > 12) log("경고: 전압 불안정 (속도 변화)", "fail");
+            document.getElementById('scoreVal').innerText = "0";
+            document.getElementById('targetVal').innerText = item.target;
+            updateHP();
 
-            startStage();
+            gameLoop();
         }
 
-        function updateLivesUI() {
-            const container = document.getElementById('livesDisplay');
-            container.innerHTML = "";
-            const maxLives = vendingItems[selectedItemIdx].lives;
-            for(let i=0; i<maxLives; i++) {
-                const span = document.createElement('span');
-                span.className = "heart";
-                span.innerText = "❤";
-                if (i >= currentLives) {
-                    span.classList.add("lost");
-                }
-                container.appendChild(span);
-            }
-        }
-
-        function startStage() {
-            const item = vendingItems[selectedItemIdx];
-            
-            let safeZone = item.zoneSize;
-            let currentCursorSpeed = item.baseSpeed + (currentStage * 2);
-            let currentDriftSpeed = item.driftSpeed;
-
-            if (rodLevel >= 2) {
-                safeZone *= 1.3; 
-                currentCursorSpeed *= 0.85; 
-            }
-
-            const targetEl = document.getElementById('targetZone');
-            const cursorEl = document.getElementById('cursor');
-
-            targetEl.style.width = safeZone + "px";
-            cursorEl.style.left = "0px";
-            
-            targetMaxMove = CONTAINER_WIDTH - safeZone;
-            targetX = Math.random() * targetMaxMove; 
-            targetEl.style.left = targetX + "px";
-
-            targetDir = Math.random() < 0.5 ? 1 : -1;
-            cursorX = 0;
-            cursorDir = 1;
-
-            if (currentStage === 2) cursorEl.classList.add('glitch-flicker');
-            else cursorEl.classList.remove('glitch-flicker');
-
-            function loop() {
-                if(!isPlaying) return;
-
-                let jitter = (Math.random() * 4) - 2; 
-                if (item.baseSpeed < 10) jitter = 0; 
-                
-                cursorX += (currentCursorSpeed + jitter) * cursorDir;
-                
-                if(cursorX >= CONTAINER_WIDTH - 4 || cursorX <= 0) {
-                    cursorDir *= -1;
-                    cursorX = Math.max(0, Math.min(cursorX, CONTAINER_WIDTH - 4));
-                }
-                
-                if (currentDriftSpeed > 0) {
-                    targetX += currentDriftSpeed * targetDir;
-                    if(targetX >= targetMaxMove || targetX <= 0) {
-                        targetDir *= -1;
-                    }
-                    targetEl.style.left = targetX + "px";
-                }
-                
-                cursorEl.style.left = cursorX + "px";
-                animFrame = requestAnimationFrame(loop);
-            }
-            loop();
-        }
-
-        // [핵심 수정] 판정 로직: 보이는 그대로 판정 (getBoundingClientRect)
-        function hitCheck() {
+        function gameLoop() {
             if(!isPlaying) return;
-            cancelAnimationFrame(animFrame);
 
-            const cursorEl = document.getElementById('cursor');
-            const targetEl = document.getElementById('targetZone');
+            const item = items[selectedItemIdx];
+            frameCount++;
 
-            // 화면상 실제 좌표 가져오기 (절대 좌표)
-            const cRect = cursorEl.getBoundingClientRect();
-            const tRect = targetEl.getBoundingClientRect();
+            // ★ [핵심 수정] 변칙적인 노트 생성 로직
+            if (frameCount >= nextSpawnAt) {
+                // 1. 노트 하나 생성
+                const firstLane = spawnNote();
 
-            // 커서의 중심점
-            const cCenter = cRect.left + (cRect.width / 2);
-
-            // 판정: 커서 중심이 타겟 박스 안에 있는가?
-            if (cCenter >= tRect.left && cCenter <= tRect.right) {
-                // SUCCESS
-                document.getElementById(`dot${currentStage+1}`).classList.add('active');
-                currentStage++;
-
-                if(currentStage >= 3) {
-                    showResult("SUCCESS!", "#0f0");
-                    setTimeout(() => giveReward(selectedItemIdx), 1000);
-                } else {
-                    setTimeout(startStage, 500);
+                // 2. [어려움 전용] 확률적으로 '동시 치기' (Double Note) 생성
+                // 난이도가 높을수록(speed > 7) 동시치기 확률 증가
+                if (item.speed > 7 && Math.random() < 0.3) {
+                    spawnNote(firstLane); // 첫 번째 노트와 겹치지 않게 생성
                 }
-            } else {
-                // FAIL
-                currentLives--;
-                updateLivesUI();
+
+                // 3. [변칙 박자] 다음 노트가 나올 시간(Interval)을 랜덤하게 계산
+                // 기본 템포에서 0.5배(빠름) ~ 1.5배(느림) 사이로 흔듦
+                let chaosFactor = 0.5 + Math.random(); 
+
+                // [극악 난이도 전용] 20% 확률로 '폭타' (아주 짧은 간격) 발생
+                if (item.speed > 10 && Math.random() < 0.2) {
+                    chaosFactor = 0.25; 
+                }
+
+                // 다음 소환 시간 예약
+                nextSpawnAt = frameCount + (item.spawnRate * chaosFactor);
+            }
+
+            // 3. 노트 이동 및 미스 체크 (기존 유지)
+            for (let i = notes.length - 1; i >= 0; i--) {
+                const note = notes[i];
+                note.y += item.speed;
+                note.el.style.top = note.y + "px";
+
+                const containerH = document.getElementById('laneContainer').clientHeight;
                 
-                const overlay = document.getElementById('hackZone');
-                overlay.classList.add('damage-shake');
-                setTimeout(()=>overlay.classList.remove('damage-shake'), 500);
+                if (note.y > containerH) {
+                    if (note.hit) {
+                        note.el.remove();
+                        notes.splice(i, 1);
+                    } else {
+                        showJudge("MISS", "#555");
+                        hp -= 10; 
+                        updateHP();
+                        note.el.remove();
+                        notes.splice(i, 1);
+                        checkGameOver();
+                    }
+                }
+            }
 
-                if (currentLives > 0) {
-                    showResult("WARNING!", "#ff9900");
-                    log("충격 감지! 시스템이 불안정합니다. (재시도)", "fail");
-                    setTimeout(() => {
-                        document.getElementById('resultMsg').style.opacity = 0;
-                        startStage(); 
-                    }, 1000);
+            animationFrame = requestAnimationFrame(gameLoop);
+        }
+
+        function spawnNote(excludeLane = -1) {
+            let laneIdx;
+            
+            // 겹치지 않는 레인을 뽑을 때까지 반복 (동시치기용)
+            do {
+                laneIdx = Math.floor(Math.random() * 4);
+            } while (laneIdx === excludeLane);
+
+            const laneEl = document.getElementById(`lane${laneIdx}`);
+            
+            const noteEl = document.createElement('div');
+            noteEl.className = `note lane-${laneIdx}`;
+            noteEl.style.top = "-20px"; 
+            laneEl.appendChild(noteEl);
+
+            notes.push({
+                el: noteEl,
+                lane: laneIdx,
+                y: -20,
+                hit: false 
+            });
+
+            return laneIdx; // 생성된 레인 번호를 반환 (다음 노트가 피할 수 있게)
+        }
+
+        function handleKeyDown(e) {
+            if(!isPlaying) return;
+            const key = e.key.toLowerCase();
+            if(KEY_MAP.hasOwnProperty(key)) {
+                const lane = KEY_MAP[key];
+                
+                // 키 누름 시각적 효과
+                document.getElementById(`key${lane}`).classList.add('active');
+                document.getElementById(`eff${lane}`).classList.add('flash');
+                setTimeout(() => document.getElementById(`eff${lane}`).classList.remove('flash'), 100);
+
+                checkHit(lane);
+            }
+        }
+
+        function handleKeyUp(e) {
+            const key = e.key.toLowerCase();
+            if(KEY_MAP.hasOwnProperty(key)) {
+                document.getElementById(`key${KEY_MAP[key]}`).classList.remove('active');
+            }
+        }
+
+        function checkHit(lane) {
+            // 해당 레인에 있는 노트 중, 판정선 근처에 있는 가장 아래쪽 노트 찾기
+            // 판정선 위치: bottom 50px. 컨테이너 높이를 기준으로 top 좌표 계산 필요.
+            const containerH = document.getElementById('laneContainer').clientHeight;
+            const targetY = containerH - 50 - 10; // 판정선 y좌표 (대략적)
+
+            // 판정 범위 (픽셀)
+            const PER_RANGE = 30; 
+            const GOOD_RANGE = 60;
+            const BAD_RANGE = 90;
+
+            // 해당 레인의 노트 필터링
+            const targetNotes = notes.filter(n => n.lane === lane && !n.hit);
+            
+            // 가장 아래에 있는 노트 찾기 (y값이 가장 큰 것)
+            if(targetNotes.length === 0) return;
+            
+            // 정렬 (y 내림차순)
+            targetNotes.sort((a, b) => b.y - a.y);
+            const note = targetNotes[0]; // 타겟 노트
+
+            const diff = Math.abs(targetY - note.y);
+
+            if (diff < BAD_RANGE) {
+                note.hit = true;
+                note.el.style.opacity = 0; // 숨김 처리 (나중에 루프에서 제거됨)
+                
+                if (diff < PER_RANGE) {
+                    score += 100;
+                    showJudge("PERFECT", "#0ff");
+                    hp = Math.min(100, hp + 2); // 힐
+                } else if (diff < GOOD_RANGE) {
+                    score += 50;
+                    showJudge("GOOD", "#0f0");
+                    hp = Math.min(100, hp + 1);
                 } else {
-                    showResult("FAILED...", "#f00");
-                    setTimeout(endGame, 1000);
+                    score += 10;
+                    showJudge("BAD", "#ff0");
                 }
+                
+                document.getElementById('scoreVal').innerText = score;
+                updateHP();
+                checkWin();
             }
         }
 
-        function showResult(text, color) {
-            const msg = document.getElementById('resultMsg');
-            msg.innerText = text; msg.style.color = color; msg.style.opacity = 1;
-            msg.style.transform = "scale(1.5)";
-            setTimeout(() => msg.style.transform = "scale(1)", 200);
+        function showJudge(text, color) {
+            const el = document.getElementById('judgeDisplay');
+            el.innerText = text;
+            el.style.color = color;
+            el.style.opacity = 1;
+            el.style.transform = "scale(1.2)";
+            
+            // 애니메이션 리셋 trick
+            setTimeout(() => {
+                el.style.transform = "scale(1)";
+                el.style.opacity = 0;
+            }, 300);
         }
 
-        function endGame() {
+        function updateHP() {
+            const bar = document.getElementById('hpVal');
+            bar.style.width = hp + "%";
+            if(hp < 30) bar.style.background = "red";
+            else bar.style.background = "#0f0";
+        }
+
+        function checkGameOver() {
+            if (hp <= 0) {
+                endGame(false);
+            }
+        }
+
+        function checkWin() {
+            const item = items[selectedItemIdx];
+            if (score >= item.target) {
+                endGame(true);
+            }
+        }
+
+        function endGame(isWin) {
             isPlaying = false;
-            document.getElementById('gameOverlay').style.display = "none";
-        }
+            cancelAnimationFrame(animationFrame);
+            
+            const overlay = document.getElementById('msgOverlay');
+            const title = document.getElementById('msgTitle');
+            const desc = document.getElementById('msgDesc');
+            const btn = document.getElementById('startBtn');
 
-        function resetDots() {
-            for(let i=1; i<=3; i++) document.getElementById(`dot${i}`).classList.remove('active');
-        }
-
-        function giveReward(idx) {
-            let item = vendingItems[idx];
-            let isGlitch = false;
-
-            if (Math.random() < 0.3) {
-                isGlitch = true;
-                const randIdx = Math.floor(Math.random() * vendingItems.length);
-                item = vendingItems[randIdx];
-            }
-
-            const inv = getLocalInv();
-            inv[item.name] = (inv[item.name] || 0) + 1;
-            inv[item.name + "_price"] = item.price;
-            inv[item.name + "_icon"] = item.emoji;
-            localStorage.setItem("myInventory", JSON.stringify(inv));
-            renderLocalInventory();
-
-            if (isGlitch) {
-                log(`⚠️ 회로 오작동! 엉뚱한 물건 획득: [${item.emoji} ${item.name}]`, "fail");
+            overlay.style.display = 'flex';
+            btn.style.display = 'inline-block'; // ★ [추가됨] 아까 숨겼던 버튼 다시 보이기
+            
+            if (isWin) {
+                title.innerText = "HACKING SUCCESS!";
+                title.style.color = "#0f0";
+                desc.innerText = `목표 점수 달성! 보상을 획득합니다.`;
+                btn.innerText = "보상 수령";
+                btn.onclick = () => giveReward();
             } else {
-                log(`잠금 해제 성공! [${item.emoji} ${item.name}] 획득`, "success");
-            }
-            endGame();
-        }
-
-        function log(msg, type="") {
-            const box = document.getElementById("actionLog");
-            const div = document.createElement("div");
-            div.className = "log-item " + (type==="success"?"log-success":type==="fail"?"log-fail":"");
-            div.innerText = "> " + msg;
-            box.prepend(div);
-        }
-
-        function getLocalInv() { return JSON.parse(localStorage.getItem("myInventory") || "{}"); }
-        function renderLocalInventory() {
-            const grid = document.getElementById("invGrid");
-            grid.innerHTML = "";
-            const inv = getLocalInv();
-            for (const [key, val] of Object.entries(inv)) {
-                if (!key.includes("_price") && !key.includes("_icon") && val > 0) {
-                    const icon = inv[key+"_icon"] || "📦";
-                    grid.innerHTML += `<div class="inv-item">${icon}<span>${val}</span></div>`;
-                }
+                title.innerText = "SYSTEM FAILURE";
+                title.style.color = "#f00";
+                desc.innerText = `HP가 소진되었습니다.`;
+                btn.innerText = "다시 시도";
+                btn.onclick = () => startGame(); // 재시작 시 다시 카운트다운부터
             }
         }
+
+        function giveReward() {
+            const item = items[selectedItemIdx];
+            // 확률적으로 엉뚱한 물건 (기존 로직 유지)
+            let rewardItem = item;
+            let msg = `[${item.name}] 획득!`;
+
+            if (Math.random() < 0.1) { // 10% 확률로 꽝
+                const randIdx = Math.floor(Math.random() * items.length);
+                rewardItem = items[randIdx];
+                msg = `⚠️ 오류 발생! 엉뚱한 물건 [${rewardItem.name}] 획득...`;
+            }
+
+            // 인벤토리 저장
+            const inv = JSON.parse(localStorage.getItem("myInventory") || "{}");
+            inv[rewardItem.name] = (inv[rewardItem.name] || 0) + 1;
+            inv[rewardItem.name + "_price"] = rewardItem.price;
+            inv[rewardItem.name + "_icon"] = rewardItem.emoji;
+            localStorage.setItem("myInventory", JSON.stringify(inv));
+
+            alert(msg);
+            location.reload(); // 새로고침하여 초기화
+        }
+
+        function logout() { localStorage.clear(); location.href="index.html"; }
     </script>
 </body>
 </html>

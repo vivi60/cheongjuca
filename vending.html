@@ -115,6 +115,25 @@
             }
         }
 
+        window.onload = function() {
+            // 1. 배지 표시
+            const status = localStorage.getItem("loginStatus");
+            const nick = localStorage.getItem("userNick");
+            const badge = document.getElementById("userBadge");
+
+            if (badge && nick) {
+                if (status === "admin") {
+                    badge.innerText = `[관리자 모드]`;
+                    badge.style.color = "#ff0000";
+                    badge.style.fontWeight = "bold";
+                } else {
+                    badge.innerText = `[${nick}]`;
+                    badge.style.color = "#cccccc";
+                }
+                badge.style.display = "inline";
+            }
+        };
+        
         // 각 파일의 script 태그 안에 있는 logout 함수를 이 코드로 교체하세요.
 function logout() { 
     localStorage.clear(); 

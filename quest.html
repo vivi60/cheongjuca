@@ -106,17 +106,41 @@
 
 <script src="script.js"></script> 
 <script>
-    // 1. 기본 변수 정의
+    // 1. 기본 변수 설정
     const myID = localStorage.getItem("loginID"); 
     const myNick = localStorage.getItem("userNick") || "생존자";
-    // [복구됨] 관리자 여부 확인
-    const isAdmin = localStorage.getItem("loginStatus") === "admin";
 
-    // 2. 실시간 의뢰 목록 감시 및 렌더링
+    // 2. 페이지 로드 시 실행 (배지 표시 + 인벤토리 로드)
+    window.onload = function() {
+        // [배지 표시 로직]
+        const status = localStorage.getItem("loginStatus");
+        const nick = localStorage.getItem("userNick");
+        const badge = document.getElementById("userBadge");
+
+        if (badge && nick) {
+            if (status === "admin") {
+                badge.innerText = `[관리자 모드]`;
+                badge.style.color = "#ff0000";
+                badge.style.fontWeight = "bold";
+            } else {
+                badge.innerText = `[${nick}]`;
+                badge.style.color = "#cccccc";
+            }
+            badge.style.display = "inline";
+        }
+
+        // [인벤토리 로드]
+        loadMyInventoryForQuest();
+    };
+
+    // 3. 의뢰 목록 실시간 렌더링 (여기에 삭제 버튼 로직이 있습니다!)
     database.ref('requests').on('value', (snapshot) => {
         const questListArea = document.getElementById('questListArea');
         const data = snapshot.val();
         questListArea.innerHTML = ""; 
+
+        // ★ 여기서 관리자 여부를 다시 확인합니다 (실수 방지)
+        const isAdmin = localStorage.getItem("loginStatus") === "admin";
 
         if (!data) {
             questListArea.innerHTML = "<p style='color:white; width:100%; text-align:center;'>등록된 의뢰가 없습니다.</p>";
@@ -132,7 +156,7 @@
             const isAuthor = (quest.authorID === myID);
             const isRunner = (quest.takenBy === myNick);
 
-            // 상태별 버튼 로직
+            // (1) 상태별 버튼 로직
             if (quest.status === 'open') {
                 buttonsHtml = isAuthor ? 
                     `<button onclick="cancelQuest('${key}')" style="background:#ab0000; color:white;">의뢰 취소 (물자회수)</button>` : 
@@ -142,9 +166,13 @@
                     `<button class="btn-accept" onclick="requestApproval('${key}')" style="background:#222; border:2px solid #ab0000; color:#ab0000;">임무 완료 보고</button>` : 
                     `<button class="btn-accept" disabled style="background:#222; color:#ff4444;">[${quest.takenBy}] 수행중...</button>`;
             } else if (quest.status === 'pending') {
+                // ★ 여기가 수정된 부분입니다 (거절 버튼 추가됨)
                 if (isAuthor) {
                     statusBadge = "<div style='color:#00ff00; font-size:14px; margin-bottom:5px;'>★ 상대방이 완료했습니다!</div>";
-                    buttonsHtml = `<button class="btn-accept" onclick="approveQuest('${key}')" style="background:#006400; border:2px solid #00ff00;">완료 확인 (보상 지급)</button>`;
+                    buttonsHtml = `
+                        <button class="btn-accept" onclick="approveQuest('${key}')" style="background:#006400; border:2px solid #00ff00;">완료 확인 (보상 지급)</button>
+                        <button class="btn-accept" onclick="rejectQuest('${key}')" style="background:#ab0000; border:2px solid #ff4444; margin-left:5px;">거절 (다시 오픈)</button>
+                    `;
                 } else {
                     buttonsHtml = `<button class="btn-accept" disabled style="background:#444;">의뢰자 확인 대기중...</button>`;
                 }
@@ -153,17 +181,18 @@
                     statusBadge = "<div style='color:gold; font-size:14px; margin-bottom:5px;'>★ 의뢰자가 확인했습니다!</div>";
                     buttonsHtml = `<button class="btn-accept" onclick="finishAndGetReward('${key}')" style="background:gold; color:black; font-weight:bold; border:2px solid orange;">보상 수령 (목록에서 삭제)</button>`;
                 } else { 
-                    card.style.display = 'none'; return; 
+                    // 완료된 의뢰 숨김 처리 (관리자는 볼 수 있게 하려면 주석 해제)
+                    // card.style.display = 'none'; return; 
                 }
             }
 
-            // [복구됨] 관리자용 강제 삭제 버튼 생성
+            // (2) ★ [핵심] 관리자용 강제 삭제 버튼 생성
             let adminBtnHtml = "";
             if (isAdmin) {
                 adminBtnHtml = `<button onclick="forceDeleteQuest('${key}')" style="background:black; color:red; border:1px solid red; margin-top:5px; width:100%; font-size:12px;">[관리자] 강제 삭제</button>`;
             }
 
-            // 카드 HTML 조립
+            // (3) 카드 조립
             card.innerHTML = `
                 <div class="quest-profile"><img src="${quest.image || 'https://i.imgur.com/3SPL075.png'}" onerror="this.src='https://i.imgur.com/3SPL075.png'"></div>
                 <h3 class="quest-title">[${quest.title}]</h3>
@@ -172,13 +201,12 @@
                 <div style="font-size:12px; color:#666; margin-bottom:5px;">의뢰자: ${quest.author}</div>
                 ${statusBadge}
                 <div class="quest-buttons">${buttonsHtml}</div>
-                ${adminBtnHtml}
-            `;
+                ${adminBtnHtml} `;
             questListArea.appendChild(card);
         });
     });
 
-    // --- 관리자 기능: 강제 삭제 ---
+    // 4. 관리자 기능: 강제 삭제 함수
     window.forceDeleteQuest = function(key) {
         if(confirm("관리자 권한으로 이 의뢰를 영구 삭제하시겠습니까?\n(경고: 보상은 누구에게도 돌아가지 않습니다.)")) {
             database.ref('requests/' + key).remove();
@@ -186,7 +214,7 @@
         }
     }
 
-    // --- 나머지 기능들 (기존과 동일) ---
+    // 5. 일반 기능 함수들 (기존 유지)
     function loadMyInventoryForQuest() {
         const rewardSelect = document.getElementById('qRewardSelect');
         if (!myID) return;
@@ -278,11 +306,93 @@
         });
     }
 
-    function acceptQuest(key) { database.ref('requests/'+key).update({status:'accepted', takenBy:myNick}); }
-    function requestApproval(key) { database.ref('requests/'+key).update({status:'pending'}); }
-    function approveQuest(key) { database.ref('requests/'+key).update({status:'completed'}); }
+    // 1. [수락] 수행자 ID(runnerID)도 같이 저장하도록 수정! (알림을 위해 필수)
+    function acceptQuest(key) { 
+        if(!confirm("이 의뢰를 수락하시겠습니까?")) return;
+        
+        database.ref('requests/' + key).update({
+            status: 'accepted', 
+            takenBy: myNick,
+            runnerID: myID // ★ 중요: 수행자의 ID를 저장해야 나중에 알림을 보낼 수 있음
+        }); 
+        
+        // (선택) 의뢰자에게 "누군가 수락했다"고 알림 보내기
+        database.ref('requests/' + key).once('value', snap => {
+            const q = snap.val();
+            sendNotification(q.authorID, `🔔 [의뢰] ${myNick}님이 '${q.title}' 의뢰를 수락했습니다!`);
+        });
+    }
 
-    window.onload = loadMyInventoryForQuest;
+    // 2. [완료 보고] 수행자 -> 의뢰자에게 알림 발송
+    function requestApproval(key) { 
+        if(!confirm("임무를 완료했나요? 의뢰자에게 보고합니다.")) return;
+
+        database.ref('requests/' + key).once('value', snapshot => {
+            const quest = snapshot.val();
+            
+            // 상태 변경
+            database.ref('requests/' + key).update({status: 'pending'});
+
+            // ★ 의뢰자에게 알림 전송
+            sendNotification(quest.authorID, `📬 [의뢰] '${quest.title}' 임무 완료 보고가 도착했습니다! 확인해주세요.`);
+            
+            alert("의뢰자에게 완료 보고를 보냈습니다.");
+        });
+    }
+
+    // 3. [승인] 의뢰자 -> 수행자에게 알림 발송
+    function approveQuest(key) { 
+        if(!confirm("완료를 승인하고 보상을 지급하시겠습니까?")) return;
+
+        database.ref('requests/' + key).once('value', snapshot => {
+            const quest = snapshot.val();
+            
+            // 상태 변경
+            database.ref('requests/' + key).update({status: 'completed'});
+
+            // ★ 수행자에게 알림 전송 (runnerID가 있어야 함)
+            if (quest.runnerID) {
+                sendNotification(quest.runnerID, `🎉 [의뢰] '${quest.title}' 완료 승인! 보상을 수령하세요.`);
+            }
+            
+            alert("승인 완료! 수행자가 보상을 수령할 수 있습니다.");
+        });
+    }
+
+    // 4. [공통] 알림 보내기 도우미 함수 (스크립트 맨 아래에 추가하세요)
+    function sendNotification(targetId, message) {
+        if (!targetId) return;
+        database.ref('users/' + targetId + '/notifications').push({
+            message: message,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            read: false
+        });
+    }
+
+    // [NEW] 의뢰 거절 (다시 오픈하기)
+    function rejectQuest(key) {
+        if(!confirm("결과물이 만족스럽지 않나요?\n의뢰를 거절하고 다시 [공개 상태]로 전환합니다.\n(현재 수행자는 해제됩니다.)")) return;
+
+        database.ref('requests/' + key).once('value', snapshot => {
+            const quest = snapshot.val();
+            const oldRunnerID = quest.runnerID; // 알림 보낼 수행자 ID 저장
+
+            // DB 업데이트: 상태를 open으로 돌리고, 수행자 정보를 지움
+            database.ref('requests/' + key).update({
+                status: 'open',
+                takenBy: null, 
+                runnerID: null
+            });
+
+            // 수행자에게 알림 전송
+            if (oldRunnerID) {
+                sendNotification(oldRunnerID, `⚠️ [의뢰 거절] '${quest.title}' 의뢰자가 완료를 거절했습니다. 의뢰가 취소되었습니다.`);
+            }
+
+            alert("의뢰를 거절했습니다.\n이제 다른 사람들이 다시 '수락'할 수 있습니다.");
+        });
+    }
+    
 </script>
 </body>
 </html>
