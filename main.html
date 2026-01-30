@@ -66,24 +66,30 @@
         */
         .left-sidebar {
             position: absolute;
-            top: 80px; 
-            left: 30px;
+            
+            /* [수정] px 대신 % 사용 */
+            top: 5%;   /* 화면 높이의 15% 지점에서 시작 (네비게이션바 피해서) */
+            left: 2%;   /* 화면 너비의 2% 지점에 위치 */
             
             display: flex;
-            flex-direction: column; /* 세로 정렬 */
-            gap: 15px; /* 아이템 간격 */
-            align-items: flex-start; /* 왼쪽 정렬 */
+            flex-direction: column; 
+            gap: 2vh;   /* [수정] 버튼 사이 간격도 화면 높이(vh)에 따라 조절 */
+            align-items: flex-start; 
         }
-
         /* 버튼 스타일 */
         /* 버튼 스타일 수정 */
         .custom-btn {
-            width: auto;   /* 200px -> auto (원본 너비 그대로) */
-            height: auto;  /* 70px -> auto (원본 높이 그대로) */
+            width: auto; 
+            height: auto;
+            
+            /* [추가] 화면이 작아도 버튼이 화면의 20%를 넘지 않게 제한 */
+            max-width: 20vw;  
+            /* [추가] 버튼 높이도 화면의 10%를 넘지 않게 제한 (선택사항) */
+            max-height: 10vh; 
             
             cursor: pointer;
             transition: transform 0.2s;
-            display: block; /* 줄바꿈을 위해 블록 요소로 설정 */
+            display: block;
         }
         .custom-btn:hover { transform: scale(1.00) translateX(10px); }
 
@@ -92,12 +98,21 @@
             font-family: 'Pretendard';
             margin-top: 3px; /* 버튼들과 약간 더 거리 두기 */
         }
-        .d-day-label { font-size: 12px; color: #9f9f9f; margin-bottom: 0px; }
         .d-day-count { 
-            font-size: 50px; 
+            /* [수정] 50px -> 4vw (화면 너비의 4% 크기) */
+            font-size: 4vw; 
+            
             color: #e8e8e8; 
             text-shadow: 2px 2px 0 #000;
-            font-weight: 900; /* ★ 이 줄을 추가하세요! (엄청 두껍게) */
+            font-weight: 900; 
+            letter-spacing: -0.3vw; /* [수정] 자간도 비율로 설정 (-5px 대신) */
+        }
+        
+        /* TARGET DAY 라벨도 비율로 */
+        .d-day-label {
+            font-size: 1vw; /* 화면 너비의 1% 크기 */
+            color: #888;
+            margin-bottom: -0.5vh;
         }
     </style>
 </head>
@@ -124,9 +139,9 @@
 
         <div class="left-sidebar">
             
-            <img src="https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%87%E1%85%A5%E1%84%90%E1%85%B3%E1%86%AB1.png?alt=media&token=7714fc5d-fa31-48d7-8062-58c65675ddd9" class="custom-btn" onclick="alert('버튼1 실행')">
-            <img src="https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%87%E1%85%A5%E1%84%90%E1%85%B3%E1%86%AB2.png?alt=media&token=fa8319e4-7b67-4053-9039-1980e840c69a" class="custom-btn" onclick="alert('버튼2 실행')">
-            <img src="https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%87%E1%85%A5%E1%84%90%E1%85%B3%E1%86%AB3.png?alt=media&token=7510b0ae-e5f0-41b7-a3b8-9a26a4446586" class="custom-btn" onclick="alert('버튼3 실행')">
+            <img src="https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%87%E1%85%A5%E1%84%90%E1%85%B3%E1%86%AB1.png?alt=media&token=7714fc5d-fa31-48d7-8062-58c65675ddd9" class="custom-btn" onclick="location.href='board.html'">
+            <img src="https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%87%E1%85%A5%E1%84%90%E1%85%B3%E1%86%AB2.png?alt=media&token=fa8319e4-7b67-4053-9039-1980e840c69a" class="custom-btn" onclick="location.href='sub.html'">
+            <img src="https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%87%E1%85%A5%E1%84%90%E1%85%B3%E1%86%AB3.png?alt=media&token=7510b0ae-e5f0-41b7-a3b8-9a26a4446586" class="custom-btn" onclick="location.href='vending.html'">
 
             <div class="d-day-box">
                 <div class="d-day-label">생존자 조우까지</div>
