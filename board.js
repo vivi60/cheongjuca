@@ -2,35 +2,40 @@
 
 let currentPage = 1;
 const postsPerPage = 10; 
-let allPosts = []; // Firebase에서 가져온 전체 데이터를 담을 변수
+let allPosts = []; 
 
-// 1. 실시간 데이터 불러오기 (최초 1회 실행 및 데이터 변경 시 자동 호출)
+// 1. 실시간 데이터 불러오기
 database.ref('posts').on('value', (snapshot) => {
     const data = snapshot.val();
     
-    // 데이터를 배열로 변환하고 최신순(역순)으로 정렬하여 저장
     allPosts = data ? Object.entries(data).map(([key, value]) => ({ 
         id: key, 
         ...value,
         comments: value.comments ? Object.entries(value.comments).map(([ckey, cvalue]) => ({ id: ckey, ...cvalue })) : []
     })).reverse() : [];
     
-    renderPosts(); // 데이터가 오면 화면을 그립니다.
+    renderPosts(); 
 });
 
-// 2. 게시글 추가 (Firebase 저장)
+// 2. 게시글 추가 (수정됨: authorID 저장 추가)
 function addPost() {
     const title = document.getElementById('postTitle').value;
     const content = document.getElementById('postContent').value;
+    
+    // [중요] 현재 로그인한 사용자의 실제 ID 가져오기
+    const myID = localStorage.getItem("loginID"); 
+    
+    // 화면에 보여줄 익명 닉네임 생성
     const anonymousNum = Math.floor(Math.random() * 900) + 100;
-    const author = `익명${anonymousNum}`;
+    const authorDisplay = `익명${anonymousNum}`;
 
     if (!title || !content) return alert("내용을 입력하세요.");
-    const password = prompt(`${author}님, 파기 비밀번호를 입력하세요:`);
+    const password = prompt(`${authorDisplay}님, 파기 비밀번호를 입력하세요:`);
     if (!password) return;
 
     database.ref('posts').push({
-        author: author,
+        author: authorDisplay, // 화면 표시용 (익명)
+        authorID: myID,        // ★ [핵심] 알림 발송용 실제 ID (DB에만 저장됨)
         title: title,
         content: content,
         password: password,
@@ -41,27 +46,54 @@ function addPost() {
     document.getElementById('postContent').value = '';
 }
 
-// 3. 댓글 추가 (해당 게시글 하위에 저장)
+// 댓글 추가 함수 (익명 버전)
 function addComment(postId) {
-    const commentInput = document.getElementById(`input-${postId}`);
-    const commentText = commentInput.value;
-    if (!commentText) return;
+    const input = document.getElementById(`input-${postId}`);
+    const text = input.value;
+    if (!text) return;
 
-    const anonymousNum = Math.floor(Math.random() * 900) + 100;
-    const author = `익명${anonymousNum}`;
-    const password = prompt(`${author}님, 댓글 삭제용 비밀번호를 입력하세요:`);
-    if (!password) return;
+    // [수정된 부분] 닉네임 대신 랜덤 익명 이름 생성 (예: 익명452)
+    const randomNum = Math.floor(Math.random() * 900) + 100; // 100 ~ 999 랜덤
+    const anonymousNick = `익명${randomNum}`; 
 
-    database.ref(`posts/${postId}/comments`).push({
-        author: author,
-        text: commentText,
-        password: password
+    // 현재 로그인한 사람 ID (알림 체크용, 이름으로는 안 씀)
+    const myID = localStorage.getItem("loginID");
+
+    const postRef = database.ref('posts/' + postId);
+    
+    postRef.once('value', snapshot => {
+        const post = snapshot.val();
+        
+        // 댓글 저장 (작성자를 랜덤 익명으로 저장)
+        const newCommentRef = postRef.child('comments').push();
+        newCommentRef.set({
+            author: anonymousNick, // ★ 여기가 '익명XXX'로 저장됨
+            text: text,
+            timestamp: new Date().toISOString()
+        });
+
+        // ★ [알림 메시지 수정: 댓글 내용 추가]
+        if (post.authorID && post.authorID !== myID) {
+            // 1. 게시글 제목 줄이기 (10글자)
+            let shortTitle = post.title;
+            if (shortTitle.length > 10) shortTitle = shortTitle.substring(0, 10) + "...";
+
+            // 2. 댓글 내용 줄이기 (15글자)
+            let shortComment = text;
+            if (shortComment.length > 15) shortComment = shortComment.substring(0, 15) + "...";
+
+            // 3. 최종 메시지 조합
+            // 예: 내 '공지사항...' 게시물에 익명842님이 댓글을 남겼습니다: "안녕하세요..."
+            const message = `💬 [게시판] 내 '${shortTitle}' 게시물에 ${anonymousNick}님이 댓글을 남겼습니다: "${shortComment}"`;
+            
+            sendNotification(post.authorID, message);
+        }
     });
 
-    commentInput.value = '';
+    input.value = '';
 }
 
-// 4. 삭제 함수 (게시글 & 댓글 통합)
+// 4. 삭제 함수
 function deletePost(postId) {
     const loginStatus = localStorage.getItem("loginStatus");
     database.ref(`posts/${postId}`).once('value', (snapshot) => {
@@ -84,7 +116,7 @@ function deleteComment(postId, commentId) {
     });
 }
 
-// 5. 화면 그리기 및 페이징 로직
+// 5. 화면 그리기 및 페이징
 function renderPosts() {
     const postList = document.getElementById('postList');
     const totalPages = Math.ceil(allPosts.length / postsPerPage);
@@ -134,4 +166,15 @@ function goToPage(page) {
     currentPage = page;
     renderPosts();
     window.scrollTo(0, 0);
+}
+
+// 알림 보내기 함수 (필수)
+function sendNotification(targetId, message) {
+    if(!targetId) return; // 타겟 ID가 없으면 중단
+    
+    database.ref('users/' + targetId + '/notifications').push({
+        message: message,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        read: false
+    });
 }

@@ -12,6 +12,12 @@
     font-weight: normal;
     font-display: swap;
 }
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-display: swap;
+}
 
 body {
     /* 메뉴바 높이(60px) + 여유공간(40px) = 총 100px 밀기 */

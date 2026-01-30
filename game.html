@@ -167,30 +167,108 @@
         }
         .start-btn:disabled { background: #444; cursor: not-allowed; }
 
+        /* [추가] 볼륨 슬라이더 스타일 */
+        .volume-control {
+            display: flex; align-items: center; gap: 10px; font-size: 14px; color: #aaa;
+        }
+        
+        /* [수정됨] 따옴표("") 추가 및 표준 속성 적용 */
+        input[type="range"] {
+            -webkit-appearance: none; /* 크롬, 사파리 구버전 */
+            appearance: none;         /* 표준 속성 */
+            width: 100px; 
+            height: 6px; 
+            background: #333; 
+            border-radius: 3px; 
+            outline: none;
+            margin: 0 5px; /* 좌우 여백 살짝 추가 */
+        }
+        
+        /* 슬라이더 핸들(손잡이) 스타일 - 이것도 꼭 있어야 합니다! */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px; 
+            height: 14px; 
+            background: #ab0000; 
+            border-radius: 50%;
+            cursor: pointer; 
+            border: 2px solid #fff;
+        }
+
+        /* --- [추가] 노트 스킨 디자인 --- */
+        
+        /* 1. 기본 노트 (파란색 네모) */
+        .note.skin_default {
+            background: #00ffff; 
+            border-radius: 2px;
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        /* 2. 네온 서클 (보라색 동그라미) */
+        .note.skin_neon {
+            background: #d000ff; 
+            border-radius: 50%;
+            box-shadow: 0 0 15px #d000ff, inset 0 0 5px white;
+            border: 2px solid #fff;
+        }
+
+        /* 3. 8비트 픽셀 (투명 배경 + 이모지) */
+        .note.skin_pixel {
+            background: transparent;
+            box-shadow: none;
+        }
+        /* 픽셀 스킨은 CSS로 가짜 요소(이모지)를 넣어서 표현 */
+        .note.skin_pixel::after {
+            content: '👾'; 
+            font-size: 30px; 
+            position: absolute; 
+            left: -8px; top: -5px;
+            filter: drop-shadow(0 0 5px #0f0);
+        }
+
+        /* 4. 불꽃 노트 (주황색 물방울 모양) */
+        .note.skin_fire {
+            background: linear-gradient(to bottom, yellow, red);
+            border-radius: 50% 50% 5px 5px;
+            box-shadow: 0 -5px 15px orange;
+        }
+
     </style>
 </head>
 <body>
-
+<audio id="bgmPlayer" loop style="display:none;"></audio>
     <nav class="navbar">
-        <div class="logo">
-            RHYTHM HACK
-            <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px;"></span>
-        </div>
-        <ul class="nav-links">
-            <li><a href="main.html">홈</a></li>
-            <li><a href="sub.html">생존자목록</a></li>
-            <li><a href="shop.html">상점</a></li>
-            <li><a href="#" onclick="logout()">로그아웃</a></li>
-        </ul>
+    <div class="logo">
+        OUT BREAK 
+        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
+    </div>
+    <ul class="nav-links">
+        <li><a href="main.html">홈</a></li>
+        <li><a href="sub.html">생존자목록</a></li>
+        <li><a href="board.html">자유게시판</a></li>
+        <li><a href="trade.html">중고거래게시판</a></li>
+        <li><a href="quest.html">의뢰게시판</a></li>
+        <li><a href="game.html">고장난자판기</a></li>
+        <li><a href="shop.html">교환소</a></li>
+        <li><a href="vending.html">신형자판기</a></li>
+        <li><a href="#" onclick="logout()">로그아웃</a></li>
+    </ul>
     </nav>
 
     <div class="game-wrapper">
         <div class="shelf-section" id="shelfList">
             </div>
 
+            
         <div class="rhythm-section">
             <div class="game-hud">
-                <div>SCORE: <span id="scoreVal">0</span> / <span id="targetVal">0</span></div>
+                <div class="score-box">SCORE: <span id="scoreVal">0</span> / <span id="targetVal">0</span></div>
+                
+                <div class="volume-control">
+                    <span>♪ VOL</span>
+                    <input type="range" id="volSlider" min="0" max="1" step="0.1" value="0.5">
+                </div>
+
                 <div class="hp-bar"><div class="hp-fill" id="hpVal"></div></div>
             </div>
 
@@ -218,7 +296,9 @@
                 <button class="start-btn" id="startBtn" onclick="startGame()" disabled>START GAME</button>
             </div>
         </div>
+        
     </div>
+    
 
     <script>
         const firebaseConfig = {
@@ -237,13 +317,40 @@
         // speed: 노트 내려오는 속도 (높을수록 빠름)
         // target: 클리어 목표 점수
         // spawnRate: 노트 생성 빈도 (낮을수록 자주 나옴)
+        // [게임 설정 데이터]
+        // bpm: 노래 빠르기 (높을수록 노트가 빨리 나옴)
+        // audio: 실행할 음악 파일 주소 (mp3 등)
         const items = [
-            { name: "미지근한 캔커피", emoji: "☕", price: 50, speed: 3, target: 500, spawnRate: 60, desc: "EASY" },
-            { name: "찌그러진 캔음료", emoji: "🥤", price: 80, speed: 5, target: 1000, spawnRate: 50, desc: "NORMAL" },
-            { name: "유통기한 지난 과자", emoji: "🍪", price: 120, speed: 7, target: 2000, spawnRate: 40, desc: "HARD" },
-            { name: "녹아내린 초콜릿", emoji: "🍫", price: 200, speed: 9, target: 3500, spawnRate: 30, desc: "VERY HARD" },
-            { name: "수상한 에너지드링크", emoji: "⚡", price: 500, speed: 12, target: 5000, spawnRate: 25, desc: "INSANE" },
-            { name: "반짝이는 동전 지갑", emoji: "👛", price: 2000, speed: 15, target: 8000, spawnRate: 20, desc: "CHAOS" }
+            { 
+                name: "미지근한 캔커피 (Easy)", emoji: "☕", price: 50, 
+                target: 5000, desc: "BPM 90", 
+                speed: 3, bpm: 90, // 느린 박자
+                audio: "https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg" // (예시) 잔잔한 소리
+            },
+            { 
+                name: "찌그러진 캔음료 (Normal)", emoji: "🥤", price: 80, 
+                target: 10000, desc: "BPM 110", 
+                speed: 5, bpm: 110, // 보통 박자
+                audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" // (예시) 신나는 음악
+            },
+            { 
+                name: "유통기한 지난 과자 (Hard)", emoji: "🍪", price: 120, 
+                target: 20000, desc: "BPM 130", 
+                speed: 8, bpm: 130, // 빠른 박자
+                audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" 
+            },
+            { 
+                name: "녹아내린 초콜릿 (Crazy)", emoji: "🍫", price: 200, 
+                target: 35000, desc: "BPM 160", 
+                speed: 12, bpm: 160, // 아주 빠른 박자
+                audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" 
+            },
+            { 
+                name: "해킹 디스크 (Extreme)", emoji: "💾", price: 500, 
+                target: 50000, desc: "BPM 180", 
+                speed: 15, bpm: 180, // 미친 속도
+                audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" 
+            }
         ];
 
         let selectedItemIdx = -1;
@@ -252,6 +359,7 @@
         let hp = 100;
         let animationFrame;
         let frameCount = 0;
+        let currentSkin = 'skin_default'; // 기본값
         let notes = []; // 현재 화면에 있는 노트들 객체 배열
         const KEY_MAP = { 'd': 0, 'f': 1, 'j': 2, 'k': 3 }; // 키 매핑
         
@@ -261,11 +369,39 @@
         let userMoney = 0;
 
         window.onload = function() {
-            // 배지 및 로그인 체크
+            // 1. 로그인 및 권한 체크
             const status = localStorage.getItem("loginStatus");
+            // loginID와 myID가 혼용되고 있다면 하나로 통일 (보통 loginID 사용)
+            const myID = localStorage.getItem("loginID"); 
+            const myNick = localStorage.getItem("userNick");
+
             if (!status || (status !== "success" && status !== "admin")) {
                 alert("로그인이 필요합니다."); location.href="index.html"; return;
             }
+
+            // 2. Firebase 데이터 가져오기 (스킨, 닉네임)
+            database.ref('users/' + myID).once('value', snapshot => {
+                const data = snapshot.val();
+                
+                // 장착한 스킨 정보가 있다면 전역 변수 업데이트
+                if (data && data.equipped && data.equipped.skin) {
+                    currentSkin = data.equipped.skin;
+                }
+                
+                // 게임 화면에 닉네임 표시
+                if(data) {
+                    const nickElem = document.getElementById('myNick');
+                    if(nickElem) nickElem.innerText = "USER: " + (data.nick || myID);
+                }
+            });
+
+            // 3. 돈 정보 실시간 동기화
+            database.ref(`users/${myID}/money`).on('value', snap => {
+                // userMoney 전역변수가 선언되어 있어야 함
+                userMoney = snap.val() || 0; 
+            });
+
+            // 4. 상단 네비게이션 배지 설정
             const badge = document.getElementById("userBadge");
             if(badge && myNick) {
                 if(status === "admin") { badge.innerText="[관리자 모드]"; badge.style.color="red"; }
@@ -273,16 +409,22 @@
                 badge.style.display="inline";
             }
 
-            // 돈 정보 로드
-            database.ref(`users/${myID}/money`).on('value', snap => {
-                userMoney = snap.val() || 0;
-            });
-
+            // 5. 게임 초기화 및 화면 그리기 (중복 제거됨)
             renderShelf();
             
-            // 키보드 이벤트 리스너
+            // 6. 키보드 이벤트 리스너 연결 (중복 제거됨)
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('keyup', handleKeyUp);
+
+            // 7. 볼륨 슬라이더 연결
+            const volSlider = document.getElementById('volSlider');
+            const audioPlayer = document.getElementById('bgmPlayer');
+            
+            if(volSlider && audioPlayer) {
+                volSlider.addEventListener('input', function() {
+                    audioPlayer.volume = this.value; 
+                });
+            }
         };
 
         function renderShelf() {
@@ -395,7 +537,7 @@
             }, 1000); // 1초 간격
         }
 
-        // 게임 변수 초기화 및 루프 시작 함수 (분리됨)
+        // 게임 시작 (카운트다운 직후 실행됨)
         function initGameAndLoop() {
             const item = items[selectedItemIdx];
             
@@ -405,53 +547,73 @@
             frameCount = 0;
             nextSpawnAt = 0;
             notes = [];
+            
+            // 기존 노트 제거
             document.querySelectorAll('.note').forEach(el => el.remove()); 
             
             document.getElementById('scoreVal').innerText = "0";
             document.getElementById('targetVal').innerText = item.target;
             updateHP();
 
+            // ★ [수정된 음악 재생 로직]
+            const audio = document.getElementById('bgmPlayer');
+            const volSlider = document.getElementById('volSlider'); // 슬라이더 가져오기
+
+            if (item.audio) {
+                audio.src = item.audio; 
+                audio.volume = volSlider.value; // [수정] 현재 슬라이더 값으로 볼륨 설정
+                
+                audio.play().catch(e => console.log("음악 재생 실패:", e));
+            }
+
             gameLoop();
         }
 
+        // 메인 게임 루프 (BPM 적용됨)
         function gameLoop() {
             if(!isPlaying) return;
 
             const item = items[selectedItemIdx];
             frameCount++;
 
-            // ★ [핵심 수정] 변칙적인 노트 생성 로직
+            // ★ [핵심] BPM 기반 노트 생성 타이밍 계산
+            // 60FPS 기준: 1초에 60프레임
+            // BPM(분당 박자수)을 프레임 간격으로 변환: (60초 * 60프레임) / BPM
+            // 예: BPM 120이면 30프레임마다(0.5초마다) 노트 생성
+            const framesPerBeat = 3600 / item.bpm; 
+
+            // 노트 생성 시간인가?
             if (frameCount >= nextSpawnAt) {
-                // 1. 노트 하나 생성
+                // 1. 노트 생성
                 const firstLane = spawnNote();
 
-                // 2. [어려움 전용] 확률적으로 '동시 치기' (Double Note) 생성
-                // 난이도가 높을수록(speed > 7) 동시치기 확률 증가
-                if (item.speed > 7 && Math.random() < 0.3) {
-                    spawnNote(firstLane); // 첫 번째 노트와 겹치지 않게 생성
+                // 2. [어려움] BPM 130 이상이면 확률적으로 동시 치기
+                if (item.bpm >= 30 && Math.random() < 0.3) {
+                    spawnNote(firstLane);
                 }
 
-                // 3. [변칙 박자] 다음 노트가 나올 시간(Interval)을 랜덤하게 계산
-                // 기본 템포에서 0.5배(빠름) ~ 1.5배(느림) 사이로 흔듦
-                let chaosFactor = 0.5 + Math.random(); 
+                // 3. [리듬 변칙] 다음 노트가 나올 시간 계산
+                // 기본적으로 '1박자' 뒤에 나오지만, 가끔 '반박자(0.5)' 빠르게 나옴
+                let rhythmFactor = 1; 
 
-                // [극악 난이도 전용] 20% 확률로 '폭타' (아주 짧은 간격) 발생
-                if (item.speed > 10 && Math.random() < 0.2) {
-                    chaosFactor = 0.25; 
+                // BPM이 높을수록 엇박자(반박자) 확률 증가
+                if (Math.random() < 0.3) {
+                    rhythmFactor = 0.5; // 반박자 (8분음표)
                 }
 
                 // 다음 소환 시간 예약
-                nextSpawnAt = frameCount + (item.spawnRate * chaosFactor);
+                nextSpawnAt = frameCount + (framesPerBeat * rhythmFactor);
             }
 
-            // 3. 노트 이동 및 미스 체크 (기존 유지)
+            // --- 아래는 기존 노트 이동 로직과 동일 ---
             for (let i = notes.length - 1; i >= 0; i--) {
                 const note = notes[i];
-                note.y += item.speed;
+                note.y += item.speed; // 떨어지는 속도는 아이템별 speed 설정 따름
                 note.el.style.top = note.y + "px";
 
                 const containerH = document.getElementById('laneContainer').clientHeight;
                 
+                // 화면 밖으로 나갔을 때 처리
                 if (note.y > containerH) {
                     if (note.hit) {
                         note.el.remove();
@@ -470,29 +632,45 @@
             animationFrame = requestAnimationFrame(gameLoop);
         }
 
-        function spawnNote(excludeLane = -1) {
-            let laneIdx;
+        // 노트 생성 함수 (스킨 적용 버전)
+        function spawnNote(laneIdx = null) {
+            // 1. 레인 랜덤 선택 (만약 laneIdx가 null이면 랜덤, 숫자가 오면 그 레인 제외하고 뽑기)
+            // 기존 코드의 'excludeLane' 기능을 'laneIdx' 파라미터로 통합해서 처리합니다.
             
-            // 겹치지 않는 레인을 뽑을 때까지 반복 (동시치기용)
-            do {
-                laneIdx = Math.floor(Math.random() * 4);
-            } while (laneIdx === excludeLane);
-
-            const laneEl = document.getElementById(`lane${laneIdx}`);
+            let targetLane;
             
-            const noteEl = document.createElement('div');
-            noteEl.className = `note lane-${laneIdx}`;
-            noteEl.style.top = "-20px"; 
-            laneEl.appendChild(noteEl);
+            if (laneIdx === null) {
+                // 완전히 랜덤
+                targetLane = Math.floor(Math.random() * 4);
+            } else {
+                // 특정 레인 제외하고 랜덤 (동시치기용)
+                do {
+                    targetLane = Math.floor(Math.random() * 4);
+                } while (targetLane === laneIdx);
+            }
 
+            const laneEl = document.getElementById(`lane${targetLane}`);
+            const note = document.createElement('div');
+            
+            // ★ [핵심] 스킨 적용: note 클래스와 함께 스킨 클래스(currentSkin) 추가
+            // lane-0, lane-1 등은 색상 구분을 위해 남겨둡니다.
+            note.className = `note lane-${targetLane} ${currentSkin}`; 
+            
+            // 초기 위치
+            note.style.top = "-20px"; 
+            
+            // 화면에 추가
+            laneEl.appendChild(note);
+            
+            // 게임 로직 배열에 추가
             notes.push({
-                el: noteEl,
-                lane: laneIdx,
+                el: note,
+                lane: targetLane,
                 y: -20,
-                hit: false 
+                hit: false
             });
 
-            return laneIdx; // 생성된 레인 번호를 반환 (다음 노트가 피할 수 있게)
+            return targetLane; // 생성된 레인 번호 반환 (다음 노트가 피할 수 있게)
         }
 
         function handleKeyDown(e) {
@@ -597,17 +775,23 @@
             }
         }
 
+        // 게임 종료 처리 (음악 끄기 추가)
         function endGame(isWin) {
             isPlaying = false;
             cancelAnimationFrame(animationFrame);
             
+            // ★ [음악 정지]
+            const audio = document.getElementById('bgmPlayer');
+            audio.pause();
+            audio.currentTime = 0; // 음악 처음으로 되감기
+
             const overlay = document.getElementById('msgOverlay');
             const title = document.getElementById('msgTitle');
             const desc = document.getElementById('msgDesc');
             const btn = document.getElementById('startBtn');
 
             overlay.style.display = 'flex';
-            btn.style.display = 'inline-block'; // ★ [추가됨] 아까 숨겼던 버튼 다시 보이기
+            btn.style.display = 'inline-block'; 
             
             if (isWin) {
                 title.innerText = "HACKING SUCCESS!";
@@ -620,7 +804,7 @@
                 title.style.color = "#f00";
                 desc.innerText = `HP가 소진되었습니다.`;
                 btn.innerText = "다시 시도";
-                btn.onclick = () => startGame(); // 재시작 시 다시 카운트다운부터
+                btn.onclick = () => startGame(); 
             }
         }
 

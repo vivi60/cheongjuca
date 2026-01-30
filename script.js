@@ -3,8 +3,8 @@
 // 1. 회원 명단 (비밀번호 관리)
 const userDB = {
     "13reaking_news": { pw: "admin0303", nick: "관리자", role: "admin" }, // 관리자 계정
-    "13reaking_system": { pw: "1234",      nick: "러너1",  role: "user" },
-    "runner1":        { pw: "run1",      nick: "러너2",  role: "user" }
+    "13reaking_system": { pw: "1234",      nick: "시스템",  role: "user" },
+    "runner1":        { pw: "run1",      nick: "러너1",  role: "user" }
 };
 
 // 2. 로그인 체크 함수 (index.html에서 사용)
