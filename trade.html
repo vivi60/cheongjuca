@@ -2,216 +2,383 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>중고장터 - 거래소</title>
+    <title>중고 거래 게시판</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
+        authDomain: "cheongjuca.firebaseapp.com",
+        databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
+        projectId: "cheongjuca",
+        storageBucket: "cheongjuca.firebasestorage.app",
+        messagingSenderId: "455437421321",
+        appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8",
+        measurementId: "G-9XG7JRFM3D"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+    </script>
+
     <style>
-        /* --- 중고장터 전용 스타일 --- */
-        
-        /* 판매글 작성 구역 */
-        .trade-write-box {
-            background: #1a1a1a; padding: 25px; margin: 30px auto; width: 90%; max-width: 800px;
-            border: 2px solid #ab0000; border-radius: 10px; text-align: center;
-            box-shadow: 0 0 15px rgba(171, 0, 0, 0.3);
+        /* --- [1] 기본 스타일 (자유게시판과 동일) --- */
+        body {
+            margin: 0; padding: 0;
+            color: #e0e0e0;
+            font-family: 'Pretendard', sans-serif;
+            position: relative;
+            min-height: 100vh;
         }
-        .input-group {
-            display: flex; gap: 10px; justify-content: center; margin-bottom: 10px;
+
+        body::before {
+            content: "";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%85%E1%85%A9%E1%84%80%E1%85%B3%E1%84%8B%E1%85%B5%E1%86%AB%E1%84%86%E1%85%A2%E1%86%AB%E1%84%86%E1%85%B5%E1%87%80%E1%84%92%E1%85%AA%E1%84%86%E1%85%A7%E1%86%AB.png?alt=media&token=d4242030-99d5-4bf9-a6e3-42c7e09d613f');
+            background-size: cover; background-position: center;
+            filter: blur(12px); z-index: -1; transform: scale(1.02); opacity: 0.5;
+        }
+
+        .top-header-bar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 60px;
+            background-color: rgba(30, 30, 30, 0.75); backdrop-filter: blur(5px);
+            border-bottom: 1px solid #444; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px; box-sizing: border-box; z-index: 9999;
+        }
+
+        .header-logo {
+            font-family: 'Black Ops One', cursive; font-size: 24px; color: #efefef; 
+            text-decoration: none; cursor: pointer; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); 
+            transition: color 0.3s; z-index: 2;
+        }
+        .header-logo:hover { color: #535353; }
+
+        .header-search-wrapper {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 500px; text-align: center;
+        }
+
+        #headerSearchInput {
+            width: 100%; padding: 10px 15px; border: 1px solid #444;
+            background-color: rgba(37, 37, 38, 0.8); color: white;
+            font-size: 15px; border-radius: 4px; outline: none; box-sizing: border-box; text-align: left;
+        }
+        #headerSearchInput:focus { border-color: #535353; background-color: rgba(45, 45, 48, 0.9); text-align: left; }
+
+        .hamburger-btn {
+            background: none; border: none; cursor: pointer; padding: 5px;
+            display: flex; flex-direction: column; gap: 5px; z-index: 2;
+        }
+        .hamburger-line { width: 25px; height: 3px; background-color: #e0e0e0; border-radius: 2px; transition: 0.3s; }
+        .hamburger-btn:hover .hamburger-line { background-color: #ab0000; }
+
+        .nav-dropdown {
+            display: none; position: absolute; top: 60px; right: 0; width: 250px;
+            background-color: #252526; border: 1px solid #444; border-top: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10000; border-radius: 0 0 0 4px;
+        }
+        .nav-item { display: block; padding: 15px 20px; color: #ccc; text-decoration: none; font-size: 14px; border-bottom: 1px solid #333; transition: 0.2s; }
+        .nav-item:hover { background-color: #535353; color: white; padding-left: 25px; }
+        .nav-item:last-child { border-bottom: none; }
+        .logout-item { color: #ff6b6b; font-weight: bold; }
+        .nav-item:hover.logout-item { background-color: #c42b1c; color: white; }
+
+        .board-container {
+            width: 80%; max-width: 800px;
+            background-color: rgba(30, 30, 30, 0.8);
+            border: 1px solid #444; padding: 30px; border-radius: 8px;
+            margin: 100px auto 50px auto; 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(3px);
+        }
+
+        /* --- 중고장터 전용 스타일 --- */
+        .trade-write-box {
+            background: rgba(20, 20, 20, 0.5); padding: 20px; 
+            border: 1px solid #555; border-radius: 8px; text-align: center; margin-bottom: 30px;
+        }
+        .input-group { 
+            display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 10px; 
         }
         .trade-input {
-            background: #222; color: #fff; border: 1px solid #444; padding: 12px;
-            font-family: 'Noto Sans KR', sans-serif; border-radius: 4px;
+            background: rgba(37, 37, 38, 0.8); color: #fff; border: 1px solid #444; padding: 12px;
+            font-family: 'Noto Sans KR', sans-serif; border-radius: 4px; outline: none;
         }
-        .trade-input:focus { outline: none; border-color: #ab0000; }
+        .trade-input:focus { border-color: #535353; }
         
-        /* 거래 목록 리스트 */
-        .trade-list {
-            width: 90%; max-width: 800px; margin: 0 auto 100px auto;
+        /* [NEW] 이미지 선택기 스타일 */
+        .img-selector-area {
+            width: 50px; height: 50px; 
+            background: #222; border: 1px solid #555; border-radius: 5px;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+            overflow: hidden;
         }
+        .img-selector-area img { width: 100%; height: 100%; object-fit: cover; }
+        .img-selector-area:hover { border-color: #ab0000; }
+        .img-placeholder { font-size: 12px; color: #888; text-align: center; }
+
+        /* [NEW] 이미지 선택 모달 */
+        #imgSelectModal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 5000; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: #1a1a1a; padding: 20px; border-radius: 10px; border: 1px solid #ab0000;
+            width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;
+        }
+        .img-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px;
+            margin-top: 15px;
+        }
+        .grid-item {
+            width: 100%; aspect-ratio: 1/1; background: #000; border: 2px solid #333;
+            cursor: pointer; overflow: hidden; border-radius: 5px;
+        }
+        .grid-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.2s; }
+        .grid-item:hover { border-color: #ab0000; }
+        .grid-item:hover img { transform: scale(1.1); }
+
+        .trade-list { width: 100%; }
         .trade-card {
-            background: rgba(20, 20, 20, 0.9); border: 1px solid #444; margin-bottom: 25px; padding: 20px;
-            border-radius: 8px; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.3); border: 1px solid #444; margin-bottom: 25px; padding: 20px;
+            border-radius: 8px; position: relative;
         }
         .trade-card.sold { opacity: 0.5; border-color: #333; filter: grayscale(1); }
         
         .item-preview {
-            display: flex; align-items: center; gap: 15px; background: #000; 
+            display: flex; align-items: center; gap: 15px; background: rgba(0,0,0,0.5); 
             padding: 15px; margin: 15px 0; border-radius: 5px; border: 1px solid #333;
         }
-        .item-icon { font-size: 2.5em; }
+        /* [수정] 이모지 폰트 대신 이미지 태그 스타일 */
+        .item-icon-img { 
+            width: 30px; height: 30px; object-fit: cover; 
+            border-radius: 5px; border: 1px solid #444; 
+        }
         
-        /* --- 관리자(NPC) 제안 패널 디자인 --- */
         .admin-offer-box {
-            background: #2a0505; /* 짙은 붉은색 배경 */
-            border: 1px solid #ff4444; 
-            padding: 15px; margin-top: 15px;
-            border-radius: 5px;
-            display: none; /* 기본 숨김 */
+            background: #2a0505; border: 1px solid #ff4444; 
+            padding: 15px; margin-top: 15px; border-radius: 5px; display: none;
         }
-        .admin-title {
-            color: #ff4444; font-weight: bold; margin-bottom: 10px; display: block; font-size: 0.9em;
-        }
-        .admin-row {
-            display: flex; gap: 10px; align-items: center; margin-bottom: 5px;
-        }
-        .admin-input {
-            background: #111; border: 1px solid #555; color: #ffcccc; padding: 8px; font-size: 0.9em; border-radius: 3px;
-        }
-        .btn-offer {
-            background: #ab0000; color: white; border: none; padding: 8px 15px; 
-            cursor: pointer; font-weight: bold; border-radius: 3px; transition: 0.2s;
-        }
+        .admin-title { color: #ff4444; font-weight: bold; margin-bottom: 10px; display: block; font-size: 0.9em; }
+        .admin-row { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
+        .admin-input { background: #111; border: 1px solid #555; color: #ffcccc; padding: 8px; font-size: 0.9em; border-radius: 3px; }
+        
+        .btn-offer { background: #ab0000; color: white; border: none; padding: 8px 15px; cursor: pointer; font-weight: bold; border-radius: 3px; }
         .btn-offer:hover { background: #ff0000; }
-        .btn-delete {
-            background: #444; color: #ccc; border: none; padding: 8px 15px; 
-            cursor: pointer; border-radius: 3px; font-size: 0.8em;
-        }
+        .btn-delete { background: #444; color: #ccc; border: none; padding: 8px 15px; cursor: pointer; border-radius: 3px; font-size: 0.8em; }
         .btn-delete:hover { background: #666; color: white; }
 
-        /* --- NPC 제안 댓글 스타일 --- */
         .offer-comment {
-            background: #111; border-left: 4px solid gold; padding: 15px; margin-top: 10px;
+            background: rgba(255,255,255,0.05); border-left: 4px solid gold; padding: 15px; margin-top: 10px;
             border-radius: 0 5px 5px 0;
         }
-        /* [수정됨] 작고 네모난 금색 버튼 */
         .btn-deal {
-            background: gold;           /* 배경: 금색 */
-            color: black;               /* 글자: 검정 */
-            font-weight: bold;
-            border: 2px solid orange;   /* 테두리: 오렌지색 */
-            
-            /* 크기 작게 조정 */
-            padding: 4px 8px;           /* 안쪽 여백 축소 */
-            font-size: 0.85em;          /* 글자 크기 축소 */
-            
-            /* 모양 네모나게 */
-            border-radius: 0;           /* 모서리 둥글기 제거 */
-            
-            cursor: pointer;
-            margin-left: 10px;
-            box-shadow: 0 2px 0 #b8860b; /* 약간의 입체감 (진한 금색 그림자) */
-            transition: 0.1s;
+            background: gold; color: black; font-weight: bold; border: 2px solid orange;
+            padding: 4px 8px; font-size: 0.85em; border-radius: 0; cursor: pointer; margin-left: 10px;
+            box-shadow: 0 2px 0 #b8860b; transition: 0.1s;
         }
-        
-        /* 마우스 올렸을 때 */
-        .btn-deal:hover {
-            background: #ffe066;       /* 조금 더 밝은 금색 */
-            border-color: #ff4500;     /* 테두리 붉은 오렌지색 */
-        }
-        
-        /* 클릭했을 때 (눌리는 효과) */
-        .btn-deal:active {
-            transform: translateY(2px); /* 아래로 살짝 이동 */
-            box-shadow: none;           /* 그림자 제거 */
-        }
+        .btn-deal:hover { background: #ffe066; border-color: #ff4500; }
+        .btn-deal:active { transform: translateY(2px); box-shadow: none; }
 
-        /* 메인 버튼 */
         .btn-main {
-            background: #ab0000; color: white; border: none; padding: 12px 40px; 
-            cursor: pointer; font-weight: bold; font-size: 1.1em; border-radius: 5px;
-            box-shadow: 0 4px 0 #600; transition: 0.1s;
+            background: #535353; color: white; border: none; padding: 10px 40px; 
+            cursor: pointer; font-weight: bold; font-size: 1.1em; border-radius: 4px; transition: 0.2s;
         }
-        .btn-main:active { transform: translateY(4px); box-shadow: none; }
+        .btn-main:hover { background: #3d3d3d; }
+
+        #pagination button {
+            background: rgba(37, 37, 38, 0.8); border: 1px solid #444; color: #ccc;
+            padding: 6px 12px; margin: 0 2px; cursor: pointer; border-radius: 3px;
+        }
+        #pagination button:hover { background: #535353; color: white; }
+        #pagination button.active { background: #ab0000; color: white; font-weight: bold; }
     </style>
 </head>
-<body>
+<body class="board-page">
 
-    <nav class="navbar">
-    <div class="logo">
-        OUT BREAK 
-        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
-    </div>
-    <ul class="nav-links">
-        <li><a href="main.html">홈</a></li>
-        <li><a href="sub.html">생존자목록</a></li>
-        <li><a href="board.html">자유게시판</a></li>
-        <li><a href="trade.html">중고거래게시판</a></li>
-        <li><a href="quest.html">의뢰게시판</a></li>
-        <li><a href="game.html">고장난자판기</a></li>
-        <li><a href="vending.html">신형자판기</a></li>
-        <li><a href="#" onclick="logout()">로그아웃</a></li>
-    </ul>
-    </nav>
+    <header class="top-header-bar">
+        <a href="main.html" class="header-logo">OUTBREAK</a>
+        <div class="header-search-wrapper">
+            <input type="text" id="headerSearchInput" placeholder="🔍 물품 검색" autocomplete="off">
+        </div>
+        <button class="hamburger-btn" id="hamburgerBtn">
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
+        </button>
+        <div class="nav-dropdown" id="menuList">
+            <a href="board.html" class="nav-item">자유 게시판</a>
+            <a href="trade.html" class="nav-item">중고 거래 게시판</a>
+            <a href="quest.html" class="nav-item">의뢰 게시판</a>
+            <a href="#" onclick="logout()" class="nav-item logout-item">로그아웃</a>
+        </div>
+    </header>
 
-    <div style="height: 80px;"></div> <h1 style="text-align:center; color:#ab0000; font-family:'Black Han Sans'; font-size: 3em; margin-bottom: 10px;">📦 중고거래게시판</h1>
-    <p style="text-align:center; color:#888;">NPC에게 팔고 싶은 물건을 등록하세요. 가격은 그들 마음입니다.</p>
+    <div class="board-container">
+        <h2 style="font-family: 'Pretendard'; color: #e0e0e0; border-bottom: 2px solid #444; padding-bottom: 15px; margin-bottom: 25px;">
+            중고 거래 게시판
+        </h2>
+        <p style="text-align:center; color:#888; margin-bottom: 20px;">
+            NPC에게 팔고 싶은 물건을 등록하세요. 가격은 그들 마음입니다.
+        </p>
 
-    <div class="trade-write-box">
-        <h3 style="margin-top:0; color:white;">💰 판매글 작성</h3>
-        
-        <div class="input-group">
-            <input type="text" id="inputIcon" class="trade-input" placeholder="이모티콘 (예: 💍)" style="width: 120px; text-align: center; font-size: 1.0em;">
-            <input type="text" id="inputName" class="trade-input" placeholder="아이템 이름 (예: 수상한 보석)" style="width: 60%;">
+        <div class="trade-write-box">
+            <h3 style="margin-top:0; color:white; margin-bottom: 15px;">판매글 작성</h3>
+            
+            <div class="input-group">
+                <div class="img-selector-area" onclick="openImgModal()">
+                    <img id="previewImg" src="" style="display:none;">
+                    <div id="previewPlaceholder" class="img-placeholder">이미지<br>선택</div>
+                </div>
+                
+                <input type="text" id="inputName" class="trade-input" placeholder="아이템 이름 (예: 수상한 보석)" style="flex:1;">
+            </div>
+            
+            <textarea id="tradeDesc" placeholder="판매 사유나 상태를 적어주세요. (예: 주웠는데 비싸보임)" style="width:100%; height:80px; background:rgba(37,37,38,0.8); color:white; border:1px solid #444; padding:10px; border-radius:4px; margin-bottom: 15px; outline:none; box-sizing: border-box;"></textarea>
+            <br>
+            <button onclick="postTrade()" class="btn-main">등록하기</button>
         </div>
 
-        <textarea id="tradeDesc" placeholder="판매 사유나 상태를 적어주세요. (예: 주웠는데 비싸보임)" style="width:85%; height:80px; background:#222; color:white; border:1px solid #444; padding:10px; border-radius:4px; margin-bottom: 15px;"></textarea>
-        <br>
-        <button onclick="postTrade()" class="btn-main">등록하기</button>
+        <div id="tradeList" class="trade-list"></div>
+        <div id="pagination" style="text-align: center; margin-top: 30px; display: flex; justify-content: center; gap: 5px;"></div>
     </div>
 
-    <div id="tradeList" class="trade-list">
+    <div id="imgSelectModal">
+        <div class="modal-content">
+            <h3 style="color:white; margin-top:0;">이미지 선택</h3>
+            <div class="img-grid" id="imgGridArea">
+                </div>
+            <button onclick="closeImgModal()" style="width:100%; margin-top:20px; padding:10px; background:#444; color:white; border:none; border-radius:5px; cursor:pointer;">닫기</button>
         </div>
+    </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
-            authDomain: "cheongjuca.firebaseapp.com",
-            databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
-            projectId: "cheongjuca",
-            storageBucket: "cheongjuca.firebasestorage.app",
-            messagingSenderId: "455437421321",
-            appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
         const myID = localStorage.getItem("loginID");
         const myNick = localStorage.getItem("userNick");
         const isAdmin = localStorage.getItem("loginStatus") === "admin";
 
+        // ★ [여기에 준비한 이미지 주소를 넣으세요] ★
+        const itemImages = [
+            "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%90%E1%85%A2%E1%86%A8%E1%84%87%E1%85%A2%E1%84%89%E1%85%A1%E1%86%BC%E1%84%8C%E1%85%A1.png?alt=media&token=ab01921d-f11d-4c16-b2a6-36f8d5551c0c", 
+            "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%90%E1%85%A2%E1%86%A8%E1%84%87%E1%85%A2%E1%84%89%E1%85%A1%E1%86%BC%E1%84%8C%E1%85%A1.png?alt=media&token=ab01921d-f11d-4c16-b2a6-36f8d5551c0c",
+            "https://i.imgur.com/3SPL075.png", // 기본 이미지 (예시)
+            "https://cdn-icons-png.flaticon.com/512/2550/2550264.png", // 보석
+            "https://cdn-icons-png.flaticon.com/512/867/867449.png", // 약
+            "https://cdn-icons-png.flaticon.com/512/2917/2917995.png", // 통조림
+            // ... 더 많은 이미지 주소 추가 가능
+        ];
+
+        let selectedImgUrl = ""; // 현재 선택된 이미지
+
+        // 페이징 변수
+        let allTrades = [];      
+        let filteredTrades = []; 
+        let currentPage = 1;
+        const itemsPerPage = 5; 
+
         window.onload = function() {
             if(!myID) { alert("로그인이 필요합니다."); location.href='index.html'; return; }
+            initImgModal(); // 모달 초기화
         };
 
-        // --- 기능 1: 판매글 등록 (수동 입력) ---
+        // --- 이미지 모달 관련 함수 ---
+        function initImgModal() {
+            const grid = document.getElementById('imgGridArea');
+            grid.innerHTML = "";
+            itemImages.forEach(url => {
+                const div = document.createElement('div');
+                div.className = "grid-item";
+                div.onclick = () => selectImage(url);
+                div.innerHTML = `<img src="${url}">`;
+                grid.appendChild(div);
+            });
+        }
+
+        function openImgModal() { document.getElementById('imgSelectModal').style.display = 'flex'; }
+        function closeImgModal() { document.getElementById('imgSelectModal').style.display = 'none'; }
+
+        function selectImage(url) {
+            selectedImgUrl = url;
+            document.getElementById('previewImg').src = url;
+            document.getElementById('previewImg').style.display = 'block';
+            document.getElementById('previewPlaceholder').style.display = 'none';
+            closeImgModal();
+        }
+
+        // --- 거래글 등록 (수정됨: 이미지 URL 사용) ---
         function postTrade() {
-            const icon = document.getElementById('inputIcon').value || "📦";
             const name = document.getElementById('inputName').value;
             const desc = document.getElementById('tradeDesc').value;
             
-            if(!name) return alert("아이템 이름을 입력해주세요.");
+            // 이미지를 선택 안 했으면 기본 이미지 사용 (선택 사항)
+            const finalImg = selectedImgUrl || "https://i.imgur.com/3SPL075.png"; 
 
+            if(!name) return alert("아이템 이름을 입력해주세요.");
             if(!confirm(`[${name}] 판매글을 등록하시겠습니까?`)) return;
 
             database.ref('trades').push({
-                sellerID: myID,
-                sellerName: myNick,
-                itemName: name,
-                itemIcon: icon,
+                sellerID: myID, sellerName: myNick, itemName: name, 
+                itemIcon: finalImg, // ★ URL 저장
                 description: desc,
-                status: 'open',
-                timestamp: firebase.database.ServerValue.TIMESTAMP
+                status: 'open', timestamp: firebase.database.ServerValue.TIMESTAMP
             });
 
-            document.getElementById('inputIcon').value = "";
+            // 초기화
             document.getElementById('inputName').value = "";
             document.getElementById('tradeDesc').value = "";
+            selectedImgUrl = "";
+            document.getElementById('previewImg').src = "";
+            document.getElementById('previewImg').style.display = "none";
+            document.getElementById('previewPlaceholder').style.display = "block";
+            
             alert("등록되었습니다. NPC의 제안을 기다리세요.");
         }
 
-        // --- 기능 2: 거래 목록 실시간 렌더링 ---
+        // --- 데이터 로드 및 렌더링 (이모지 대신 <img> 태그 사용) ---
         database.ref('trades').on('value', snapshot => {
+            const data = snapshot.val();
+            if(!data) {
+                allTrades = []; filteredTrades = []; renderPage(); return;
+            }
+            allTrades = Object.entries(data).reverse().map(([key, val]) => ({ id: key, ...val }));
+            filterTrades();
+        });
+
+        function filterTrades() {
+            const searchText = document.getElementById('headerSearchInput').value.toLowerCase();
+            if (!searchText) {
+                filteredTrades = allTrades;
+            } else {
+                filteredTrades = allTrades.filter(trade => 
+                    trade.itemName.toLowerCase().includes(searchText) || 
+                    trade.description.toLowerCase().includes(searchText)
+                );
+            }
+            currentPage = 1;
+            renderPage();
+        }
+
+        function renderPage() {
             const listArea = document.getElementById('tradeList');
             listArea.innerHTML = "";
-            const data = snapshot.val();
-            
-            if(!data) {
-                listArea.innerHTML = "<p style='text-align:center; color:#666; margin-top:50px;'>현재 등록된 매물이 없습니다.</p>";
+
+            if (filteredTrades.length === 0) {
+                listArea.innerHTML = "<p style='text-align:center; color:#666; margin-top:50px;'>등록된 매물이 없습니다.</p>";
+                document.getElementById('pagination').innerHTML = "";
                 return;
             }
 
-            Object.entries(data).reverse().forEach(([tradeId, trade]) => {
+            const totalPages = Math.ceil(filteredTrades.length / itemsPerPage);
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageItems = filteredTrades.slice(start, end);
+
+            pageItems.forEach(trade => {
                 const card = document.createElement('div');
                 card.className = `trade-card ${trade.status === 'sold' ? 'sold' : ''}`;
                 
@@ -219,75 +386,82 @@
                     ? `<span style="color:#666; font-weight:bold; border:1px solid #666; padding:2px 8px; border-radius:3px;">판매완료</span>` 
                     : `<span style="color:#0f0; font-weight:bold; border:1px solid #0f0; padding:2px 8px; border-radius:3px;">판매중</span>`;
 
-                // ★ [관리자 패널] 디자인 개선 및 대사 입력칸 추가
                 let adminPanel = "";
                 if(isAdmin && trade.status === 'open') {
                     adminPanel = `
                         <div class="admin-offer-box" style="display:block;">
                             <span class="admin-title">👑 [관리자] NPC 가격 흥정</span>
                             <div class="admin-row">
-                                <input type="text" id="npcName-${tradeId}" class="admin-input" placeholder="NPC 이름 (예: 고물상)" value="수상한 상인" style="width:20%;">
-                                <input type="number" id="offerPrice-${tradeId}" class="admin-input" placeholder="가격(G)" style="width:20%;">
-                                <input type="text" id="npcComment-${tradeId}" class="admin-input" placeholder="대사 입력 (예: 흠.. 이건 가짜네. 10원!)" style="flex:1;">
+                                <input type="text" id="npcName-${trade.id}" class="admin-input" placeholder="NPC 이름" value="수상한 상인" style="width:20%;">
+                                <input type="number" id="offerPrice-${trade.id}" class="admin-input" placeholder="가격(G)" style="width:20%;">
+                                <input type="text" id="npcComment-${trade.id}" class="admin-input" placeholder="대사 입력" style="flex:1;">
                             </div>
                             <div style="text-align:right;">
-                                <button onclick="deleteTrade('${tradeId}')" class="btn-delete">글 삭제</button>
-                                <button onclick="adminMakeOffer('${tradeId}')" class="btn-offer">제안 등록</button>
+                                <button onclick="deleteTrade('${trade.id}')" class="btn-delete">글 삭제</button>
+                                <button onclick="adminMakeOffer('${trade.id}')" class="btn-offer">제안 등록</button>
                             </div>
                         </div>
                     `;
                 }
 
+                // ★ [수정] 텍스트 이모지 대신 이미지를 출력합니다 (.item-icon -> .item-icon-img)
                 card.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                         <span style="color:#ab0000; font-weight:bold; font-size:1.1em;">👤 ${trade.sellerName}</span>
                         ${statusBadge}
                     </div>
                     <div class="item-preview">
-                        <span class="item-icon">${trade.itemIcon}</span>
+                        <img src="${trade.itemIcon}" class="item-icon-img" onerror="this.src='https://i.imgur.com/3SPL075.png'">
                         <div style="flex:1;">
                             <div style="font-size:1.3em; font-weight:bold; color:white; margin-bottom:5px;">${trade.itemName}</div>
                             <div style="color:#aaa; font-size:0.95em; line-height:1.4;">${trade.description}</div>
                         </div>
                     </div>
-                    
-                    <div id="comments-${tradeId}" style="margin-top:10px;"></div>
+                    <div id="comments-${trade.id}" style="margin-top:10px;"></div>
                     ${adminPanel}
                 `;
                 listArea.appendChild(card);
-                renderOffers(tradeId, trade);
+                renderOffers(trade.id, trade);
             });
-        });
 
-        // --- 기능 3: 제안(댓글) 렌더링 ---
+            renderPagination(totalPages);
+        }
+
+        function renderPagination(totalPages) {
+            const paginationArea = document.getElementById('pagination');
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button onclick="goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
+            }
+            paginationArea.innerHTML = html;
+        }
+
+        function goToPage(page) { currentPage = page; renderPage(); window.scrollTo(0, 0); }
+        document.getElementById('headerSearchInput').addEventListener('keyup', filterTrades);
+
+        // --- 기능: 제안(댓글) 렌더링 (기존 유지) ---
         function renderOffers(tradeId, trade) {
             database.ref(`trades/${tradeId}/offers`).on('value', snap => {
                 const commentArea = document.getElementById(`comments-${tradeId}`);
+                if(!commentArea) return;
                 commentArea.innerHTML = "";
                 const offers = snap.val();
-                
                 if(offers) {
                     Object.entries(offers).forEach(([offerId, offer]) => {
                         const div = document.createElement('div');
                         div.className = "offer-comment";
-                        
                         let acceptBtn = "";
                         if(myID === trade.sellerID && trade.status === 'open') {
                             acceptBtn = `<button class="btn-deal" onclick="acceptOffer('${tradeId}', ${offer.price}, '${offer.npcName}')">🤝 ${offer.price}G 받고 팔기</button>`;
                         }
-
-                        // 대사(comment)가 있으면 그것을, 없으면 기본 문구 출력
                         const dialogue = offer.comment || `이 물건, ${offer.price}G에 사겠네.`;
-
                         div.innerHTML = `
                             <div style="margin-bottom:5px;">
                                 <span style="font-size:1.2em;">👤</span> 
                                 <strong style="color:gold;">${offer.npcName}</strong>
                                 <span style="color:#666; font-size:0.8em; margin-left:5px;">(제안가: ${offer.price}G)</span>
                             </div>
-                            <div style="color:#ddd; font-style:italic; margin-bottom:10px;">
-                                "${dialogue}"
-                            </div>
+                            <div style="color:#ddd; font-style:italic; margin-bottom:10px;">"${dialogue}"</div>
                             ${acceptBtn}
                         `;
                         commentArea.appendChild(div);
@@ -296,68 +470,55 @@
             });
         }
 
-        // --- 기능 4: [관리자] 가격 및 대사 제안 ---
         function adminMakeOffer(tradeId) {
             const npcName = document.getElementById(`npcName-${tradeId}`).value || "상인";
             const price = Number(document.getElementById(`offerPrice-${tradeId}`).value);
-            // ★ [추가] 대사 입력값 가져오기
             const comment = document.getElementById(`npcComment-${tradeId}`).value;
-
             if(!price || price <= 0) return alert("가격을 입력하세요.");
             if(!comment) return alert("NPC 대사를 입력해주세요.");
-
             database.ref(`trades/${tradeId}/offers`).push({
-                npcName: npcName,
-                price: price,
-                comment: comment, // 대사 저장
-                timestamp: firebase.database.ServerValue.TIMESTAMP
+                npcName: npcName, price: price, comment: comment, timestamp: firebase.database.ServerValue.TIMESTAMP
             });
-            
-            // 거래자에게 알림 보내기
             database.ref(`trades/${tradeId}`).once('value', snap => {
                 const sellerID = snap.val().sellerID;
                 if(sellerID) sendNotification(sellerID, `💰 [장터] ${npcName}: "${comment}" (제안가: ${price}G)`);
             });
-            
             alert("제안을 등록했습니다.");
         }
 
-        // --- 기능 5: [유저] 제안 수락 ---
         async function acceptOffer(tradeId, price, npcName) {
             if(!confirm(`${npcName}에게 물건을 넘기고 ${price}G를 받으시겠습니까?`)) return;
-
-            // 돈 추가
             const userRef = database.ref(`users/${myID}`);
             const userSnap = await userRef.once('value');
             const currentMoney = userSnap.val().money || 0;
-            
             await userRef.update({ money: currentMoney + price });
-
-            // 거래 상태 변경
             await database.ref(`trades/${tradeId}`).update({ status: 'sold' });
-
             alert(`거래 성사!\n${price}G를 획득했습니다.`);
         }
 
-        // [관리자] 글 삭제
         function deleteTrade(tradeId) {
-            if(confirm("이 거래글을 삭제하시겠습니까?")) {
-                database.ref(`trades/${tradeId}`).remove();
-            }
+            if(confirm("이 거래글을 삭제하시겠습니까?")) database.ref(`trades/${tradeId}`).remove();
         }
         
         function sendNotification(targetId, message) {
             database.ref('users/' + targetId + '/notifications').push({
-                message: message,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                read: false
+                message: message, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
             });
         }
 
-        function logout() {
-            localStorage.clear();
-            location.href = 'index.html';
-        }
+        function logout() { localStorage.clear(); location.href = 'index.html'; }
+
+        const menuList = document.getElementById('menuList');
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        hamburgerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuList.style.display = (menuList.style.display === 'block') ? 'none' : 'block';
+        });
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-dropdown') && !e.target.closest('#hamburgerBtn')) {
+                menuList.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>

@@ -74,14 +74,14 @@
         .header-logo {
             font-family: 'Black Ops One', cursive;
             font-size: 24px;
-            color: #ab0000;
+            color: #efefef;
             text-decoration: none;
             cursor: pointer;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
             transition: color 0.3s;
             z-index: 2; /* 검색창보다 위에 오도록 */
         }
-        .header-logo:hover { color: #ff0000; }
+        .header-logo:hover { color: #535353; }
 
         /* [수정됨] 2. 검색창 컨테이너 (완벽한 중앙 정렬) */
         .header-search-wrapper {
@@ -98,7 +98,7 @@
             border: 1px solid #444;
             background-color: rgba(37, 37, 38, 0.8);
             color: white; font-size: 15px; border-radius: 4px; outline: none; box-sizing: border-box;
-            text-align: center; 
+            text-align: left; 
         }
         #headerSearchInput:focus {
             border-color: #535353; 
@@ -245,10 +245,10 @@
 <body class="board-page">
 
     <header class="top-header-bar">
-        <a href="main.html" class="header-logo">OUT BREAK</a>
+        <a href="main.html" class="header-logo">OUTBREAK</a>
 
         <div class="header-search-wrapper">
-            <input type="text" id="headerSearchInput" placeholder="🔍 게시글 제목/내용 검색" autocomplete="off">
+            <input type="text" id="headerSearchInput" placeholder="🔍 게시글 검색" autocomplete="off">
         </div>
 
         <button class="hamburger-btn" id="hamburgerBtn">
