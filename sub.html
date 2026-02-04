@@ -125,6 +125,15 @@
 
                 Object.keys(users).forEach(id => {
                     const d = users[id];
+                    // ★ [수정됨] 관리자 완벽 차단 코드 (3중 체크)
+                    // 1. 아이디가 '13reaking_news'면 무조건 숨김 (가장 확실)
+                    if (id === '13reaking_news') return;
+
+                    // 2. 닉네임이 '관리자'면 숨김 (변수명 nick, nickname 둘 다 체크)
+                    if (d.nick === '관리자' || d.nickname === '관리자') return;
+
+                    // 3. 역할이 'admin'이면 숨김
+                    if (d.role === 'admin') return;
                     const div = document.createElement('div');
                     div.className = 'survivor-card';
                     div.onclick = () => { location.href = `profile.html?name=${id}`; };

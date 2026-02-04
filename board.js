@@ -47,16 +47,20 @@ function addPost() {
 }
 
 // 댓글 추가 함수 (익명 버전)
+// 댓글 추가 함수 (수정됨: 비밀번호 입력 추가)
 function addComment(postId) {
     const input = document.getElementById(`input-${postId}`);
     const text = input.value;
-    if (!text) return;
+    if (!text) return alert("댓글 내용을 입력하세요.");
 
-    // [수정된 부분] 닉네임 대신 랜덤 익명 이름 생성 (예: 익명452)
-    const randomNum = Math.floor(Math.random() * 900) + 100; // 100 ~ 999 랜덤
+    // [추가됨] 비밀번호 입력 받기
+    const password = prompt("댓글 삭제 시 사용할 비밀번호를 입력하세요:");
+    if (!password) return; // 취소 누르면 중단
+
+    // 닉네임 대신 랜덤 익명 이름 생성
+    const randomNum = Math.floor(Math.random() * 900) + 100; 
     const anonymousNick = `익명${randomNum}`; 
 
-    // 현재 로그인한 사람 ID (알림 체크용, 이름으로는 안 씀)
     const myID = localStorage.getItem("loginID");
 
     const postRef = database.ref('posts/' + postId);
@@ -64,26 +68,23 @@ function addComment(postId) {
     postRef.once('value', snapshot => {
         const post = snapshot.val();
         
-        // 댓글 저장 (작성자를 랜덤 익명으로 저장)
+        // 댓글 저장
         const newCommentRef = postRef.child('comments').push();
         newCommentRef.set({
-            author: anonymousNick, // ★ 여기가 '익명XXX'로 저장됨
+            author: anonymousNick,
             text: text,
+            password: password, // ★ 비밀번호 저장
             timestamp: new Date().toISOString()
         });
 
-        // ★ [알림 메시지 수정: 댓글 내용 추가]
+        // 알림 메시지 발송
         if (post.authorID && post.authorID !== myID) {
-            // 1. 게시글 제목 줄이기 (10글자)
             let shortTitle = post.title;
             if (shortTitle.length > 10) shortTitle = shortTitle.substring(0, 10) + "...";
 
-            // 2. 댓글 내용 줄이기 (15글자)
             let shortComment = text;
             if (shortComment.length > 15) shortComment = shortComment.substring(0, 15) + "...";
 
-            // 3. 최종 메시지 조합
-            // 예: 내 '공지사항...' 게시물에 익명842님이 댓글을 남겼습니다: "안녕하세요..."
             const message = `💬 [게시판] 내 '${shortTitle}' 게시물에 ${anonymousNick}님이 댓글을 남겼습니다: "${shortComment}"`;
             
             sendNotification(post.authorID, message);

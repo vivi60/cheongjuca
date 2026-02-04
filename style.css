@@ -241,7 +241,6 @@ body.main-page {
 
 /* 생존자목록 */
 body.sub-page {
-    background-image: url('/image/noname.png');
     background-size: cover;      
     background-position: 0 20px;  
     background-repeat: no-repeat;
@@ -253,8 +252,6 @@ body.sub-page {
 /* 익명게시판 */
 
 body.board-page {
-    /* 새로운 게시판 배경 이미지 경로 (파일명에 맞춰 수정하세요) */
-    background-image: url('image/noname.png'); 
     
     /* 화면에 꽉 채우기 위한 설정 (이전의 노하우 적용!) */
     background-size: 100% 100vh; 

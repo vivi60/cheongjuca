@@ -3,8 +3,28 @@
 // 1. 회원 명단 (비밀번호 관리)
 const userDB = {
     "13reaking_news": { pw: "admin0303", nick: "관리자", role: "admin" }, // 관리자 계정
-    "13reaking_system": { pw: "1234",      nick: "시스템",  role: "user" },
-    "runner1":        { pw: "run1",      nick: "러너1",  role: "user" }
+    "runner1":        { pw: "outbreak",      nick: "강나리",  role: "user" },
+    "runner2":        { pw: "outbreak",      nick: "강진혁",  role: "user" },
+    "runner3":        { pw: "outbreak",      nick: "강초아",  role: "user" },
+    "runner4":        { pw: "outbreak",      nick: "강하나",  role: "user" },
+    "runner5":        { pw: "outbreak",      nick: "고요한",  role: "user" },
+    "runner6":        { pw: "outbreak",      nick: "매튜 백",  role: "user" },
+    "runner7":        { pw: "outbreak",      nick: "백람",  role: "user" },
+    "runner8":        { pw: "outbreak",      nick: "범지태",  role: "user" },
+    "runner9":        { pw: "outbreak",      nick: "양희진",  role: "user" },
+    "runner10":        { pw: "outbreak",      nick: "유재이",  role: "user" },
+    "runner11":        { pw: "outbreak",      nick: "유한결",  role: "user" },
+    "runner12":        { pw: "outbreak",      nick: "윤태",  role: "user" },
+    "runner13":        { pw: "outbreak",      nick: "이기조",  role: "user" },
+    "runner14":        { pw: "outbreak",      nick: "이은정",  role: "user" },
+    "runner15":        { pw: "outbreak",      nick: "이필우",  role: "user" },
+    "runner16":        { pw: "outbreak",      nick: "임새언",  role: "user" },
+    "runner17":        { pw: "outbreak",      nick: "임해신",  role: "user" },
+    "runner18":        { pw: "outbreak",      nick: "장만우",  role: "user" },
+    "runner19":        { pw: "outbreak",      nick: "정해찬",  role: "user" },
+    "runner20":        { pw: "outbreak",      nick: "청록",  role: "user" },
+    "runner21":        { pw: "outbreak",      nick: "최도화",  role: "user" },
+    "runner22":        { pw: "outbreak",      nick: "한바다",  role: "user" },
 };
 
 // 2. 로그인 체크 함수 (index.html에서 사용)

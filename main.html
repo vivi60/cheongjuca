@@ -36,10 +36,10 @@
 
         .layer-character { z-index: 2; }
         .char-silhouette {
-            position: absolute; right: 0; bottom: 30;
-            width: 65vw; height: 100vh;
+            position: absolute; right: -15vw; bottom: 30;
+            width: 100vw; height: 100vh;
             object-fit: cover; object-position: top;
-            filter: brightness(0) blur(4px); opacity: 0.9;
+            filter: brightness(0) blur(6px); opacity: 0.8;
         }
         .char-face {
             position: absolute; left: 51%; top: 51%;
@@ -188,7 +188,8 @@
                 const users = snap.val();
                 if(!users) return;
 
-                const validUsers = Object.values(users).filter(u => u.fullBodyImg);
+                const validUsers = Object.values(users).filter(u => 
+    u.fullBodyImg && u.nick !== '관리자' && u.role !== 'admin');
                 if (validUsers.length > 0) {
                     const target = validUsers[Math.floor(Math.random() * validUsers.length)];
                     
@@ -203,7 +204,7 @@
 
         //0이 1월이고 1이 2월임
         function calculateCountdown() {
-            const targetDate = new Date(2026, 0 , 31); 
+            const targetDate = new Date(2026, 1 , 6); 
             const today = new Date();
             const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
             

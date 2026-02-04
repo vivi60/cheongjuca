@@ -1,178 +1,273 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <title>자유 게시판</title>
     <link rel="stylesheet" href="style.css">
 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
 
-<script>
-  // Firebase 콘솔에서 복사한 설정값을 여기에 넣으세요!
-const firebaseConfig = {
-    apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
-    authDomain: "cheongjuca.firebaseapp.com",
-    databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
-    projectId: "cheongjuca",
-    storageBucket: "cheongjuca.firebasestorage.app",
-    messagingSenderId: "455437421321",
-    appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8",
-    measurementId: "G-9XG7JRFM3D"
-  };
-  
-  // Firebase 초기화
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-</script>
+    <script>
+      // Firebase 설정
+      const firebaseConfig = {
+        apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
+        authDomain: "cheongjuca.firebaseapp.com",
+        databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
+        projectId: "cheongjuca",
+        storageBucket: "cheongjuca.firebasestorage.app",
+        messagingSenderId: "455437421321",
+        appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8",
+        measurementId: "G-9XG7JRFM3D"
+      };
+      
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+    </script>
 
     <style>
-        /* 게시판 전용 추가 스타일 */
+        /* --- 기본 설정 --- */
+        body {
+            margin: 0;
+            padding: 0;
+            color: #e0e0e0;
+            font-family: 'Pretendard';
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* [수정 1] 배경 이미지 및 흐림 효과 강화 */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%85%E1%85%A9%E1%84%80%E1%85%B3%E1%84%8B%E1%85%B5%E1%86%AB%E1%84%86%E1%85%A2%E1%86%AB%E1%84%86%E1%85%B5%E1%87%80%E1%84%92%E1%85%AA%E1%84%86%E1%85%A7%E1%86%AB.png?alt=media&token=d4242030-99d5-4bf9-a6e3-42c7e09d613f');
+            background-size: cover;
+            background-position: center;
+            /* 흐림 정도를 5px에서 12px로 높임 */
+            filter: blur(12px); 
+            z-index: -1;
+            transform: scale(1.02);
+            opacity: 0.5;
+        }
+
+        /* --- 상단 헤더바 --- */
+        .top-header-bar {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 60px;
+            /* [수정 2] 배경을 반투명하게 변경 (뒤가 비치도록) */
+            background-color: rgba(30, 30, 30, 0.75); 
+            backdrop-filter: blur(5px); /* 헤더 자체에도 블러 효과 */
+            border-bottom: 1px solid #444;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            display: flex; align-items: center;
+            padding: 0 20px; box-sizing: border-box;
+            z-index: 9999;
+        }
+
+        .header-search-container {
+            flex-grow: 1; max-width: 800px; margin: 0 auto; position: relative;
+        }
+
+        #headerSearchInput {
+            width: 100%; padding: 10px 15px;
+            border: 1px solid #444;
+            background-color: rgba(37, 37, 38, 0.8); /* 입력창도 살짝 투명하게 */
+            color: white; font-size: 15px; border-radius: 4px; outline: none; box-sizing: border-box;
+        }
+        
+        /* [수정 3] 포커스 색상 변경 (파란색 -> #535353) */
+        #headerSearchInput:focus {
+            border-color: #535353; 
+            background-color: rgba(45, 45, 48, 0.9);
+        }
+
+        /* 드롭다운 메뉴 */
+        .nav-dropdown {
+            display: none; position: absolute; top: 100%; left: 0; width: 100%;
+            background-color: #252526; border: 1px solid #444; border-top: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10000; border-radius: 0 0 4px 4px;
+        }
+        .nav-item { display: block; padding: 12px 15px; color: #ccc; text-decoration: none; font-size: 14px; border-bottom: 1px solid #333; }
+        
+        /* [수정 3] 메뉴 호버 색상 변경 (파란색 -> #535353) */
+        .nav-item:hover { background-color: #535353; color: white; }
+        
+        .nav-item:last-child { border-bottom: none; }
+        .logout-item { color: #ff6b6b; font-weight: bold; }
+        .nav-item:hover.logout-item { background-color: #c42b1c; color: white; }
+
+
+        /* --- 게시판 컨테이너 --- */
         .board-container {
             width: 80%;
             max-width: 800px;
-            background: rgba(0, 0, 0, 0.7); /* 반투명 검정 */
+            /* [수정 2] 게시판 배경을 더 투명하게 변경 (0.6 ~ 0.7 정도) */
+            background-color: rgba(30, 30, 30, 0.8); 
+            border: 1px solid #444;
             padding: 30px;
-            border-radius: 15px;
-            margin-top: 20px;
-            box-shadow: 0 0 20px rgba(171, 0, 0, 0.3);
-            backdrop-filter: blur(5px);
+            border-radius: 8px;
+            margin: 100px auto 50px auto; 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(3px); /* 유리 효과 추가 */
         }
+
+        /* 제목 스타일 */
+        h2 {
+            font-family: 'Pretendard', sans-serif;
+            color: #e0e0e0 !important;
+            margin-top: 0;
+            border-bottom: 2px solid #444;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        /* 글쓰기 입력창 스타일 */
         .post-form input, .post-form textarea {
             width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            background: #222;
-            border: 1px solid #ab0000;
+            padding: 12px;
+            margin-bottom: 12px;
+            background-color: rgba(37, 37, 38, 0.8);
+            border: 1px solid #444;
             color: white;
-            border-radius: 5px;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
         }
-        .post-item {
-            border-bottom: 1px solid #444;
-            padding: 15px 0;
+
+        /* [수정 3] 입력창 포커스 색상 변경 (#535353) */
+        .post-form input:focus, .post-form textarea:focus {
+            border-color: #535353; 
         }
-        .post-header { color: #ab0000; font-weight: bold; margin-bottom: 5px; }
-        .comment-section { margin-left: 20px; margin-top: 10px; font-size: 0.9em; }
-        .comment-item { color: #ccc; border-left: 2px solid #ab0000; padding-left: 10px; margin-bottom: 5px; }
-        .btn-post { background: #ab0000; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
-    
-    /* 삭제 버튼 스타일 */
-.btn-delete {
-    float: right;
-    background: none;
-    border: 1px solid #666;
-    color: #666;
-    font-size: 11px;
-    cursor: pointer;
-    padding: 2px 5px;
-    border-radius: 3px;
-    transition: 0.3s;
-}
-.btn-delete:hover {
-    color: #ab0000;
-    border-color: #ab0000;
-}
 
-/* 댓글 삭제 (작은 x) */
-.del-comment {
-    margin-left: 10px;
-    color: #555;
-    cursor: pointer;
-    font-weight: bold;
-}
-.del-comment:hover {
-    color: #ff0000;
-}
+        /* [수정 3] 버튼 색상 변경 (파란색 -> #535353) */
+        .btn-post {
+            background-color: #535353; 
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: 600;
+            float: right;
+            transition: background-color 0.2s;
+        }
+        /* 호버 시 조금 더 어둡게 */
+        .btn-post:hover { background-color: #3d3d3d; }
 
-/* 게시글 박스 내 줄바꿈 허용 */
-.post-content {
-    white-space: pre-wrap;
-    word-break: break-all;
-    margin-bottom: 15px;
-}
-    
+        /* 게시글 목록 스타일 */
+        .post-item { border-bottom: 1px solid #444; padding: 20px 0; }
+        
+        .post-header { 
+            color: #b0b0b0; /* 작성자 이름 색상 조정 */
+            font-weight: bold; margin-bottom: 8px; font-size: 1.05em;
+        }
+        
+        .post-content { 
+            color: #cccccc;
+            white-space: pre-wrap; word-break: break-all; margin-bottom: 15px; line-height: 1.5;
+        }
+        
+        .btn-delete { 
+            float: right; background: transparent; border: 1px solid #555; 
+            color: #888; font-size: 12px; cursor: pointer; padding: 4px 8px; border-radius: 3px; 
+        }
+        .btn-delete:hover { border-color: #ff4d4d; color: #ff4d4d; }
+
+        .comment-section { 
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 12px; margin-top: 15px; border-radius: 4px; 
+        }
+        .comment-item { 
+            color: #aaa; border-left: 2px solid #535353; /* 라인 색상도 변경 */
+            padding-left: 10px; margin-bottom: 8px; font-size: 0.9em;
+        }
+        .del-comment { margin-left: 10px; color: #666; cursor: pointer; font-size: 0.8em; }
+        .del-comment:hover { color: #ff4d4d; }
+
+        #pagination button {
+            background: rgba(37, 37, 38, 0.8); border: 1px solid #444; color: #ccc;
+            padding: 6px 12px; margin: 0 2px; cursor: pointer; border-radius: 3px;
+        }
+        #pagination button:hover { background: #535353; color: white; }
+        
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
     </style>
-
-<script>
-    (function() {
-        const status = localStorage.getItem("loginStatus");
-        const nick = localStorage.getItem("userNick"); // 저장된 닉네임 가져오기
-
-        // 1. 로그인 안 된 사람 튕겨내기
-        if (!status || (status !== "success" && status !== "admin")) {
-            if (!window.location.href.includes("index.html")) {
-                alert("로그인이 필요합니다.");
-                window.location.href = "index.html";
-            }
-        }
-
-        // 2. 페이지 로딩 후 닉네임 표시하기
-        window.addEventListener('load', function() {
-            const badge = document.getElementById("userBadge");
-            if (badge && nick) {
-                // 관리자면 빨간색, 일반 유저는 흰색이나 회색 등으로 표시
-                if (status === "admin") {
-                    badge.innerText = `[관리자 모드]`;
-                    badge.style.color = "#ff0000";
-                } else {
-                    badge.innerText = `[${nick}]`; // 예: [러너1]
-                    badge.style.color = "#cccccc"; // 일반 유저 색상
-                }
-                badge.style.display = "inline"; // 숨겨둔 배지를 보이게 함
-            }
-        });
-    })();
-
-        // 로그아웃 함수
-        function logout() {
-            localStorage.removeItem("loginStatus");
-            alert("로그아웃 되었습니다.");
-            window.location.href = "index.html";
-        }
-    </script>
-
 </head>
+
 <body class="board-page">
-<nav class="navbar">
-    <div class="logo">
-        OUT BREAK 
-        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
-    </div>
-    <ul class="nav-links">
-        <li><a href="main.html">홈</a></li>
-        <li><a href="sub.html">생존자목록</a></li>
-        <li><a href="board.html">자유게시판</a></li>
-        <li><a href="trade.html">중고거래게시판</a></li>
-        <li><a href="quest.html">의뢰게시판</a></li>
-        <li><a href="game.html">고장난자판기</a></li>
-        <li><a href="vending.html">신형자판기</a></li>
-        <li><a href="#" onclick="logout()">로그아웃</a></li>
-    </ul>
-    </nav>
+
+    <header class="top-header-bar">
+        <div class="header-search-container nav-search-wrapper">
+            <input type="text" id="headerSearchInput" placeholder="🔍 메뉴 검색" autocomplete="off">
+            <div class="nav-dropdown" id="menuList">
+                <a href="main.html" class="nav-item">메인 페이지</a>
+                <a href="sub.html" class="nav-item">생존자 목록</a>
+                <a href="board.html" class="nav-item">자유 게시판</a>
+                <a href="trade.html" class="nav-item">중고 거래 게시판</a>
+                <a href="quest.html" class="nav-item">의뢰 게시판</a>
+                <a href="game.html" class="nav-item">고장난 자판기</a>
+                <a href="vending.html" class="nav-item">신형 자판기</a>
+                <a href="#" onclick="logout()" class="nav-item logout-item">접속 종료</a>
+            </div>
+        </div>
+    </header>
 
     <div class="board-container">
-        <h2 style="font-family: 'SchoolSafeBoardMarker'; color: #ab0000;">자유 게시판</h2>
+        <h2>자유 게시판</h2>
         
         <div class="post-form">
             <input type="text" id="postTitle" placeholder="제목">
-            <textarea id="postContent" rows="3" placeholder="내용을 입력하세요..."></textarea>
-            <button class="btn-post" onclick="addPost()">게시하기</button>
+            <textarea id="postContent" rows="4" placeholder="내용을 입력하세요..."></textarea>
+            <div style="overflow: hidden;">
+                <button class="btn-post" onclick="addPost()">게시하기</button>
+            </div>
         </div>
 
-        <hr style="border: 0.5px solid #444; margin: 30px 0;">
-
         <div id="postList"></div>
-        <div id="pagination" style="text-align: center; margin-top: 30px; display: flex; justify-content: center; gap: 10px;"></div>
-
+        <div id="pagination" style="text-align: center; margin-top: 30px; display: flex; justify-content: center; gap: 5px;"></div>
     </div>
 
     <script src="board.js"></script>
+
     <script>
-        // 각 파일의 script 태그 안에 있는 logout 함수를 이 코드로 교체하세요.
-function logout() { 
-    localStorage.clear(); 
-    location.href = "index.html"; 
-}
+        (function() {
+            const status = localStorage.getItem("loginStatus");
+            if (!status || (status !== "success" && status !== "admin")) {
+                if (!window.location.href.includes("index.html")) {
+                    alert("로그인이 필요합니다.");
+                    window.location.href = "index.html";
+                }
+            }
+        })();
+
+        function logout() { 
+            localStorage.clear(); 
+            location.href = "index.html"; 
+        }
+
+        const searchInput = document.getElementById('headerSearchInput');
+        const menuList = document.getElementById('menuList');
+        const menuItems = menuList.getElementsByClassName('nav-item');
+
+        searchInput.addEventListener('focus', () => { menuList.style.display = 'block'; });
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-search-wrapper')) menuList.style.display = 'none';
+        });
+
+        searchInput.addEventListener('keyup', () => {
+            const filter = searchInput.value.toUpperCase();
+            for (let i = 0; i < menuItems.length; i++) {
+                const txtValue = menuItems[i].textContent || menuItems[i].innerText;
+                menuItems[i].style.display = (txtValue.toUpperCase().indexOf(filter) > -1) ? "" : "none";
+            }
+            menuList.style.display = 'block'; 
+        });
     </script>
 </body>
 </html>

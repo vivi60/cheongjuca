@@ -2,137 +2,173 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>BOOKING</title>
-    <script src="script.js"></script> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>생존자 접속 승인</title>
     
+    <link href="https://db.onlinewebfonts.com/c/b4a89f5837a3f561b244965550593f37?family=SimSun" rel="stylesheet" type="text/css"/>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap');
+        /* 폰트 정의 */
+        body, input, button, div {
+            font-family: "SimSun", serif;
+        }
 
         body {
-            background-color: #1a1a1a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            margin: 0; padding: 0;
+            background-color: #000;
             height: 100vh;
-            margin: 0;
-            font-family: 'Courier Prime', monospace;
-            cursor: url(http://www.rw-designer.com/cursor-extern.php?id=88921), auto !important;
-        }
-
-        .ticket {
-            background-color: #fdfbf7;
-            color: #333;
-            width: 650px;
-            height: 300px;
-            display: flex;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border-radius: 5px;
+            width: 100vw;
             overflow: hidden;
             position: relative;
-        }
-
-        .stub {
-            background-color: #ab0000;
-            width: 180px;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            color: white;
-            border-right: 2px dashed #333;
-            position: relative;
         }
 
-        .stub::after {
-            content: '';
+        /* 1. 배경 이미지 */
+        .bg-layer {
             position: absolute;
-            right: -10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
-            background-color: #1a1a1a;
-            border-radius: 50%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+        }
+        .bg-image {
+            width: 100%; height: 100%;
+            object-fit: cover;
         }
 
-        .main-content {
-            flex: 1;
-            padding: 30px;
+        /* 2. 중앙 컨테이너 */
+        .center-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            /* [수정] 화면 너비의 70% 크기로 설정 (조절 가능) */
+            width: 70vw; 
+        }
+
+        /* 종이 이미지 */
+        .paper-image {
+            /* [수정] 부모(center-container) 너비에 꽉 차게 */
+            width: 150%; 
+            height: auto;
+            box-shadow: 1.5vw 1.5vw 4vw rgba(0,0,0,0.8); /* 그림자도 vw로 비율 조정 */
+        }
+
+        /* 3. 입력 폼 & 버튼 그룹 */
+        .form-overlay {
+            position: absolute;
+            top: 51%; 
+            right: 27%; 
+            transform: translateY(-50%);
+            
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            position: relative;
+            align-items: center;
+            
+            /* [수정] px 대신 비율(vw, %) 사용 */
+            gap: 0.4vw;      
+            width: 20%;   
         }
 
-        .input-group { margin-bottom: 15px; }
-        .input-group label {
-            display: block;
-            font-size: 12px;
-            margin-bottom: 5px;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #555;
+        /* (1) 로그인 버튼 */
+        .login-btn-wrapper {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-align: center;
+        }
+        .login-btn-wrapper:hover {
+            transform: scale(1.05);
         }
         
-        /* script.js의 checkLogin()이 찾는 ID인 username, password로 통일 */
-        .input-group input {
-            width: 90%;
-            padding: 10px;
-            border: 2px solid #333;
-            background: transparent;
-            font-family: 'Courier Prime';
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            outline: none;
+        .btn-image {
+            /* [수정] 부모(form-overlay)보다 1.2배 크게 */
+            width: 120%; 
+            height: auto; 
+            display: block;
         }
 
-        .btn-login {
-            margin-top: 10px;
-            padding: 12px;
-            background: #333;
-            color: white;
-            border: none;
-            font-family: 'Courier Prime';
+        .btn-text {
+            position: absolute;
+            top: 50%; left: 58%;
+            transform: translate(-50%, -50%);
+            color: white; 
+            
+            /* [수정] 글자 크기를 화면 비례로 */
+            font-size: 1.0vw; 
+            
             font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-            width: 50%;
+            letter-spacing: 0.2vw; /* 자간도 vw로 */
+            pointer-events: none; 
+            white-space: nowrap;
         }
-        .btn-login:hover { background: #ab0000; }
+
+        /* (2) 입력창 그룹 */
+        .input-group {
+            width: 100%;
+            text-align: center;
+            
+            /* [수정] 35px -> 4vw (화면 줄면 여백도 좁아짐) */
+            margin-right: -1vw;
+        }
+
+        .input-field {
+            width: 100%;
+            
+            /* [수정] 높이 30px -> 3vw */
+            height: 2vw; 
+            background: transparent;
+            border: none; 
+            
+            /* [수정] 글자 크기 16px -> 1.3vw */
+            font-size: 1.0vw; 
+            
+            text-align: left;
+            color: #555;
+            outline: none;
+        }
+        
+        .input-field::placeholder { 
+            color: #555; 
+            /* [수정] 플레이스홀더 크기도 동일하게 */
+            font-size: 1.0vw;
+            font-weight: bold;
+        }
+
     </style>
-    
-    <script>
-        // 페이지 로드 시 자동 로그인 체크
-        window.onload = function() {
-            const status = localStorage.getItem("loginStatus");
-            // success(일반) 또는 admin(관리자)이면 메인으로
-            if (status === "success" || status === "admin") {
-                window.location.href = "main.html"; 
-            }
-        };
-    </script>
 </head>
 <body>
-    <div class="ticket">
-        <div class="stub">
-            <h2 style="transform: rotate(-90deg); white-space: nowrap; font-size: 32px;">TICKET</h2>
-        </div>
-        <div class="main-content">
-            <h1 style="font-family: 'Black Ops One'; font-size: 36px; margin: 0 0 20px 0;">OUTBREAK</h1>
-            
-            <div class="input-group">
-                <label>OPERATOR ID</label>
-                <input type="text" id="username" placeholder="Enter ID">
+
+    <div class="bg-layer">
+        <img src="https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%85%E1%85%A9%E1%84%80%E1%85%B3%E1%84%8B%E1%85%B5%E1%86%AB%E1%84%86%E1%85%A2%E1%86%AB%E1%84%86%E1%85%B5%E1%87%80%E1%84%92%E1%85%AA%E1%84%86%E1%85%A7%E1%86%AB.png?alt=media&token=d4242030-99d5-4bf9-a6e3-42c7e09d613f" class="bg-image" alt="Background">
+    </div>
+
+    <div class="center-container">
+        
+        <img src="https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%85%E1%85%A9%E1%84%80%E1%85%B3%E1%84%8B%E1%85%B5%E1%86%AB%E1%84%8E%E1%85%A1%E1%86%BC.png?alt=media&token=54ce6c40-d505-40c0-af94-cb82fdf0c483" class="paper-image" alt="Login Paper">
+
+        <div class="form-overlay">
+
+            <div class="login-btn-wrapper" onclick="checkLogin()">
+                <img src="https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%85%E1%85%A9%E1%84%80%E1%85%B3%E1%84%8B%E1%85%B5%E1%86%AB%E1%84%92%E1%85%AA%E1%86%A8%E1%84%8B%E1%85%B5%E1%86%AB%E1%84%87%E1%85%A5%E1%84%90%E1%85%B3%E1%86%AB.png?alt=media&token=43bfb9d3-8322-4b16-99b7-1a2a9f24f176" class="btn-image" alt="Login Button">
+                <span class="btn-text">LOGIN</span>
             </div>
+
             <div class="input-group">
-                <label>ACCESS CODE</label>
-                <input type="password" id="password" placeholder="Enter Password">
+                <input type="text" id="username" class="input-field" placeholder="ID NUMBER">
             </div>
-            
-            <button class="btn-login" onclick="checkLogin()">CONFIRM ENTRY</button>
+
+            <div class="input-group">
+                <input type="password" id="password" class="input-field" placeholder="PASSWORD NUMBER">
+            </div>
+
         </div>
     </div>
+
+    <script src="script.js"></script>
+
 </body>
 </html>
