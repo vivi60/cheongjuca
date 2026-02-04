@@ -5,6 +5,8 @@
     <title>자유 게시판</title>
     <link rel="stylesheet" href="style.css">
 
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
+
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
 
@@ -31,12 +33,12 @@
             margin: 0;
             padding: 0;
             color: #e0e0e0;
-            font-family: 'Pretendard';
+            font-family: 'Pretendard', sans-serif;
             position: relative;
             min-height: 100vh;
         }
 
-        /* [수정 1] 배경 이미지 및 흐림 효과 강화 */
+        /* 배경 이미지 및 흐림 효과 */
         body::before {
             content: "";
             position: fixed;
@@ -44,55 +46,102 @@
             background-image: url('https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%85%E1%85%A9%E1%84%80%E1%85%B3%E1%84%8B%E1%85%B5%E1%86%AB%E1%84%86%E1%85%A2%E1%86%AB%E1%84%86%E1%85%B5%E1%87%80%E1%84%92%E1%85%AA%E1%84%86%E1%85%A7%E1%86%AB.png?alt=media&token=d4242030-99d5-4bf9-a6e3-42c7e09d613f');
             background-size: cover;
             background-position: center;
-            /* 흐림 정도를 5px에서 12px로 높임 */
             filter: blur(12px); 
             z-index: -1;
             transform: scale(1.02);
             opacity: 0.5;
         }
 
-        /* --- 상단 헤더바 --- */
+        /* --- 상단 헤더바 (수정됨) --- */
         .top-header-bar {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 60px;
-            /* [수정 2] 배경을 반투명하게 변경 (뒤가 비치도록) */
             background-color: rgba(30, 30, 30, 0.75); 
-            backdrop-filter: blur(5px); /* 헤더 자체에도 블러 효과 */
+            backdrop-filter: blur(5px);
             border-bottom: 1px solid #444;
             box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            display: flex; align-items: center;
-            padding: 0 20px; box-sizing: border-box;
+            
+            /* 좌우 배치 설정 */
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            padding: 0 20px; 
+            box-sizing: border-box;
             z-index: 9999;
         }
 
-        .header-search-container {
-            flex-grow: 1; max-width: 800px; margin: 0 auto; position: relative;
+        /* 1. 로고 스타일 */
+        .header-logo {
+            font-family: 'Black Ops One', cursive;
+            font-size: 24px;
+            color: #ab0000;
+            text-decoration: none;
+            cursor: pointer;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            transition: color 0.3s;
+            z-index: 2; /* 검색창보다 위에 오도록 */
+        }
+        .header-logo:hover { color: #ff0000; }
+
+        /* [수정됨] 2. 검색창 컨테이너 (완벽한 중앙 정렬) */
+        .header-search-wrapper {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%); /* 정확히 가운데로 이동 */
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
         }
 
         #headerSearchInput {
             width: 100%; padding: 10px 15px;
             border: 1px solid #444;
-            background-color: rgba(37, 37, 38, 0.8); /* 입력창도 살짝 투명하게 */
+            background-color: rgba(37, 37, 38, 0.8);
             color: white; font-size: 15px; border-radius: 4px; outline: none; box-sizing: border-box;
+            text-align: center; 
         }
-        
-        /* [수정 3] 포커스 색상 변경 (파란색 -> #535353) */
         #headerSearchInput:focus {
             border-color: #535353; 
             background-color: rgba(45, 45, 48, 0.9);
+            text-align: left; 
         }
+
+        /* 3. 햄버거 메뉴 버튼 (오른쪽) */
+        .hamburger-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 2; /* 검색창보다 위에 오도록 */
+        }
+        .hamburger-line {
+            width: 25px;
+            height: 3px;
+            background-color: #e0e0e0;
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+        .hamburger-btn:hover .hamburger-line { background-color: #ab0000; }
 
         /* 드롭다운 메뉴 */
         .nav-dropdown {
-            display: none; position: absolute; top: 100%; left: 0; width: 100%;
-            background-color: #252526; border: 1px solid #444; border-top: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10000; border-radius: 0 0 4px 4px;
+            display: none; 
+            position: absolute; 
+            top: 60px; 
+            right: 0; 
+            width: 250px;
+            background-color: #252526; 
+            border: 1px solid #444; 
+            border-top: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
+            z-index: 10000; 
+            border-radius: 0 0 0 4px;
         }
-        .nav-item { display: block; padding: 12px 15px; color: #ccc; text-decoration: none; font-size: 14px; border-bottom: 1px solid #333; }
-        
-        /* [수정 3] 메뉴 호버 색상 변경 (파란색 -> #535353) */
-        .nav-item:hover { background-color: #535353; color: white; }
-        
+        .nav-item { display: block; padding: 15px 20px; color: #ccc; text-decoration: none; font-size: 14px; border-bottom: 1px solid #333; transition: 0.2s; }
+        .nav-item:hover { background-color: #535353; color: white; padding-left: 25px; }
         .nav-item:last-child { border-bottom: none; }
         .logout-item { color: #ff6b6b; font-weight: bold; }
         .nav-item:hover.logout-item { background-color: #c42b1c; color: white; }
@@ -102,17 +151,15 @@
         .board-container {
             width: 80%;
             max-width: 800px;
-            /* [수정 2] 게시판 배경을 더 투명하게 변경 (0.6 ~ 0.7 정도) */
             background-color: rgba(30, 30, 30, 0.8); 
             border: 1px solid #444;
             padding: 30px;
             border-radius: 8px;
             margin: 100px auto 50px auto; 
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6); 
-            backdrop-filter: blur(3px); /* 유리 효과 추가 */
+            backdrop-filter: blur(3px);
         }
 
-        /* 제목 스타일 */
         h2 {
             font-family: 'Pretendard', sans-serif;
             color: #e0e0e0 !important;
@@ -122,7 +169,6 @@
             margin-bottom: 25px;
         }
 
-        /* 글쓰기 입력창 스타일 */
         .post-form input, .post-form textarea {
             width: 100%;
             padding: 12px;
@@ -137,12 +183,10 @@
             transition: border-color 0.2s;
         }
 
-        /* [수정 3] 입력창 포커스 색상 변경 (#535353) */
         .post-form input:focus, .post-form textarea:focus {
             border-color: #535353; 
         }
 
-        /* [수정 3] 버튼 색상 변경 (파란색 -> #535353) */
         .btn-post {
             background-color: #535353; 
             color: white;
@@ -154,14 +198,12 @@
             float: right;
             transition: background-color 0.2s;
         }
-        /* 호버 시 조금 더 어둡게 */
         .btn-post:hover { background-color: #3d3d3d; }
 
-        /* 게시글 목록 스타일 */
         .post-item { border-bottom: 1px solid #444; padding: 20px 0; }
         
         .post-header { 
-            color: #b0b0b0; /* 작성자 이름 색상 조정 */
+            color: #b0b0b0; 
             font-weight: bold; margin-bottom: 8px; font-size: 1.05em;
         }
         
@@ -181,7 +223,7 @@
             padding: 12px; margin-top: 15px; border-radius: 4px; 
         }
         .comment-item { 
-            color: #aaa; border-left: 2px solid #535353; /* 라인 색상도 변경 */
+            color: #aaa; border-left: 2px solid #535353; 
             padding-left: 10px; margin-bottom: 8px; font-size: 0.9em;
         }
         .del-comment { margin-left: 10px; color: #666; cursor: pointer; font-size: 0.8em; }
@@ -203,18 +245,23 @@
 <body class="board-page">
 
     <header class="top-header-bar">
-        <div class="header-search-container nav-search-wrapper">
-            <input type="text" id="headerSearchInput" placeholder="🔍 메뉴 검색" autocomplete="off">
-            <div class="nav-dropdown" id="menuList">
-                <a href="main.html" class="nav-item">메인 페이지</a>
-                <a href="sub.html" class="nav-item">생존자 목록</a>
-                <a href="board.html" class="nav-item">자유 게시판</a>
-                <a href="trade.html" class="nav-item">중고 거래 게시판</a>
-                <a href="quest.html" class="nav-item">의뢰 게시판</a>
-                <a href="game.html" class="nav-item">고장난 자판기</a>
-                <a href="vending.html" class="nav-item">신형 자판기</a>
-                <a href="#" onclick="logout()" class="nav-item logout-item">접속 종료</a>
-            </div>
+        <a href="main.html" class="header-logo">OUT BREAK</a>
+
+        <div class="header-search-wrapper">
+            <input type="text" id="headerSearchInput" placeholder="🔍 게시글 제목/내용 검색" autocomplete="off">
+        </div>
+
+        <button class="hamburger-btn" id="hamburgerBtn">
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
+        </button>
+
+        <div class="nav-dropdown" id="menuList">
+            <a href="board.html" class="nav-item">자유 게시판</a>
+            <a href="trade.html" class="nav-item">중고 거래 게시판</a>
+            <a href="quest.html" class="nav-item">의뢰 게시판</a>
+            <a href="#" onclick="logout()" class="nav-item logout-item">로그아웃</a>
         </div>
     </header>
 
@@ -253,20 +300,28 @@
 
         const searchInput = document.getElementById('headerSearchInput');
         const menuList = document.getElementById('menuList');
-        const menuItems = menuList.getElementsByClassName('nav-item');
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
 
-        searchInput.addEventListener('focus', () => { menuList.style.display = 'block'; });
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.nav-search-wrapper')) menuList.style.display = 'none';
+        // 1. 햄버거 버튼 클릭 시 메뉴 토글
+        hamburgerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuList.style.display = (menuList.style.display === 'block') ? 'none' : 'block';
         });
 
-        searchInput.addEventListener('keyup', () => {
-            const filter = searchInput.value.toUpperCase();
-            for (let i = 0; i < menuItems.length; i++) {
-                const txtValue = menuItems[i].textContent || menuItems[i].innerText;
-                menuItems[i].style.display = (txtValue.toUpperCase().indexOf(filter) > -1) ? "" : "none";
+        // 2. 외부 클릭 시 메뉴 닫기
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-dropdown') && !e.target.closest('#hamburgerBtn')) {
+                menuList.style.display = 'none';
             }
-            menuList.style.display = 'block'; 
+        });
+
+        // 3. [변경됨] 검색창 입력 시 '게시글 검색' 실행
+        // (board.js에 있는 searchPosts 함수를 호출합니다)
+        searchInput.addEventListener('keyup', (e) => {
+            const keyword = e.target.value;
+            if (typeof searchPosts === 'function') {
+                searchPosts(keyword); // board.js에 새로 만들 함수
+            }
         });
     </script>
 </body>

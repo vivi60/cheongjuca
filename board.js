@@ -2,30 +2,52 @@
 
 let currentPage = 1;
 const postsPerPage = 10; 
-let allPosts = []; 
+
+let allPosts = [];       // DB에서 가져온 전체 원본 데이터
+let displayedPosts = []; // 화면에 실제로 보여줄 데이터 (검색 필터링 적용됨)
 
 // 1. 실시간 데이터 불러오기
 database.ref('posts').on('value', (snapshot) => {
     const data = snapshot.val();
     
+    // 전체 게시글 로드
     allPosts = data ? Object.entries(data).map(([key, value]) => ({ 
         id: key, 
         ...value,
         comments: value.comments ? Object.entries(value.comments).map(([ckey, cvalue]) => ({ id: ckey, ...cvalue })) : []
     })).reverse() : [];
     
+    // [수정됨] 처음에는 전체 게시글을 보여줌
+    displayedPosts = allPosts;
+    
     renderPosts(); 
 });
 
-// 2. 게시글 추가 (수정됨: authorID 저장 추가)
+// [NEW] 1-2. 게시글 검색 함수 (HTML 검색창에서 호출됨)
+function searchPosts(keyword) {
+    if (!keyword.trim()) {
+        // 검색어가 없으면 전체 게시글 표시
+        displayedPosts = allPosts;
+    } else {
+        const lowerKey = keyword.toLowerCase();
+        // 제목(title) 또는 내용(content)에 검색어가 포함된 것만 필터링
+        displayedPosts = allPosts.filter(post => 
+            (post.title && post.title.toLowerCase().includes(lowerKey)) || 
+            (post.content && post.content.toLowerCase().includes(lowerKey))
+        );
+    }
+    
+    // 검색 후에는 1페이지로 초기화하고 다시 그리기
+    currentPage = 1;
+    renderPosts();
+}
+
+// 2. 게시글 추가
 function addPost() {
     const title = document.getElementById('postTitle').value;
     const content = document.getElementById('postContent').value;
-    
-    // [중요] 현재 로그인한 사용자의 실제 ID 가져오기
     const myID = localStorage.getItem("loginID"); 
     
-    // 화면에 보여줄 익명 닉네임 생성
     const anonymousNum = Math.floor(Math.random() * 900) + 100;
     const authorDisplay = `익명${anonymousNum}`;
 
@@ -34,8 +56,8 @@ function addPost() {
     if (!password) return;
 
     database.ref('posts').push({
-        author: authorDisplay, // 화면 표시용 (익명)
-        authorID: myID,        // ★ [핵심] 알림 발송용 실제 ID (DB에만 저장됨)
+        author: authorDisplay,
+        authorID: myID,
         title: title,
         content: content,
         password: password,
@@ -46,47 +68,38 @@ function addPost() {
     document.getElementById('postContent').value = '';
 }
 
-// 댓글 추가 함수 (익명 버전)
-// 댓글 추가 함수 (수정됨: 비밀번호 입력 추가)
+// 3. 댓글 추가
 function addComment(postId) {
     const input = document.getElementById(`input-${postId}`);
     const text = input.value;
     if (!text) return alert("댓글 내용을 입력하세요.");
 
-    // [추가됨] 비밀번호 입력 받기
     const password = prompt("댓글 삭제 시 사용할 비밀번호를 입력하세요:");
-    if (!password) return; // 취소 누르면 중단
+    if (!password) return; 
 
-    // 닉네임 대신 랜덤 익명 이름 생성
     const randomNum = Math.floor(Math.random() * 900) + 100; 
     const anonymousNick = `익명${randomNum}`; 
-
     const myID = localStorage.getItem("loginID");
-
     const postRef = database.ref('posts/' + postId);
     
     postRef.once('value', snapshot => {
         const post = snapshot.val();
         
-        // 댓글 저장
         const newCommentRef = postRef.child('comments').push();
         newCommentRef.set({
             author: anonymousNick,
             text: text,
-            password: password, // ★ 비밀번호 저장
+            password: password, 
             timestamp: new Date().toISOString()
         });
 
-        // 알림 메시지 발송
         if (post.authorID && post.authorID !== myID) {
             let shortTitle = post.title;
             if (shortTitle.length > 10) shortTitle = shortTitle.substring(0, 10) + "...";
-
             let shortComment = text;
             if (shortComment.length > 15) shortComment = shortComment.substring(0, 15) + "...";
 
             const message = `💬 [게시판] 내 '${shortTitle}' 게시물에 ${anonymousNick}님이 댓글을 남겼습니다: "${shortComment}"`;
-            
             sendNotification(post.authorID, message);
         }
     });
@@ -117,13 +130,21 @@ function deleteComment(postId, commentId) {
     });
 }
 
-// 5. 화면 그리기 및 페이징
+// 5. 화면 그리기 및 페이징 (수정됨: displayedPosts 사용)
 function renderPosts() {
     const postList = document.getElementById('postList');
-    const totalPages = Math.ceil(allPosts.length / postsPerPage);
     
+    // [수정] displayedPosts(검색 결과)가 비어있으면 안내 메시지 표시
+    if (displayedPosts.length === 0) {
+        postList.innerHTML = '<div style="text-align:center; padding:40px; color:#666;">검색 결과가 없습니다.</div>';
+        document.getElementById('pagination').innerHTML = '';
+        return;
+    }
+
+    // [수정] allPosts 대신 displayedPosts를 사용하여 페이징 계산
+    const totalPages = Math.ceil(displayedPosts.length / postsPerPage);
     const startIndex = (currentPage - 1) * postsPerPage;
-    const currentPosts = allPosts.slice(startIndex, startIndex + postsPerPage);
+    const currentPosts = displayedPosts.slice(startIndex, startIndex + postsPerPage);
 
     postList.innerHTML = currentPosts.map(post => `
         <div class="post-item">
@@ -169,10 +190,8 @@ function goToPage(page) {
     window.scrollTo(0, 0);
 }
 
-// 알림 보내기 함수 (필수)
 function sendNotification(targetId, message) {
-    if(!targetId) return; // 타겟 ID가 없으면 중단
-    
+    if(!targetId) return;
     database.ref('users/' + targetId + '/notifications').push({
         message: message,
         timestamp: firebase.database.ServerValue.TIMESTAMP,
