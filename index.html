@@ -7,6 +7,15 @@
     
     <link href="https://db.onlinewebfonts.com/c/b4a89f5837a3f561b244965550593f37?family=SimSun" rel="stylesheet" type="text/css"/>
 
+    <script>
+        (function() {
+            const status = localStorage.getItem("loginStatus");
+            if (status === "success" || status === "admin") {
+                window.location.href = "main.html"; // 바로 메인으로 점프!
+            }
+        })();
+    </script>
+    
     <style>
         /* 폰트 정의 */
         body, input, button, div {
@@ -139,6 +148,7 @@
         }
 
     </style>
+    
 </head>
 <body>
 
