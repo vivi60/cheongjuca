@@ -331,7 +331,6 @@ body.board-page {
 .page-btn.active {
     background: #ab0000;
     font-weight: bold;
-    box-shadow: 0 0 10px rgba(171, 0, 0, 0.5);
 }
 
 /* --- 의뢰 게시판 (Quest Page) 스타일 --- */
@@ -339,7 +338,7 @@ body.board-page {
 /* 1. 배경 설정 (어두운 분위기) */
 body.quest-page {
     background-color: #1a1a1a;
-    background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://i.imgur.com/IbRS0sX.png'); /* 배경 이미지 변경 가능 */
+    background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7));
     background-size: cover;
     background-attachment: fixed;
     margin: 0;
@@ -859,7 +858,7 @@ body.profile-page {
     width: 8px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #ab0000; /* 생존 테마의 붉은색 */
+    background: #535353; /* 생존 테마의 붉은색 */
     border-radius: 4px;
 }
 ::-webkit-scrollbar-track {
