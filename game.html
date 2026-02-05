@@ -2,303 +2,291 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>리듬 자판기 (4-KEY)</title>
+    <title>고장난 자판기 (물리 충격 요법)</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
-
+        /* =========================================
+           [디자인: 인더스트리얼 그레이 & 물리 타격]
+           ========================================= */
         body {
+            margin: 0; padding: 0;
             background-color: #111;
-            color: #d0d0d0;
-            font-family: 'Courier Prime', monospace;
-            display: flex; flex-direction: column; align-items: center;
-            margin: 0; padding: 20px; min-height: 100vh;
-            user-select: none;
-            overflow: hidden; /* 스크롤 방지 */
-        }
-
-        /* --- 네비게이션 (공통) --- */
-        .navbar { width: 100%; background: rgba(0,0,0,0.9); border-bottom: 1px solid #ab0000; height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 50px; box-sizing: border-box; position: fixed; top: 0; z-index: 1000; }
-        .logo { color: #ab0000; font-family: 'Black Ops One'; font-size: 24px; }
-        .nav-links { list-style: none; display: flex; gap: 20px; }
-        .nav-links a { color: white; text-decoration: none; }
-
-        /* --- 메인 컨테이너 --- */
-        .game-wrapper {
-            margin-top: 80px;
-            display: flex; gap: 20px;
-            width: 100%; max-width: 1000px;
-            height: 80vh;
-        }
-
-        /* 왼쪽: 아이템 진열장 */
-        .shelf-section {
-            flex: 1;
-            background: #1a1a1a;
-            border: 2px solid #444;
-            border-radius: 10px;
-            padding: 15px;
-            overflow-y: auto;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            align-content: start;
-        }
-
-        .shelf-item {
-            background: #222; border: 1px solid #555; border-radius: 5px;
-            padding: 10px; text-align: center; cursor: pointer; transition: 0.2s;
-        }
-        .shelf-item:hover { border-color: #ab0000; background: #2a2a2a; }
-        .shelf-item.selected { border-color: #0f0; background: #001100; box-shadow: 0 0 10px #0f0; }
-        .item-emoji { font-size: 30px; }
-        .item-info { font-size: 10px; color: #888; margin-top: 5px; }
-        .difficulty-badge { 
-            display: inline-block; background: #000; color: #fff; 
-            font-size: 10px; padding: 2px 5px; border-radius: 3px; margin-top: 3px;
-        }
-
-        /* 오른쪽: 리듬게임 스테이지 */
-        .rhythm-section {
-            flex: 1.5;
-            background: #000;
-            border: 4px solid #333;
-            border-radius: 10px;
-            position: relative;
+            color: #efefef; /* 보조색 (텍스트) */
+            font-family: 'Black Ops One', cursive; 
+            height: 100vh;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            display: flex; flex-direction: column; align-items: center;
+            user-select: none;
         }
 
-        /* 게임 UI 정보 */
-        .game-hud {
-            width: 100%; padding: 10px;
-            display: flex; justify-content: space-between;
-            background: rgba(255,255,255,0.05);
+        /* 배경 이미지 */
+        body::before {
+            content: "";
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: 
+                linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)),
+                url('https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A1%E1%84%91%E1%85%A1%E1%86%AB%E1%84%80%E1%85%B5%E1%84%87%E1%85%A2%E1%84%80%E1%85%A7%E1%86%BC.png?alt=media&token=10609fbc-4621-42dd-b401-ca7051e97864');
+            background-size: cover;
+            background-position: center;
+            z-index: -2;
+        }
+
+        /* --- [헤더 네비게이션] --- */
+        .top-header-bar {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 60px;
+            background-color: #1a1a1a;
+            border-bottom: 4px solid #535353;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.9);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px; box-sizing: border-box; z-index: 2000;
+        }
+
+        .header-logo {
+            font-size: 24px; color: #efefef; text-decoration: none;
+            text-shadow: 2px 2px 0px #000; cursor: pointer; letter-spacing: 1px;
+        }
+
+        .hamburger-btn {
+            background: none; border: none; cursor: pointer; padding: 5px;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .hamburger-line {
+            width: 30px; height: 4px; background-color: #efefef; border-radius: 2px; transition: 0.3s;
+        }
+        .hamburger-btn:hover .hamburger-line { background-color: #999; }
+
+        .nav-dropdown {
+            display: none; position: absolute; top: 60px; right: 0; width: 220px;
+            background-color: #222; border: 2px solid #535353; border-top: none;
+            box-shadow: 0 10px 20px rgba(0,0,0,1); z-index: 10000;
+        }
+        .nav-item { 
+            display: block; padding: 15px; color: #ccc; text-decoration: none; 
+            font-size: 14px; border-bottom: 1px solid #444; font-family: 'Share Tech Mono';
+        }
+        .nav-item:hover { background-color: #535353; color: #fff; font-weight: bold; }
+
+        /* --- [자판기 본체 프레임] --- */
+        .machine-frame {
+            margin-top: 80px;
+            width: 95vw; max-width: 1200px; height: 85vh;
+            display: flex; gap: 15px;
+            border: 20px solid #535353; 
+            border-radius: 10px;
+            background: #222;
+            box-shadow: inset 0 0 50px #000, 10px 10px 30px rgba(0,0,0,0.8);
+            padding: 15px; position: relative;
+        }
+        
+        .machine-frame::after {
+            content: "KICK HERE";
+            position: absolute; bottom: 10px; right: 20px;
+            font-size: 40px; color: rgba(239, 239, 239, 0.1);
+            transform: rotate(-10deg); pointer-events: none;
             font-family: 'Black Ops One';
-            z-index: 10;
-        }
-        .score-box { color: #ffd700; font-size: 20px; }
-        .hp-bar { width: 150px; height: 20px; background: #333; border: 1px solid #555; }
-        .hp-fill { width: 100%; height: 100%; background: #0f0; transition: 0.2s; }
-
-        /* 4키 레인 컨테이너 */
-        .lane-container {
-            position: relative;
-            width: 320px; /* 4키 * 80px */
-            height: 100%;
-            background: linear-gradient(180deg, #000 0%, #111 100%);
-            display: flex;
-            border-left: 2px solid #444; border-right: 2px solid #444;
         }
 
-        .lane {
+        /* [왼쪽] 상품 진열장 */
+        .menu-panel {
             flex: 1;
-            border-right: 1px solid #333;
-            position: relative;
+            background: #151515; border: 4px solid #333;
+            display: flex; flex-direction: column;
+            padding: 10px; overflow-y: auto;
+            box-shadow: inset 0 0 20px #000;
+        }
+        .panel-header {
+            color: #efefef; font-size: 22px; text-align: center; margin-bottom: 10px;
+            border-bottom: 2px dashed #555; padding-bottom: 10px;
+            text-shadow: 0 0 5px #fff;
+        }
+        .item-card {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #2a2a2a; border: 1px solid #444; margin-bottom: 8px;
+            padding: 12px; cursor: pointer; transition: 0.1s;
+        }
+        .item-card:active { transform: scale(0.98); }
+        .item-card.active { 
+            background: #444; border-color: #efefef;
+            box-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
+        .item-name { font-size: 16px; color: #efefef; }
+        .item-detail { font-size: 12px; color: #888; font-family: 'Share Tech Mono'; }
+        .item-price { font-family: 'VT323'; font-size: 20px; color: #efefef; }
+
+        /* [오른쪽] 타격 지점 */
+        .game-panel {
+            flex: 2;
+            background: #0a0a0a;
+            position: relative; overflow: hidden;
+            display: flex; flex-direction: column;
+            border: 4px solid #333; border-radius: 5px;
+            background-image: repeating-linear-gradient(45deg, #111 0, #111 10px, #1a1a1a 10px, #1a1a1a 20px);
+        }
+        
+        /* HUD */
+        .hud-bar {
+            height: 60px; background: #151515; border-bottom: 2px solid #333;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px; z-index: 10;
+        }
+        .score-box { font-family: 'VT323'; color: #efefef; font-size: 36px; }
+        .combo-box { 
+            font-size: 28px; color: #efefef; text-shadow: 2px 2px 0 #535353; 
+            display: none; transform: rotate(-5deg);
+        }
+        .combo-box.show { display: block; animation: shake 0.2s; }
+        @keyframes shake { 0% { transform: translate(0,0) rotate(-5deg); } 50% { transform: translate(2px, 2px) rotate(0deg); } 100% { transform: translate(0,0) rotate(-5deg); } }
+
+        .hp-container { width: 200px; height: 15px; background: #333; border: 2px solid #535353; }
+        .hp-fill { 
+            width: 100%; height: 100%; background: #efefef;
+            box-shadow: 0 0 10px #fff; transition: width 0.2s;
+        }
+
+        /* 노트 트랙 */
+        .track-area {
+            flex: 1; position: relative;
+            display: flex; justify-content: center;
+        }
+        .lanes-wrapper {
+            width: 100%; max-width: 500px; height: 100%;
+            display: flex; position: relative;
+            background: rgba(0,0,0,0.6);
+            border-left: 5px solid #333; border-right: 5px solid #333;
+        }
+        .lane { 
+            flex: 1; border-right: 1px dashed #444; position: relative; 
         }
         .lane:last-child { border-right: none; }
 
-        /* 판정선 (Receptor) */
-        .receptor-line {
-            position: absolute;
-            bottom: 50px;
-            width: 100%; height: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border-top: 2px solid #0ff;
-            border-bottom: 2px solid #0ff;
-            pointer-events: none;
+        .judge-line {
+            position: absolute; bottom: 80px; width: 100%; height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-top: 2px solid #efefef; border-bottom: 2px solid #efefef;
             z-index: 5;
         }
 
-        /* 키 가이드 (D F J K) */
-        .key-guide {
-            position: absolute; bottom: 10px; width: 100%; display: flex;
-        }
-        .key-label {
-            flex: 1; text-align: center; color: #555; font-weight: bold; font-size: 20px;
-            text-shadow: 0 0 5px #000;
-        }
-        .key-label.active { color: #fff; text-shadow: 0 0 10px #fff; transform: translateY(2px); }
-
-        /* 떨어지는 노트 */
         .note {
-            position: absolute;
-            width: 90%; left: 5%; height: 20px;
-            background: #ab0000;
-            border: 1px solid #ff5555;
-            border-radius: 4px;
-            box-shadow: 0 0 10px #ab0000;
-            z-index: 2;
+            position: absolute; width: 80%; left: 10%; height: 25px;
+            background: #ff6600; 
+            border: 2px solid #ffaa00;
+            box-shadow: 0 0 10px #ff3300; 
+            border-radius: 2px; z-index: 2;
         }
-        /* 라인별 노트 색상 (D,K는 파랑 / F,J는 흰색 - 디제이맥스 스타일?) */
-        .note.lane-0, .note.lane-3 { background: #0088ff; border-color: #88ccff; box-shadow: 0 0 10px #0088ff; }
-        .note.lane-1, .note.lane-2 { background: #ffffff; border-color: #cccccc; box-shadow: 0 0 10px #ffffff; }
 
-        /* 히트 이펙트 */
-        .hit-effect {
-            position: absolute; bottom: 50px; width: 100%; height: 50px;
-            background: linear-gradient(to top, rgba(255,255,255,0.5), transparent);
-            opacity: 0; pointer-events: none; transition: 0.1s;
-        }
-        .hit-effect.flash { opacity: 1; }
-
-        /* 판정 텍스트 */
-        #judgeDisplay {
+        .judge-text {
             position: absolute; top: 40%; width: 100%; text-align: center;
-            font-family: 'Black Ops One'; font-size: 40px; 
-            text-shadow: 0 0 10px #000; opacity: 0; transform: scale(0.5); transition: 0.1s; z-index: 20;
+            font-size: 60px; color: #efefef; font-weight: bold;
+            text-shadow: 4px 4px 0 #000;
+            opacity: 0; pointer-events: none; z-index: 20;
         }
 
-        /* 게임 오버레이 (시작 전/종료 후) */
-        .overlay-msg {
+        .key-guide {
+            position: absolute; bottom: 20px; width: 100%; display: flex;
+        }
+        .key-box {
+            flex: 1; text-align: center; color: #555; font-size: 24px;
+            border-top: 5px solid transparent; transition: 0.05s;
+        }
+        .key-box.pressed { 
+            color: #efefef; border-top-color: #efefef; 
+            transform: translateY(5px);
+        }
+
+        /* 오버레이 */
+        .overlay-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.9);
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             z-index: 50; text-align: center;
         }
-        .start-btn {
-            padding: 15px 30px; font-size: 20px; background: #ab0000; color: white;
-            border: none; cursor: pointer; font-family: 'Black Ops One'; margin-top: 20px;
+        .msg-title { 
+            font-size: 50px; color: #efefef; text-shadow: 0 0 20px #fff; 
+            transform: rotate(-3deg); margin-bottom: 20px;
         }
-        .start-btn:disabled { background: #444; cursor: not-allowed; }
-
-        /* [추가] 볼륨 슬라이더 스타일 */
-        .volume-control {
-            display: flex; align-items: center; gap: 10px; font-size: 14px; color: #aaa;
+        .btn-action {
+            padding: 20px 60px; font-size: 30px; font-family: 'Black Ops One';
+            background: #535353; color: #efefef; border: 4px solid #efefef;
+            cursor: pointer; box-shadow: 0 5px 0 #333; transition: 0.1s;
         }
-        
-        /* [수정됨] 따옴표("") 추가 및 표준 속성 적용 */
-        input[type="range"] {
-            -webkit-appearance: none; /* 크롬, 사파리 구버전 */
-            appearance: none;         /* 표준 속성 */
-            width: 100px; 
-            height: 6px; 
-            background: #333; 
-            border-radius: 3px; 
-            outline: none;
-            margin: 0 5px; /* 좌우 여백 살짝 추가 */
-        }
-        
-        /* 슬라이더 핸들(손잡이) 스타일 - 이것도 꼭 있어야 합니다! */
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 14px; 
-            height: 14px; 
-            background: #ab0000; 
-            border-radius: 50%;
-            cursor: pointer; 
-            border: 2px solid #fff;
-        }
-
-        /* --- [추가] 노트 스킨 디자인 --- */
-        
-        /* 1. 기본 노트 (파란색 네모) */
-        .note.skin_default {
-            background: #00ffff; 
-            border-radius: 2px;
-            box-shadow: 0 0 10px #00ffff;
-        }
-
-        /* 2. 네온 서클 (보라색 동그라미) */
-        .note.skin_neon {
-            background: #d000ff; 
-            border-radius: 50%;
-            box-shadow: 0 0 15px #d000ff, inset 0 0 5px white;
-            border: 2px solid #fff;
-        }
-
-        /* 3. 8비트 픽셀 (투명 배경 + 이모지) */
-        .note.skin_pixel {
-            background: transparent;
-            box-shadow: none;
-        }
-        /* 픽셀 스킨은 CSS로 가짜 요소(이모지)를 넣어서 표현 */
-        .note.skin_pixel::after {
-            content: '👾'; 
-            font-size: 30px; 
-            position: absolute; 
-            left: -8px; top: -5px;
-            filter: drop-shadow(0 0 5px #0f0);
-        }
-
-        /* 4. 불꽃 노트 (주황색 물방울 모양) */
-        .note.skin_fire {
-            background: linear-gradient(to bottom, yellow, red);
-            border-radius: 50% 50% 5px 5px;
-            box-shadow: 0 -5px 15px orange;
-        }
+        .btn-action:hover { background: #666; }
+        .btn-action:active { transform: translateY(5px); box-shadow: 0 0 0 #333; }
+        .btn-action:disabled { background: #222; border-color: #444; color: #555; pointer-events: none; box-shadow: none; }
 
     </style>
 </head>
 <body>
-<audio id="bgmPlayer" loop style="display:none;"></audio>
-    <nav class="navbar">
-    <div class="logo">
-        OUT BREAK 
-        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
-    </div>
-    <ul class="nav-links">
-        <li><a href="main.html">홈</a></li>
-        <li><a href="sub.html">생존자목록</a></li>
-        <li><a href="board.html">자유게시판</a></li>
-        <li><a href="trade.html">중고거래게시판</a></li>
-        <li><a href="quest.html">의뢰게시판</a></li>
-        <li><a href="game.html">고장난자판기</a></li>
-        <li><a href="shop.html">교환소</a></li>
-        <li><a href="vending.html">신형자판기</a></li>
-        <li><a href="#" onclick="logout()">로그아웃</a></li>
-    </ul>
-    </nav>
 
-    <div class="game-wrapper">
-        <div class="shelf-section" id="shelfList">
-            </div>
+    <audio id="bgmPlayer" style="display:none;"></audio>
 
-            
-        <div class="rhythm-section">
-            <div class="game-hud">
-                <div class="score-box">SCORE: <span id="scoreVal">0</span> / <span id="targetVal">0</span></div>
-                
-                <div class="volume-control">
-                    <span>♪ VOL</span>
-                    <input type="range" id="volSlider" min="0" max="1" step="0.1" value="0.5">
-                </div>
+    <header class="top-header-bar">
+        <a href="main.html" class="header-logo">OUTBREAK</a>
 
-                <div class="hp-bar"><div class="hp-fill" id="hpVal"></div></div>
-            </div>
+        <button class="hamburger-btn" id="hamburgerBtn">
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
+        </button>
 
-            <div id="judgeDisplay">PERFECT</div>
+        <div class="nav-dropdown" id="menuList">
+            <a href="game.html" class="nav-item">고장난 자판기</a>
+            <a href="shop.html" class="nav-item">교환소</a>
+            <a href="vending.html" class="nav-item">신형 자판기</a>
+            <a href="#" onclick="logout()" class="nav-item logout-item">로그아웃</a>
+        </div>
+    </header>
 
-            <div class="lane-container" id="laneContainer">
-                <div class="receptor-line"></div>
-                
-                <div class="lane" id="lane0"><div class="hit-effect" id="eff0"></div></div>
-                <div class="lane" id="lane1"><div class="hit-effect" id="eff1"></div></div>
-                <div class="lane" id="lane2"><div class="hit-effect" id="eff2"></div></div>
-                <div class="lane" id="lane3"><div class="hit-effect" id="eff3"></div></div>
-
-                <div class="key-guide">
-                    <div class="key-label" id="key0">D</div>
-                    <div class="key-label" id="key1">F</div>
-                    <div class="key-label" id="key2">J</div>
-                    <div class="key-label" id="key3">K</div>
-                </div>
-            </div>
-
-            <div class="overlay-msg" id="msgOverlay">
-                <h2 id="msgTitle" style="color:#ab0000; font-size:30px;">SYSTEM READY</h2>
-                <p id="msgDesc">왼쪽에서 해킹할 물건을 선택하세요.</p>
-                <button class="start-btn" id="startBtn" onclick="startGame()" disabled>START GAME</button>
+    <div class="machine-frame">
+        <div class="menu-panel">
+            <div class="panel-header">SELECT ITEM</div>
+            <div id="itemList"></div> 
+            <div style="margin-top:auto; font-size:12px; color:#555; text-align:center;">
+                * WARNING: EXCESSIVE FORCE MAY<br>DAMAGE THE MACHINE.
             </div>
         </div>
-        
+
+        <div class="game-panel">
+            <div class="hud-bar">
+                <div class="score-box">FORCE: <span id="scoreVal">0</span></div>
+                <div class="combo-box" id="comboVal">SMASH 10!</div>
+                <div class="hp-container">
+                    <div class="hp-fill" id="hpBar"></div>
+                </div>
+            </div>
+
+            <div class="track-area">
+                <div class="judge-text" id="judgeEffect"></div>
+                <div class="lanes-wrapper" id="laneContainer">
+                    <div class="judge-line"></div>
+                    <div class="lane" id="lane0"></div>
+                    <div class="lane" id="lane1"></div>
+                    <div class="lane" id="lane2"></div>
+                    <div class="lane" id="lane3"></div>
+                    <div class="key-guide">
+                        <div class="key-box" id="key0">D</div>
+                        <div class="key-box" id="key1">F</div>
+                        <div class="key-box" id="key2">J</div>
+                        <div class="key-box" id="key3">K</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overlay-screen" id="overlay">
+                <div class="msg-title" id="ovTitle">ITEM STUCK</div>
+                <div class="msg-desc" id="ovDesc" style="color:#aaa; font-size:16px; margin-bottom:30px;">
+                    원하는 물건을 선택하고<br>자판기를 때려서 꺼내십시오.
+                </div>
+                <button class="btn-action" id="startBtn" disabled onclick="startGame()">BANG!</button>
+            </div>
+        </div>
     </div>
-    
 
     <script>
         const firebaseConfig = {
@@ -306,532 +294,276 @@
             authDomain: "cheongjuca.firebaseapp.com",
             databaseURL: "https://cheongjuca-default-rtdb.firebaseio.com", 
             projectId: "cheongjuca",
-            storageBucket: "cheongjuca.firebasestorage.app",
-            messagingSenderId: "455437421321",
             appId: "1:455437421321:web:61711d53c4fa6c9c95e1d8"
         };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        const myID = localStorage.getItem("loginID");
 
-        // [게임 설정 데이터]
-        // speed: 노트 내려오는 속도 (높을수록 빠름)
-        // target: 클리어 목표 점수
-        // spawnRate: 노트 생성 빈도 (낮을수록 자주 나옴)
-        // [게임 설정 데이터]
-        // bpm: 노래 빠르기 (높을수록 노트가 빨리 나옴)
-        // audio: 실행할 음악 파일 주소 (mp3 등)
+        if (!myID) { alert("로그인이 필요합니다."); location.href = "index.html"; }
+
+        // 아이콘(icon) 추가됨 - 교환소에서 보이게 하기 위함
         const items = [
-            { 
-                name: "미지근한 캔커피 (Easy)", emoji: "☕", price: 50, 
-                target: 5000, desc: "BPM 90", 
-                speed: 3, bpm: 90, // 느린 박자
-                audio: "https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg" // (예시) 잔잔한 소리
-            },
-            { 
-                name: "찌그러진 캔음료 (Normal)", emoji: "🥤", price: 80, 
-                target: 10000, desc: "BPM 110", 
-                speed: 5, bpm: 110, // 보통 박자
-                audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" // (예시) 신나는 음악
-            },
-            { 
-                name: "유통기한 지난 과자 (Hard)", emoji: "🍪", price: 120, 
-                target: 20000, desc: "BPM 130", 
-                speed: 8, bpm: 130, // 빠른 박자
-                audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" 
-            },
-            { 
-                name: "녹아내린 초콜릿 (Crazy)", emoji: "🍫", price: 200, 
-                target: 35000, desc: "BPM 160", 
-                speed: 12, bpm: 160, // 아주 빠른 박자
-                audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" 
-            },
-            { 
-                name: "해킹 디스크 (Extreme)", emoji: "💾", price: 500, 
-                target: 50000, desc: "BPM 180", 
-                speed: 15, bpm: 180, // 미친 속도
-                audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" 
-            }
+            { name: "미지근한 생수", price: 30, difficulty: "EASY", target: 3000, bpm: 100, speed: 4, icon: "💧" },
+            { name: "건빵 한 봉지", price: 50, difficulty: "NORMAL", target: 8000, bpm: 120, speed: 6, icon: "🍪" },
+            { name: "의료용 붕대", price: 100, difficulty: "HARD", target: 15000, bpm: 140, speed: 8, icon: "🤕" },
+            { name: "항생제 앰플", price: 200, difficulty: "CRAZY", target: 30000, bpm: 160, speed: 10, icon: "💊" },
+            { name: "군용 MRE 식량", price: 500, difficulty: "EXTREME", target: 50000, bpm: 180, speed: 13, icon: "🍱" }
         ];
 
-        let selectedItemIdx = -1;
+        let selectedIdx = -1;
         let isPlaying = false;
+        let notes = []; 
         let score = 0;
         let hp = 100;
-        let animationFrame;
-        let frameCount = 0;
-        let currentSkin = 'skin_default'; // 기본값
-        let notes = []; // 현재 화면에 있는 노트들 객체 배열
-        const KEY_MAP = { 'd': 0, 'f': 1, 'j': 2, 'k': 3 }; // 키 매핑
+        let combo = 0;
+        let maxCombo = 0;
+        let gameLoopID;
+        let spawnTimer;
         
-        // 사용자 정보
-        const myID = localStorage.getItem("loginID");
-        const myNick = localStorage.getItem("userNick");
-        let userMoney = 0;
+        const KEYS = { 'd':0, 'f':1, 'j':2, 'k':3 };
+        const KEY_STATE = [false, false, false, false];
 
-        window.onload = function() {
-            // 1. 로그인 및 권한 체크
-            const status = localStorage.getItem("loginStatus");
-            // loginID와 myID가 혼용되고 있다면 하나로 통일 (보통 loginID 사용)
-            const myID = localStorage.getItem("loginID"); 
-            const myNick = localStorage.getItem("userNick");
-
-            if (!status || (status !== "success" && status !== "admin")) {
-                alert("로그인이 필요합니다."); location.href="index.html"; return;
-            }
-
-            // 2. Firebase 데이터 가져오기 (스킨, 닉네임)
-            database.ref('users/' + myID).once('value', snapshot => {
-                const data = snapshot.val();
-                
-                // 장착한 스킨 정보가 있다면 전역 변수 업데이트
-                if (data && data.equipped && data.equipped.skin) {
-                    currentSkin = data.equipped.skin;
-                }
-                
-                // 게임 화면에 닉네임 표시
-                if(data) {
-                    const nickElem = document.getElementById('myNick');
-                    if(nickElem) nickElem.innerText = "USER: " + (data.nick || myID);
-                }
-            });
-
-            // 3. 돈 정보 실시간 동기화
-            database.ref(`users/${myID}/money`).on('value', snap => {
-                // userMoney 전역변수가 선언되어 있어야 함
-                userMoney = snap.val() || 0; 
-            });
-
-            // 4. 상단 네비게이션 배지 설정
-            const badge = document.getElementById("userBadge");
-            if(badge && myNick) {
-                if(status === "admin") { badge.innerText="[관리자 모드]"; badge.style.color="red"; }
-                else { badge.innerText=`[${myNick}]`; badge.style.color="#ccc"; }
-                badge.style.display="inline";
-            }
-
-            // 5. 게임 초기화 및 화면 그리기 (중복 제거됨)
-            renderShelf();
-            
-            // 6. 키보드 이벤트 리스너 연결 (중복 제거됨)
-            window.addEventListener('keydown', handleKeyDown);
-            window.addEventListener('keyup', handleKeyUp);
-
-            // 7. 볼륨 슬라이더 연결
-            const volSlider = document.getElementById('volSlider');
-            const audioPlayer = document.getElementById('bgmPlayer');
-            
-            if(volSlider && audioPlayer) {
-                volSlider.addEventListener('input', function() {
-                    audioPlayer.volume = this.value; 
-                });
-            }
+        window.onload = () => {
+            renderItemList();
+            window.addEventListener('keydown', onKeyDown);
+            window.addEventListener('keyup', onKeyUp);
+            setupNav();
         };
 
-        function renderShelf() {
-            const container = document.getElementById('shelfList');
-            container.innerHTML = "";
+        function renderItemList() {
+            const list = document.getElementById('itemList');
+            list.innerHTML = "";
             items.forEach((item, idx) => {
                 const div = document.createElement('div');
-                div.className = `shelf-item ${selectedItemIdx === idx ? 'selected' : ''}`;
+                div.className = `item-card ${selectedIdx === idx ? 'active' : ''}`;
                 div.innerHTML = `
-                    <div class="item-emoji">${item.emoji}</div>
-                    <div style="font-weight:bold;">${item.name}</div>
-                    <div class="difficulty-badge" style="color:${getDiffColor(idx)}">${item.desc}</div>
-                    <div class="item-info">목표: ${item.target}점 | 속도: Lv.${item.speed}</div>
-                    <div class="item-info" style="color:gold;">비용: ${item.price} G</div>
+                    <div class="item-info">
+                        <span class="item-name">${item.icon} ${item.name}</span>
+                        <span class="item-detail">${item.difficulty} | BPM: ${item.bpm}</span>
+                    </div>
+                    <span class="item-price">${item.price} P</span>
                 `;
                 div.onclick = () => selectItem(idx);
-                container.appendChild(div);
+                list.appendChild(div);
             });
-        }
-
-        function getDiffColor(idx) {
-            if(idx < 2) return "#0f0"; // Easy
-            if(idx < 4) return "#ff0"; // Medium
-            return "#f00"; // Hard
         }
 
         function selectItem(idx) {
-            if(isPlaying) return;
-            selectedItemIdx = idx;
-            renderShelf();
-            
+            if (isPlaying) return;
+            selectedIdx = idx;
+            renderItemList();
+
             const item = items[idx];
-            const msgTitle = document.getElementById('msgTitle');
-            const msgDesc = document.getElementById('msgDesc');
-            const startBtn = document.getElementById('startBtn');
-
-            msgTitle.innerText = item.name;
-            msgTitle.style.color = "#fff";
-            msgDesc.innerHTML = `
-                난이도: <span style="color:${getDiffColor(idx)}">${item.desc}</span><br>
-                필요 비용: <span style="color:gold">${item.price} G</span><br>
-                목표 점수: ${item.target} 점
-            `;
-            startBtn.disabled = false;
-            startBtn.innerText = `해킹 시작 (-${item.price}G)`;
+            document.getElementById('ovTitle').innerText = "READY TO HIT";
+            document.getElementById('ovDesc').innerHTML = 
+                `타격 대상: <b style='color:#efefef'>${item.name}</b><br>` +
+                `충격량(점수) 필요: ${item.target} | 비용: ${item.price}`;
+            
+            const btn = document.getElementById('startBtn');
+            btn.disabled = false;
+            btn.innerText = `HIT (-${item.price}P)`;
         }
-
-        // 전역 변수 추가 (기존 변수 선언부에 추가해도 되고, 그냥 둬도 됩니다)
-        let nextSpawnAt = 0; 
 
         function startGame() {
-            if(selectedItemIdx === -1) return;
-            const item = items[selectedItemIdx];
-
-            if(userMoney < item.price) {
-                alert("돈이 부족합니다!");
-                return;
-            }
-
-            if(!confirm(`${item.price}G를 사용하여 게임을 시작하시겠습니까?`)) return;
-
-            // 돈 차감
-            database.ref(`users/${myID}/money`).set(userMoney - item.price);
-
-            // ★ 바로 시작하지 않고 카운트다운 함수 호출
-            startCountdown();
-        }
-
-        function startCountdown() {
-            const overlay = document.getElementById('msgOverlay');
-            const title = document.getElementById('msgTitle');
-            const desc = document.getElementById('msgDesc');
-            const btn = document.getElementById('startBtn');
-
-            // 1. UI 준비 (버튼 숨기고, 카운트다운 준비)
-            btn.style.display = 'none'; // 버튼 숨김
-            desc.innerText = "SYSTEM BREACHING...";
-            desc.style.color = "#0f0";
-            
-            let count = 5;
-            title.innerText = count;
-            title.style.fontSize = "100px"; // 숫자 크게!
-            title.style.color = "#fff";
-
-            // 2. 1초마다 숫자 줄이기
-            const timer = setInterval(() => {
-                count--;
-                
-                if (count > 0) {
-                    title.innerText = count;
-                } else if (count === 0) {
-                    title.innerText = "HACK!";
-                    title.style.color = "#ff0000"; // 빨간색으로 강조
-                    title.style.textShadow = "0 0 20px red";
-                } else {
-                    // 3. 카운트다운 끝! 게임 시작
-                    clearInterval(timer);
-                    
-                    // 오버레이 숨기기
-                    overlay.style.display = 'none';
-                    
-                    // 스타일 원상복구 (다음 게임을 위해)
-                    title.style.fontSize = "30px"; 
-                    title.style.textShadow = "none";
-                    desc.style.color = "#aaa";
-
-                    // ★ 진짜 게임 로직 실행
-                    initGameAndLoop();
-                }
-            }, 1000); // 1초 간격
-        }
-
-        // 게임 시작 (카운트다운 직후 실행됨)
-        function initGameAndLoop() {
-            const item = items[selectedItemIdx];
-            
+            if (selectedIdx === -1) return;
+            const item = items[selectedIdx];
             isPlaying = true;
             score = 0;
             hp = 100;
-            frameCount = 0;
-            nextSpawnAt = 0;
+            combo = 0;
             notes = [];
-            
-            // 기존 노트 제거
-            document.querySelectorAll('.note').forEach(el => el.remove()); 
-            
-            document.getElementById('scoreVal').innerText = "0";
-            document.getElementById('targetVal').innerText = item.target;
-            updateHP();
+            document.querySelectorAll('.note').forEach(n => n.remove());
 
-            // ★ [수정된 음악 재생 로직]
-            const audio = document.getElementById('bgmPlayer');
-            const volSlider = document.getElementById('volSlider'); // 슬라이더 가져오기
+            updateHUD();
+            document.getElementById('overlay').style.display = 'none';
 
-            if (item.audio) {
-                audio.src = item.audio; 
-                audio.volume = volSlider.value; // [수정] 현재 슬라이더 값으로 볼륨 설정
-                
-                audio.play().catch(e => console.log("음악 재생 실패:", e));
-            }
-
-            gameLoop();
+            gameLoopID = requestAnimationFrame(gameLoop);
+            const interval = (60 / item.bpm) * 1000; 
+            spawnTimer = setInterval(spawnNote, interval);
         }
 
-        // 메인 게임 루프 (BPM 적용됨)
         function gameLoop() {
-            if(!isPlaying) return;
+            if (!isPlaying) return;
+            const item = items[selectedIdx];
+            const trackHeight = document.getElementById('laneContainer').offsetHeight;
 
-            const item = items[selectedItemIdx];
-            frameCount++;
-
-            // ★ [핵심] BPM 기반 노트 생성 타이밍 계산
-            // 60FPS 기준: 1초에 60프레임
-            // BPM(분당 박자수)을 프레임 간격으로 변환: (60초 * 60프레임) / BPM
-            // 예: BPM 120이면 30프레임마다(0.5초마다) 노트 생성
-            const framesPerBeat = 3600 / item.bpm; 
-
-            // 노트 생성 시간인가?
-            if (frameCount >= nextSpawnAt) {
-                // 1. 노트 생성
-                const firstLane = spawnNote();
-
-                // 2. [어려움] BPM 130 이상이면 확률적으로 동시 치기
-                if (item.bpm >= 30 && Math.random() < 0.3) {
-                    spawnNote(firstLane);
-                }
-
-                // 3. [리듬 변칙] 다음 노트가 나올 시간 계산
-                // 기본적으로 '1박자' 뒤에 나오지만, 가끔 '반박자(0.5)' 빠르게 나옴
-                let rhythmFactor = 1; 
-
-                // BPM이 높을수록 엇박자(반박자) 확률 증가
-                if (Math.random() < 0.3) {
-                    rhythmFactor = 0.5; // 반박자 (8분음표)
-                }
-
-                // 다음 소환 시간 예약
-                nextSpawnAt = frameCount + (framesPerBeat * rhythmFactor);
-            }
-
-            // --- 아래는 기존 노트 이동 로직과 동일 ---
             for (let i = notes.length - 1; i >= 0; i--) {
-                const note = notes[i];
-                note.y += item.speed; // 떨어지는 속도는 아이템별 speed 설정 따름
-                note.el.style.top = note.y + "px";
-
-                const containerH = document.getElementById('laneContainer').clientHeight;
-                
-                // 화면 밖으로 나갔을 때 처리
-                if (note.y > containerH) {
-                    if (note.hit) {
-                        note.el.remove();
-                        notes.splice(i, 1);
-                    } else {
-                        showJudge("MISS", "#555");
-                        hp -= 10; 
-                        updateHP();
-                        note.el.remove();
-                        notes.splice(i, 1);
-                        checkGameOver();
-                    }
+                const n = notes[i];
+                if (n.hit) continue; 
+                n.y += item.speed;
+                n.el.style.top = n.y + 'px';
+                if (n.y > trackHeight) {
+                    n.el.remove();
+                    notes.splice(i, 1);
+                    triggerJudge("MISS");
                 }
             }
-
-            animationFrame = requestAnimationFrame(gameLoop);
+            if (hp <= 0) endGame(false);
+            gameLoopID = requestAnimationFrame(gameLoop);
         }
 
-        // 노트 생성 함수 (스킨 적용 버전)
-        function spawnNote(laneIdx = null) {
-            // 1. 레인 랜덤 선택 (만약 laneIdx가 null이면 랜덤, 숫자가 오면 그 레인 제외하고 뽑기)
-            // 기존 코드의 'excludeLane' 기능을 'laneIdx' 파라미터로 통합해서 처리합니다.
-            
-            let targetLane;
-            
-            if (laneIdx === null) {
-                // 완전히 랜덤
-                targetLane = Math.floor(Math.random() * 4);
-            } else {
-                // 특정 레인 제외하고 랜덤 (동시치기용)
-                do {
-                    targetLane = Math.floor(Math.random() * 4);
-                } while (targetLane === laneIdx);
-            }
-
-            const laneEl = document.getElementById(`lane${targetLane}`);
-            const note = document.createElement('div');
-            
-            // ★ [핵심] 스킨 적용: note 클래스와 함께 스킨 클래스(currentSkin) 추가
-            // lane-0, lane-1 등은 색상 구분을 위해 남겨둡니다.
-            note.className = `note lane-${targetLane} ${currentSkin}`; 
-            
-            // 초기 위치
-            note.style.top = "-20px"; 
-            
-            // 화면에 추가
-            laneEl.appendChild(note);
-            
-            // 게임 로직 배열에 추가
-            notes.push({
-                el: note,
-                lane: targetLane,
-                y: -20,
-                hit: false
-            });
-
-            return targetLane; // 생성된 레인 번호 반환 (다음 노트가 피할 수 있게)
+        function spawnNote() {
+            if (!isPlaying) return;
+            const lane = Math.floor(Math.random() * 4);
+            if (Math.random() < 0.2) createNoteElement((lane + 1) % 4);
+            createNoteElement(lane);
         }
 
-        function handleKeyDown(e) {
-            if(!isPlaying) return;
-            const key = e.key.toLowerCase();
-            if(KEY_MAP.hasOwnProperty(key)) {
-                const lane = KEY_MAP[key];
-                
-                // 키 누름 시각적 효과
-                document.getElementById(`key${lane}`).classList.add('active');
-                document.getElementById(`eff${lane}`).classList.add('flash');
-                setTimeout(() => document.getElementById(`eff${lane}`).classList.remove('flash'), 100);
+        function createNoteElement(lane) {
+            const laneEl = document.getElementById(`lane${lane}`);
+            const noteEl = document.createElement('div');
+            noteEl.className = `note`; 
+            noteEl.style.top = '-25px';
+            laneEl.appendChild(noteEl);
+            notes.push({ el: noteEl, lane: lane, y: -25, hit: false });
+        }
 
+        function onKeyDown(e) {
+            if (!isPlaying) return;
+            const k = e.key.toLowerCase();
+            if (KEYS.hasOwnProperty(k)) {
+                const lane = KEYS[k];
+                if (KEY_STATE[lane]) return; 
+                KEY_STATE[lane] = true;
+                document.getElementById(`key${lane}`).classList.add('pressed');
                 checkHit(lane);
             }
         }
 
-        function handleKeyUp(e) {
-            const key = e.key.toLowerCase();
-            if(KEY_MAP.hasOwnProperty(key)) {
-                document.getElementById(`key${KEY_MAP[key]}`).classList.remove('active');
+        function onKeyUp(e) {
+            const k = e.key.toLowerCase();
+            if (KEYS.hasOwnProperty(k)) {
+                const lane = KEYS[k];
+                KEY_STATE[lane] = false;
+                document.getElementById(`key${lane}`).classList.remove('pressed');
             }
         }
 
         function checkHit(lane) {
-            // 해당 레인에 있는 노트 중, 판정선 근처에 있는 가장 아래쪽 노트 찾기
-            // 판정선 위치: bottom 50px. 컨테이너 높이를 기준으로 top 좌표 계산 필요.
-            const containerH = document.getElementById('laneContainer').clientHeight;
-            const targetY = containerH - 50 - 10; // 판정선 y좌표 (대략적)
+            const trackHeight = document.getElementById('laneContainer').offsetHeight;
+            const judgeY = trackHeight - 80;
+            const PERFECT = 20; const GOOD = 50; const BAD = 80;
 
-            // 판정 범위 (픽셀)
-            const PER_RANGE = 30; 
-            const GOOD_RANGE = 60;
-            const BAD_RANGE = 90;
-
-            // 해당 레인의 노트 필터링
             const targetNotes = notes.filter(n => n.lane === lane && !n.hit);
-            
-            // 가장 아래에 있는 노트 찾기 (y값이 가장 큰 것)
-            if(targetNotes.length === 0) return;
-            
-            // 정렬 (y 내림차순)
+            if (targetNotes.length === 0) return;
+
             targetNotes.sort((a, b) => b.y - a.y);
-            const note = targetNotes[0]; // 타겟 노트
+            const note = targetNotes[0];
+            const diff = Math.abs(note.y - judgeY);
 
-            const diff = Math.abs(targetY - note.y);
-
-            if (diff < BAD_RANGE) {
+            if (diff <= BAD) {
                 note.hit = true;
-                note.el.style.opacity = 0; // 숨김 처리 (나중에 루프에서 제거됨)
-                
-                if (diff < PER_RANGE) {
-                    score += 100;
-                    showJudge("PERFECT", "#0ff");
-                    hp = Math.min(100, hp + 2); // 힐
-                } else if (diff < GOOD_RANGE) {
-                    score += 50;
-                    showJudge("GOOD", "#0f0");
-                    hp = Math.min(100, hp + 1);
-                } else {
-                    score += 10;
-                    showJudge("BAD", "#ff0");
-                }
-                
-                document.getElementById('scoreVal').innerText = score;
-                updateHP();
-                checkWin();
+                note.el.style.display = 'none'; 
+                if (diff <= PERFECT) triggerJudge("PERFECT"); 
+                else if (diff <= GOOD) triggerJudge("HIT");
+                else triggerJudge("BAD");
             }
         }
 
-        function showJudge(text, color) {
-            const el = document.getElementById('judgeDisplay');
-            el.innerText = text;
-            el.style.color = color;
-            el.style.opacity = 1;
-            el.style.transform = "scale(1.2)";
+        function triggerJudge(type) {
+            const jEl = document.getElementById('judgeEffect');
+            const cEl = document.getElementById('comboVal');
+            let text = type; let color = "#efefef";
             
-            // 애니메이션 리셋 trick
-            setTimeout(() => {
-                el.style.transform = "scale(1)";
-                el.style.opacity = 0;
-            }, 300);
-        }
+            if(type === "PERFECT") { text = "CRITICAL!"; color = "#ff0000"; }
+            else if(type === "HIT") { text = "SMASH!"; color = "#ffaa00"; }
+            else if(type === "BAD") { text = "GRAZE"; color = "#888"; }
+            else if(type === "MISS") { text = "MISS..."; color = "#555"; }
 
-        function updateHP() {
-            const bar = document.getElementById('hpVal');
-            bar.style.width = hp + "%";
-            if(hp < 30) bar.style.background = "red";
-            else bar.style.background = "#0f0";
-        }
+            jEl.innerText = text; jEl.style.color = color;
+            jEl.style.opacity = 1; jEl.style.transform = "scale(1.5)";
+            setTimeout(() => { jEl.style.opacity = 0; jEl.style.transform = "scale(1)"; }, 200);
 
-        function checkGameOver() {
-            if (hp <= 0) {
-                endGame(false);
-            }
-        }
-
-        function checkWin() {
-            const item = items[selectedItemIdx];
-            if (score >= item.target) {
-                endGame(true);
-            }
-        }
-
-        // 게임 종료 처리 (음악 끄기 추가)
-        function endGame(isWin) {
-            isPlaying = false;
-            cancelAnimationFrame(animationFrame);
-            
-            // ★ [음악 정지]
-            const audio = document.getElementById('bgmPlayer');
-            audio.pause();
-            audio.currentTime = 0; // 음악 처음으로 되감기
-
-            const overlay = document.getElementById('msgOverlay');
-            const title = document.getElementById('msgTitle');
-            const desc = document.getElementById('msgDesc');
-            const btn = document.getElementById('startBtn');
-
-            overlay.style.display = 'flex';
-            btn.style.display = 'inline-block'; 
-            
-            if (isWin) {
-                title.innerText = "HACKING SUCCESS!";
-                title.style.color = "#0f0";
-                desc.innerText = `목표 점수 달성! 보상을 획득합니다.`;
-                btn.innerText = "보상 수령";
-                btn.onclick = () => giveReward();
+            if (type === "MISS" || type === "BAD") {
+                combo = 0; hp -= (type === "MISS" ? 10 : 5); cEl.style.display = 'none';
             } else {
-                title.innerText = "SYSTEM FAILURE";
-                title.style.color = "#f00";
-                desc.innerText = `HP가 소진되었습니다.`;
-                btn.innerText = "다시 시도";
-                btn.onclick = () => startGame(); 
+                combo++; if (combo > maxCombo) maxCombo = combo;
+                score += (type === "PERFECT" ? 100 : 50) + (combo * 10);
+                hp = Math.min(100, hp + (type === "PERFECT" ? 3 : 1));
+                if (combo > 2) {
+                    cEl.innerText = `${combo} HIT!`;
+                    cEl.classList.remove('show'); void cEl.offsetWidth; cEl.classList.add('show');
+                }
+            }
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('scoreVal').innerText = score;
+            const hpBar = document.getElementById('hpBar');
+            hpBar.style.width = hp + "%";
+            const item = items[selectedIdx];
+            if (score >= item.target) endGame(true);
+        }
+
+        function endGame(success) {
+            isPlaying = false;
+            cancelAnimationFrame(gameLoopID);
+            clearInterval(spawnTimer);
+            const overlay = document.getElementById('overlay');
+            const title = document.getElementById('ovTitle');
+            const desc = document.getElementById('ovDesc');
+            const btn = document.getElementById('startBtn');
+            overlay.style.display = 'flex';
+            btn.onclick = () => { overlay.style.display = 'none'; renderItemList(); selectedIdx = -1; };
+
+            if (success) {
+                giveReward();
+                title.innerText = "ITEM DISPENSED!";
+                desc.innerText = `자판기를 성공적으로 가격하여\n물건을 떨어뜨렸습니다.\n최종 점수: ${score}`;
+                btn.innerText = "확인";
+            } else {
+                title.innerText = "MACHINE JAMMED";
+                desc.innerText = "자판기가 고장나서 멈췄습니다.\n(HP 소진)";
+                btn.innerText = "다시 때리기";
+                btn.onclick = () => startGame();
             }
         }
 
+        // ★★★ [수정된 부분] 보상 지급 로직 (로컬 스토리지 사용) ★★★
         function giveReward() {
-            const item = items[selectedItemIdx];
-            // 확률적으로 엉뚱한 물건 (기존 로직 유지)
-            let rewardItem = item;
-            let msg = `[${item.name}] 획득!`;
-
-            if (Math.random() < 0.1) { // 10% 확률로 꽝
-                const randIdx = Math.floor(Math.random() * items.length);
-                rewardItem = items[randIdx];
-                msg = `⚠️ 오류 발생! 엉뚱한 물건 [${rewardItem.name}] 획득...`;
+            const targetItem = items[selectedIdx];
+            let finalItem = targetItem;
+            let msg = `덜컹! [${targetItem.name}]이(가) 나왔습니다.`;
+            
+            // 10% 꽝 확률
+            if (Math.random() < 0.1) {
+                const randomIdx = Math.floor(Math.random() * items.length);
+                finalItem = items[randomIdx];
+                msg = `쾅! 충격으로 엉뚱한 물건\n[${finalItem.name}]이(가) 떨어졌습니다.`;
             }
 
-            // 인벤토리 저장
-            const inv = JSON.parse(localStorage.getItem("myInventory") || "{}");
-            inv[rewardItem.name] = (inv[rewardItem.name] || 0) + 1;
-            inv[rewardItem.name + "_price"] = rewardItem.price;
-            inv[rewardItem.name + "_icon"] = rewardItem.emoji;
+            // 1. 로컬 스토리지 불러오기
+            let inv = JSON.parse(localStorage.getItem("myInventory") || "{}");
+            
+            // 2. 수량 증가
+            inv[finalItem.name] = (inv[finalItem.name] || 0) + 1;
+            
+            // 3. 교환소 판매를 위한 메타데이터 저장 (가격, 아이콘)
+            inv[finalItem.name + "_price"] = finalItem.price;
+            inv[finalItem.name + "_icon"] = finalItem.icon || "📦";
+
+            // 4. 다시 저장
             localStorage.setItem("myInventory", JSON.stringify(inv));
 
-            alert(msg);
-            location.reload(); // 새로고침하여 초기화
+            alert(msg + "\n(교환소 인벤토리에 저장되었습니다)");
         }
 
-        function logout() { localStorage.clear(); location.href="index.html"; }
+        function setupNav() {
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const menuList = document.getElementById('menuList');
+            hamburgerBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menuList.style.display = (menuList.style.display === 'block') ? 'none' : 'block';
+            });
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.nav-dropdown') && !e.target.closest('#hamburgerBtn')) {
+                    menuList.style.display = 'none';
+                }
+            });
+        }
+        function logout() { localStorage.clear(); location.href = "index.html"; }
     </script>
 </body>
 </html>

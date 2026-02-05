@@ -2,79 +2,139 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>생존자 목록</title>
+    <title>생존자 명단 (SURVIVOR LIST)</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     
     <style>
-        .survivor-container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
+        /* --- [기본 레이아웃 & 배경 설정] --- */
+        body {
+            margin: 0; padding: 0;
+            background-color: #111;
+            color: #eee;
+            overflow: hidden; 
+            height: 100vh;
+            display: flex; flex-direction: column;
+
+            /* 배경 이미지 */
+            background-image: url('https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%86%E1%85%A6%E1%86%B7%E1%84%87%E1%85%A5%E1%84%86%E1%85%A9%E1%86%A8%E1%84%85%E1%85%A9%E1%86%A8.png?alt=media&token=4e9286ad-9db2-424e-940f-f2bf7c67ef63');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
-        .survivor-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
-            gap: 25px; 
-            justify-content: center; 
+        /* --- [좌상단 로고 스타일] --- */
+        .header-logo {
+            position: fixed; /* 화면에 고정 */
+            top: 20px; left: 30px;
+            font-family: 'Black Ops One', cursive;
+            font-size: 30px; 
+            color: #efefef; 
+            text-decoration: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8); 
+            cursor: pointer; 
+            letter-spacing: 1px;
+            z-index: 9999; /* 제일 위에 표시 */
+            transition: 0.3s;
+        }
+        .header-logo:hover {
+            color: #535353;
+            transform: scale(1.05);
         }
 
-        .survivor-card {
+        /* --- [배경 보드 영역] --- */
+        .board-background {
             position: relative;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 12px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.3s, border-color 0.3s;
-            aspect-ratio: 1 / 1; 
+            width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            /* margin-top 제거됨 -> 전체 화면 사용 */
         }
 
-        .survivor-card:hover {
-            transform: translateY(-8px);
-            border-color: #ab0000;
-            box-shadow: 0 10px 20px rgba(171, 0, 0, 0.4);
-        }
-
-        .card-photo { width: 100%; height: 100%; }
-        .card-photo img { width: 100%; height: 100%; object-fit: cover; }
-
-        .card-info {
-            position: absolute; bottom: 0; left: 0; width: 100%;
-            background: linear-gradient(transparent, rgba(0,0,0,0.85) 70%);
-            padding: 20px 10px 10px;
-            box-sizing: border-box;
-            text-align: center;
-        }
-
-        .card-name {
-            font-size: 1.1rem; font-weight: bold; color: white;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
-        }
-
-        /* [NEW] 빨간 점 (알림 인디케이터) */
-        .notification-dot {
+        /* --- [사진(포토카드) 스타일] --- */
+        .photo-card {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 12px;
-            height: 12px;
-            background-color: #ff0000;
-            border-radius: 50%;
-            border: 2px solid #1a1a1a;
-            box-shadow: 0 0 10px #ff0000;
-            z-index: 10;
-            display: none; /* 기본 숨김 */
-            animation: blink 2s infinite;
+            width: 140px; 
+            transition: transform 0.3s, z-index 0.3s;
+            cursor: pointer;
+            z-index: 1;
+            background: transparent; 
+            padding: 0;
+            filter: drop-shadow(5px 5px 10px rgba(0,0,0,0.7));
         }
 
-        @keyframes blink {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.2); }
-            100% { opacity: 1; transform: scale(1); }
+        .photo-card:hover {
+            transform: scale(1.3) rotate(0deg) !important;
+            z-index: 100;
+            filter: drop-shadow(10px 20px 30px rgba(0,0,0,0.9));
         }
+
+        .photo-img {
+            width: 100%;
+            display: block;
+            border-radius: 2px;
+        }
+
+        /* 이름표 */
+        .photo-name-tag {
+            position: absolute;
+            bottom: 10px; left: 50%;
+            transform: translateX(-50%) rotate(-2deg);
+            background-color: #efefef; 
+            padding: 2px 10px;
+            font-family: 'Nanum Pen Script', cursive;
+            color: #000; 
+            font-weight: bold; font-size: 20px;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            max-width: 90%;
+            overflow: hidden; text-overflow: ellipsis;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        /* 알림용 빨간 점 */
+        .notification-dot {
+            position: absolute; top: -5px; right: -5px;
+            width: 15px; height: 15px;
+            background-color: #ff0000;
+            border-radius: 50%; border: 2px solid #fff;
+            animation: blink 1.5s infinite;
+            display: none; z-index: 2;
+        }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* --- [페이지 넘기기 화살표] --- */
+        .nav-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            font-size: 80px; color: rgba(255, 255, 255, 0.4);
+            cursor: pointer; transition: 0.3s; z-index: 200;
+            user-select: none; font-family: 'Black Ops One';
+        }
+        .nav-arrow:hover {
+            color: #ab0000; transform: translateY(-50%) scale(1.2);
+            text-shadow: 0 0 10px #ab0000;
+        }
+        .prev-arrow { left: 30px; display: none; }
+        .next-arrow { right: 30px; }
+
+        /* --- [11명 배치 좌표] --- */
+        .pos-0  { top: 15%; left: 18%; transform: rotate(-4deg); }
+        .pos-1  { top: 12%; left: 38%; transform: rotate(3deg); }
+        .pos-2  { top: 16%; left: 58%; transform: rotate(-2deg); }
+        .pos-3  { top: 13%; left: 78%; transform: rotate(5deg); }
+        
+        .pos-4  { top: 42%; left: 12%; transform: rotate(2deg); }
+        .pos-5  { top: 45%; left: 32%; transform: rotate(-3deg); }
+        .pos-6  { top: 40%; left: 52%; transform: rotate(1deg); }
+        .pos-7  { top: 44%; left: 72%; transform: rotate(-4deg); }
+
+        .pos-8  { top: 70%; left: 22%; transform: rotate(4deg); }
+        .pos-9  { top: 73%; left: 45%; transform: rotate(-2deg); }
+        .pos-10 { top: 68%; left: 68%; transform: rotate(3deg); }
+
     </style>
 
     <script>
@@ -90,126 +150,154 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        
-        // 로그인한 내 ID 가져오기
         const myID = localStorage.getItem("loginID") || localStorage.getItem("userNick");
-
-        window.onload = function() { // 또는 페이지 로드 시 실행되는 함수 내부
-            // ... (기존 로직)
-
-            // 뱃지 표시 로직 수정/추가
-            const status = localStorage.getItem("loginStatus"); // loginStatus 확인
-            const nick = localStorage.getItem("userNick");
-            const badge = document.getElementById("userBadge");
-
-            if (badge && nick) {
-                if (status === "admin") { // 관리자인 경우
-                    badge.innerText = `[관리자 모드]`;
-                    badge.style.color = "#ff0000"; // 빨간색 적용
-                    badge.style.fontWeight = "bold"; // 굵게 (선택 사항)
-                } else { // 일반 유저인 경우
-                    badge.innerText = `[${nick}]`;
-                    badge.style.color = "#cccccc"; // 기존 색상 유지 (또는 원하는 색상)
-                }
-                badge.style.display = "inline"; // badge 보이기
-            }
-            renderSurvivorList();
+        
+        // ★★★ [설정 구역] 사진 링크 ★★★
+        const CUSTOM_PHOTOS = {
+            "forsythia_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%82%E1%85%A1%E1%84%85%E1%85%B51.png?alt=media&token=bf03bfbc-68d6-4807-9489-195dda17517d",
+            "K_JH": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8C%E1%85%B5%E1%86%AB%E1%84%92%E1%85%A7%E1%86%A81.png?alt=media&token=569e5ee6-d5c6-44f5-8744-76cb0618e705",
+            "CHOA_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8E%E1%85%A9%E1%84%8B%E1%85%A11.png?alt=media&token=ac49576e-41e0-4528-8b05-c9a52de3b4b9",
+            "K_HANA_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%92%E1%85%A1%E1%84%82%E1%85%A11.png?alt=media&token=7d8ead75-8180-4c5c-b924-985011690eac",
+            "K_Yohan_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%80%E1%85%A9%E1%84%8B%E1%85%AD%E1%84%92%E1%85%A1%E1%86%AB1.png?alt=media&token=581ea989-1710-44bb-a959-971662d6c13e",
+            "MrBlueSky_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%86%E1%85%A2%E1%84%90%E1%85%B21.png?alt=media&token=b70120dd-652b-4413-afe7-5508f3c43867",
+            "BackRam_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%85%E1%85%A1%E1%86%B71.png?alt=media&token=a2369e0f-6871-4116-b4e8-fd6e851b2b0c",
+            "JiJi_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%87%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B5%E1%84%90%E1%85%A21.png?alt=media&token=8c39ac5c-f7c0-4401-8602-e1ad936ca2c2",
+            "JIN_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8B%E1%85%A3%E1%86%BC%E1%84%92%E1%85%B4%E1%84%8C%E1%85%B5%E1%86%AB1.png?alt=media&token=512262e4-e066-4763-a8c6-07461e429077",
+            "UJ_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8B%E1%85%B2%E1%84%8C%E1%85%A2%E1%84%8B%E1%85%B51.png?alt=media&token=3d41606f-bdbf-4c76-99eb-63e2ec3e4224",
+            "H_gyeol55_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8B%E1%85%B2%E1%84%92%E1%85%A1%E1%86%AB%E1%84%80%E1%85%A7%E1%86%AF1.png?alt=media&token=32a80811-8623-455d-aed0-1bf4ace172ae",
+            "YT_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8B%E1%85%B2%E1%86%AB%E1%84%90%E1%85%A21.png?alt=media&token=b418591e-8e81-404e-a4f7-3c99a0d60b1a",
+            "anchor_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8B%E1%85%B5%E1%84%80%E1%85%B5%E1%84%8C%E1%85%A91.png?alt=media&token=d73e1ce3-22ac-4fbf-8b81-5094793b317b",
+            "Eunjeong_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8B%E1%85%B5%E1%84%8B%E1%85%B3%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%BC1.png?alt=media&token=54d6d885-b4e4-4582-ac84-e6122f9ff1a1",
+            "2PU0_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B5%E1%86%AF%E1%84%8B%E1%85%AE1.png?alt=media&token=88d6c3c7-3a67-4468-a9ef-dd72d86ea78b",
+            "SAE2ON_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%89%E1%85%A2%E1%84%8B%E1%85%A5%E1%86%AB1.png?alt=media&token=663a2e20-16d1-491d-9aba-b347ce4c9e7c",
+            "SEA__FOREST_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%92%E1%85%A2%E1%84%89%E1%85%B5%E1%86%AB1.png?alt=media&token=2c68a5d4-ca87-41a8-b60e-88b910d7a2cc",
+            "dumpling_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8C%E1%85%A1%E1%86%BC%E1%84%86%E1%85%A1%E1%86%AB%E1%84%8B%E1%85%AE1.png?alt=media&token=78d61db2-4785-4926-87a4-72822bf438ba",
+            "HAECHAN": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8C%E1%85%A5%E1%86%BC%E1%84%92%E1%85%A2%E1%84%8E%E1%85%A1%E1%86%AB1.png?alt=media&token=967e8bb4-9d7f-41fe-a737-f79a9a2c82d0",
+            "BlueGreen_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8E%E1%85%A5%E1%86%BC%E1%84%85%E1%85%A9%E1%86%A81.png?alt=media&token=93fc9c40-89c0-4f02-91f3-077c673f02a4",
+            "CDH_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8E%E1%85%AC%E1%84%83%E1%85%A9%E1%84%92%E1%85%AA1.png?alt=media&token=264f9e05-95fd-4818-8b85-e4eda9dff9c8",
+            "sea_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%92%E1%85%A1%E1%86%AB%E1%84%87%E1%85%A1%E1%84%83%E1%85%A11.png?alt=media&token=58d977e8-df7a-4ce3-bf4b-c230bb4aa01a"
         };
 
-        function renderSurvivorList() {
-            const container = document.getElementById('survivorList');
+
+        let allSurvivors = []; 
+        let currentPage = 0;
+        const ITEMS_PER_PAGE = 11; 
+
+        window.onload = function() {
+            // setupNav(); // 네비게이션 기능 제거됨
+            loadSurvivors();
+        };
+
+        function loadSurvivors() {
             database.ref('users').on('value', (snapshot) => {
-                container.innerHTML = "";
                 const users = snapshot.val();
                 if (!users) return;
 
+                allSurvivors = []; 
+                console.log("--- [생존자 아이디 목록] ---");
+
                 Object.keys(users).forEach(id => {
                     const d = users[id];
-                    // ★ [수정됨] 관리자 완벽 차단 코드 (3중 체크)
-                    // 1. 아이디가 '13reaking_news'면 무조건 숨김 (가장 확실)
                     if (id === '13reaking_news') return;
-
-                    // 2. 닉네임이 '관리자'면 숨김 (변수명 nick, nickname 둘 다 체크)
                     if (d.nick === '관리자' || d.nickname === '관리자') return;
-
-                    // 3. 역할이 'admin'이면 숨김
                     if (d.role === 'admin') return;
-                    const div = document.createElement('div');
-                    div.className = 'survivor-card';
-                    div.onclick = () => { location.href = `profile.html?name=${id}`; };
 
-                    const userImg = d.img || 'https://i.imgur.com/3SPL075.png';
-                    const userNick = d.nickname || id; 
+                    console.log(`ID: "${id}", 닉네임: "${d.nick || d.nickname}"`);
 
-                    // HTML 구조 생성 (빨간 점 포함)
-                    div.innerHTML = `
-                        <div class="notification-dot" id="noti-${id}"></div>
-                        <div class="card-photo">
-                            <img src="${userImg}" alt="${userNick}">
-                        </div>
-                        <div class="card-info">
-                            <div class="card-name">${userNick}</div>
-                        </div>
-                    `;
-                    container.appendChild(div);
-
-                    // [NEW] 만약 이 카드가 '내 카드'라면 알림 체크 시작
-                    if (id === myID) {
-                        checkMyNotifications(id);
+                    let finalImg = 'https://i.imgur.com/3SPL075.png'; 
+                    
+                    if (CUSTOM_PHOTOS[id]) {
+                        finalImg = CUSTOM_PHOTOS[id]; 
+                    } else if (d.photoFace) {
+                        finalImg = d.photoFace;
+                    } else if (d.img) {
+                        finalImg = d.img;
                     }
+
+                    allSurvivors.push({
+                        id: id,
+                        nickname: d.nickname || d.nick || id,
+                        img: finalImg,
+                        notifications: d.notifications
+                    });
                 });
+                console.log("----------------------------");
+
+                currentPage = 0;
+                renderPage(0);
             });
         }
 
-        // [NEW] 내 알림 체크 함수
-        function checkMyNotifications(userId) {
-            database.ref('users/' + userId + '/notifications').on('value', (snap) => {
-                const notis = snap.val();
-                const dot = document.getElementById(`noti-${userId}`);
-                if (!dot) return;
+        function renderPage(pageIndex) {
+            const container = document.getElementById('boardArea');
+            container.innerHTML = ""; 
 
-                let hasUnread = false;
-                if (notis) {
-                    // 안 읽은(read: false) 알림이 하나라도 있는지 확인
-                    Object.values(notis).forEach(n => {
+            const start = pageIndex * ITEMS_PER_PAGE;
+            const end = start + ITEMS_PER_PAGE;
+            const pageData = allSurvivors.slice(start, end);
+
+            pageData.forEach((user, index) => {
+                const div = document.createElement('div');
+                div.className = `photo-card pos-${index}`; 
+                div.onclick = () => { location.href = `profile.html?name=${user.id}`; };
+
+                div.innerHTML = `
+                    <div class="notification-dot" id="noti-${user.id}"></div>
+                    <img class="photo-img" src="${user.img}" alt="${user.nickname}">
+                   
+                `;
+                
+                container.appendChild(div);
+
+                if (user.id === myID && user.notifications) {
+                    let hasUnread = false;
+                    Object.values(user.notifications).forEach(n => {
                         if (n.read === false) hasUnread = true;
                     });
+                    if (hasUnread) {
+                        const dot = div.querySelector('.notification-dot');
+                        if(dot) dot.style.display = "block";
+                    }
                 }
-
-                // 안 읽은게 있으면 점 표시
-                dot.style.display = hasUnread ? "block" : "none";
             });
+
+            updateArrows(); 
         }
 
-        function logout() { 
-            localStorage.clear(); 
-            location.href = "index.html"; 
+        function nextPage() {
+            if ((currentPage + 1) * ITEMS_PER_PAGE < allSurvivors.length) {
+                currentPage++;
+                renderPage(currentPage);
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 0) {
+                currentPage--;
+                renderPage(currentPage);
+            }
+        }
+
+        function updateArrows() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            if (currentPage === 0) prevBtn.style.display = 'none';
+            else prevBtn.style.display = 'block';
+
+            if ((currentPage + 1) * ITEMS_PER_PAGE >= allSurvivors.length) nextBtn.style.display = 'none';
+            else nextBtn.style.display = 'block';
         }
     </script>
 </head>
-<body style="background-color: #111; color: #eee; margin: 0; padding: 0;">
+<body>
 
-    <nav class="navbar">
-    <div class="logo">
-        OUT BREAK 
-        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
-    </div>
-    <ul class="nav-links">
-        <li><a href="main.html">홈</a></li>
-        <li><a href="sub.html">생존자목록</a></li>
-        <li><a href="board.html">자유게시판</a></li>
-        <li><a href="trade.html">중고거래게시판</a></li>
-        <li><a href="quest.html">의뢰게시판</a></li>
-        <li><a href="game.html">고장난자판기</a></li>
-        <li><a href="vending.html">신형자판기</a></li>
-        <li><a href="#" onclick="logout()">로그아웃</a></li>
-    </ul>
-    </nav>
+    <a href="main.html" class="header-logo">OUTBREAK</a>
 
-    <div class="survivor-container">
-        <h2 style="color: #ab0000; text-align: center; font-size: 2.5rem; margin-bottom: 40px; font-family: 'Black Han Sans', sans-serif;">등록된 생존자 명단</h2>
-        <div class="survivor-grid" id="survivorList">
-            </div>
+    <div class="board-background">
+        <div class="nav-arrow prev-arrow" id="prevBtn" onclick="prevPage()">&lt;</div>
+        <div id="boardArea" style="width: 100%; height: 100%; position: relative;"></div>
+        <div class="nav-arrow next-arrow" id="nextBtn" onclick="nextPage()">&gt;</div>
     </div>
 
 </body>

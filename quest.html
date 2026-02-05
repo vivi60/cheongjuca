@@ -228,7 +228,6 @@
             <h3 style="color: #e0e0e0; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px;">새 의뢰 등록</h3>
             
             <div class="form-row-top">
-                <input type="text" id="qImg" placeholder="이미지 주소 (링크)" style="flex:1;">
                 <input type="text" id="qTitle" placeholder="의뢰 제목" style="flex:2;">
             </div>
 
@@ -403,16 +402,20 @@
                 await database.ref(`users/${myID}`).update({ money: currentMoney - rewardMoney });
                 if (rewardObj) await database.ref(`users/${myID}/inventory/${rewardObj.key}`).remove();
 
+                // ▼▼▼ [수정됨] 무조건 이 기본 이미지가 들어갑니다 ▼▼▼
+                const defaultImg = 'https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%80%E1%85%A2%E1%84%8B%E1%85%B5%E1%86%AB%E1%84%92%E1%85%AA%E1%84%86%E1%85%A7%E1%86%AB%E1%84%87%E1%85%A2%E1%84%80%E1%85%A7%E1%86%BC.png?alt=media&token=f7043cce-163a-4a4f-aa2b-ca55f2516d47';
+                
                 const newQuest = {
-                    image: document.getElementById('qImg').value,
+                    image: defaultImg, // 입력값 대신 기본 이미지 사용
                     title: title, desc: desc,
                     reward: rewardText.trim(), rewardMoney: rewardMoney, rewardData: rewardObj,
                     author: myNick, authorID: myID, status: 'open', timestamp: new Date().toLocaleString()
                 };
+                // ▲▲▲ 수정 끝 ▲▲▲
 
                 await database.ref('requests').push(newQuest);
                 if (typeof postToMastodon === "function") {
-                    await postToMastodon(`📜 [의뢰] ${myNick}: '${title}'\n보상: ${newQuest.reward}`);
+                    //await postToMastodon(`[의뢰] ${myNick}: '${title}'\n보상: ${newQuest.reward}`);
                 }
                 alert("등록 완료!");
                 

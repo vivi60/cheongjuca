@@ -2,38 +2,106 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>생존자 프로필</title>
+    <title>개인 프로필</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
 
     <style>
-        :root { --accent-color: #ab0000; --bg-dark: #111; --panel-bg: #1a1a1a; --text-gray: #ccc; --nav-font: 'SchoolSafeBoardMarker', sans-serif; }
+        :root { --accent-color: #535353; --bg-dark: #111; --panel-bg: #1a1a1a; --text-gray: #ccc; --nav-font: 'Pretendard', sans-serif; }
         
-        body { background-color: var(--bg-dark); color: white; margin: 0; padding: 0; font-family: 'Noto Sans KR', sans-serif; overflow-x: hidden; }
+        body { background-color: var(--bg-dark); color: white; margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; overflow-x: hidden; }
 
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 0 50px; background: rgba(0, 0, 0, 0.9); border-bottom: 1px solid var(--accent-color); height: 60px; position: fixed; top: 0; width: 100%; z-index: 1000; box-sizing: border-box; font-family: var(--nav-font); }
         .nav-links { list-style: none; display: flex; gap: 20px; margin: 0; padding: 0; }
         .nav-links a { color: white; text-decoration: none; font-size: 1.1rem; }
 
+        /* [수정됨] 헤더 로고 스타일 (다른 페이지와 글꼴 통일 + 호버 효과) */
+        .header-logo {
+            font-family: 'Black Ops One', cursive; /* 글꼴 통일 */
+            font-size: 28px; 
+            color: #efefef; /* 기본 색상 (밝은 회색) */
+            text-shadow: 2px 2px 4px #000; 
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.3s; /* 색상 부드럽게 전환 */
+        }
+
+        /* 마우스 올렸을 때 색상 변경 */
+        .header-logo:hover {
+            color: #535353; /* 호버 색상 (진한 회색) */
+        }
+
         .profile-wrapper { display: flex; width: 100vw; height: calc(100vh - 60px); margin-top: 60px; }
-        .portrait-section { width: 40%; height: 100%; background: #000; display: flex; align-items: flex-start; justify-content: center; border-right: 2px solid var(--accent-color); overflow: hidden; }
+        /* [수정] 전신 이미지 영역 (왼쪽 40% 공간만 쓰도록 변경) */
+        .portrait-section { 
+            width: 40%; /* ★ 핵심! 100%에서 40%로 줄임 */
+            height: 100%; 
+            position: fixed; 
+            top: 50px; /* 헤더 높이 */
+            left: 0;
+            background: transparent; /* 배경 투명 */
+            
+            /* 정렬 설정 */
+            display: flex; 
+            justify-content: center; /* 40% 공간 안에서 가로 중앙 정렬 */
+            align-items: center;     /* 세로 중앙 정렬 */
+            
+            z-index: 1; 
+            pointer-events: none; /* 클릭 통과 */
+            overflow: hidden;     /* 삐져나오는 부분 자르기 */
+        }
         .portrait-section img { width: auto; height: 100%; object-fit: contain; }
-        .info-section { width: 60%; height: 100%; overflow-y: auto; padding: 60px; box-sizing: border-box; background: #151515; position: relative; }
+        /* [수정] 정보창을 오른쪽 위에 띄우기 (슬라이드 기능) */
+        .info-section { 
+            width: 60%; /* 너비 유지 */
+            height: 100%; 
+            position: fixed; /* 배치가 아닌 띄우기 */
+            right: 0; top: 50px; /* 오른쪽 고정 */
+            background: rgba(21, 21, 21, 0.6); /* 배경 살짝 투명하게 */
+            overflow-y: auto; padding: 60px; box-sizing: border-box; 
+            z-index: 20; /* 사진보다 위에 */
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* 부드러운 움직임 */
+            border-left: 1px solid #535353;
+        }
+
+        /* [추가] 닫혔을 때 숨기는 클래스 */
+        .info-section.closed {
+            transform: translateX(100%); /* 오른쪽으로 밀어버림 */
+        }
+
+        /* [추가] 접기 버튼 스타일 */
+        .toggle-btn {
+            position: absolute;
+            top: 50%; left: -40px; /* 패널 왼쪽에 매달림 */
+            width: 40px; height: 80px;
+            background: #535353; color: white;
+            border: none; border-radius: 10px 0 0 10px;
+            cursor: pointer; font-size: 20px; font-weight: bold;
+            box-shadow: -5px 0 10px rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .toggle-btn:hover { background: #efefef; }
 
         #editBtn { position: absolute; top: 20px; right: 20px; background: var(--accent-color); color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; display: none; z-index: 10; }
 
         .info-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; border-top: 2px solid var(--accent-color); }
         .info-table td { padding: 15px; border-bottom: 1px solid #333; }
-        .label { color: var(--accent-color); font-weight: bold; width: 80px; font-size: 0.9rem; }
+        /* 이렇게 바꾸세요! */
+.label { color: #efefef; font-weight: bold; width: 80px; font-size: 0.9rem; }
         .value { color: #eee; }
         .head-img { width: 120px; height: 120px; border-radius: 10px; border: 2px solid var(--accent-color); object-fit: cover; background: #222; }
         .section-title { font-size: 1.2rem; color: var(--accent-color); border-bottom: 1px solid #444; margin: 30px 0 15px; padding-bottom: 5px; font-family: var(--nav-font); }
 
         .stat-bars { display: flex; gap: 4px; }
         .bar { width: 14px; height: 16px; background: #333; border-radius: 2px; }
-        .bar.fill { background: var(--accent-color); box-shadow: 0 0 5px var(--accent-color); }
+        /* 수정 예시 (노란색으로 변경) */
+.bar.fill { 
+    background: #ff0000;  /* 막대 색상 */
+    box-shadow: 0 0 5px #ff0000; /* 빛나는 효과 색상 */
+}
         .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
         .inv-item { background: #222; padding: 15px 10px; border-radius: 8px; text-align: center; border: 1px solid #333; transition: 0.3s; cursor: pointer; }
         .inv-item:hover { border-color: var(--accent-color); background: #2a2a2a; }
@@ -78,7 +146,7 @@
 }
 
 .section-title:hover {
-    color: #ff4444; /* 마우스 올리면 밝은 빨강 */
+    color: #efefef; /* 마우스 올리면 밝은 빨강 */
 }
 
 /* 화살표 아이콘 (기본: 아래쪽) */
@@ -92,7 +160,7 @@
 /* 펼쳐진 상태(active 클래스)일 때 화살표 회전 */
 .section-title.active::after {
     transform: rotate(180deg); /* 위쪽을 향하게 */
-    color: #ab0000;
+    color: #535353;
 }
 
 /* 내용을 숨기는 클래스 */
@@ -104,142 +172,156 @@
 </head>
 <body>
 
-<nav class="navbar">
-    <div class="logo">
-        OUT BREAK 
-        <span id="userBadge" style="display: none; font-size: 14px; margin-left: 10px; vertical-align: middle;"></span>
-    </div>
-    <ul class="nav-links">
-        <li><a href="main.html">홈</a></li>
-        <li><a href="sub.html">생존자목록</a></li>
-        <li><a href="board.html">자유게시판</a></li>
-        <li><a href="trade.html">중고거래게시판</a></li>
-        <li><a href="quest.html">의뢰게시판</a></li>
-        <li><a href="game.html">고장난자판기</a></li>
-        <li><a href="vending.html">신형자판기</a></li>
-        <li><a href="#" onclick="logout()">로그아웃</a></li>
-    </ul>
-    </nav>
+    <header class="simple-header" style="position: fixed; top: 0; left: 0; width: 100%; height: 50px; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; box-sizing: border-box; z-index: 1000; background: rgba(21, 21, 21, 0.95); border-bottom: 1px solid #535353;">
+        <div class="header-logo" onclick="location.href='main.html'">OUTBREAK</div>
+        <button class="back-btn" onclick="location.href='sub.html'" style="background: transparent; border: none; color: #efefef; font-size: 20px; font-family: 'Black Ops One'; cursor: pointer; margin-top: 20px;">◀ LIST</button>
+    
+    </header>
 
-<div class="profile-wrapper">
+    <div id="bgLayer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: 100% 100%; background-position: center; opacity: 1; z-index: 0;"></div>
+    <div id="bgOverlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.9) 100%); z-index: 1; pointer-events: none;"></div>
+
     <div class="portrait-section">
-        <img id="pFullBody" src="" alt="전신 이미지">
+        <img id="pFullBody" src="" alt="전신 이미지" style="height: 110%; object-fit: cover; transform: translateY(5%);">
+    </div>
+
+   <div class="left-info-panel" style="position: absolute; bottom: 50px; left: 50px; width: 320px; z-index: 10; display: flex; flex-direction: column; gap: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">
+        
+    <div id="pCatchphrase" style="font-size: 18px; color: #efefef; font-weight: 300; border-left: 3px solid #efefef; padding-left: 10px; margin-top:5px;">-</div>
+        
+
+            <div id="pName" style="font-size: 48px; font-weight: 900; line-height: 1; color:white;">NAME</div>
+            
+        <div>
+            
+            
+        </div>
+
+        <div id="statsWrapper" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+            <div style="display: flex; align-items: center; color:#ccc; font-size:14px;">
+                <span style="width:60px;">근력</span> <div class="stat-bars" id="stat-str"></div>
+            </div>
+            <div style="display: flex; align-items: center; color:#ccc; font-size:14px;">
+                <span style="width:60px;">민첩</span> <div class="stat-bars" id="stat-agi"></div>
+            </div>
+            <div style="display: flex; align-items: center; color:#ccc; font-size:14px;">
+                <span style="width:60px;">대인관계</span> <div class="stat-bars" id="stat-soc"></div>
+            </div>
+            <div style="display: flex; align-items: center; color:#ccc; font-size:14px;">
+                <span style="width:60px;">행운</span> <div class="stat-bars" id="stat-luk"></div>
+            </div>
+        </div>
+
+        <div id="pOneLiner" style="margin-top: 20px; font-size: 14px; color: #ddd; font-style: italic; background: rgba(0,0,0,0.6); padding: 15px; border-radius: 0 15px 0 15px; border-left: 4px solid #fff;">
+            "한마디가 없습니다."
+        </div>
     </div>
 
     <div class="info-section">
-        <button id="notiBtn" class="noti-btn" onclick="toggleNotifications()">🔔 알림</button>
-        <button id="editBtn" onclick="openEditModal()">📝 정보 수정</button>
+        <button class="toggle-btn" onclick="toggleSidebar()">></button>
+        <button id="notiBtn" class="noti-btn" onclick="toggleNotifications()">알림</button>
+        <button id="editBtn" onclick="openEditModal()">수정</button>
         
         <div id="notificationList"></div>
 
-        <div id="pCatchphrase" style="color: var(--accent-color); font-size: 1.2rem; margin-bottom: 5px; opacity: 0.8;"></div>
-        <div id="pOneLiner" style="font-size: 2.8rem; font-weight: bold; margin-bottom: 35px; line-height: 1.2;"></div>
-
+        <div class="section-title">BASIC INFO</div>
         <table class="info-table">
             <tr>
-                <td rowspan="4" style="width: 140px; text-align: center;"><img id="pHeadImg" class="head-img" src="" alt="두상"></td>
-                <td class="label">이름</td><td class="value" id="pName"></td>
-                <td class="label">나이</td><td class="value" id="pAge"></td>
+                <td rowspan="3" style="width: 120px; text-align: center; padding:0;">
+                    <img id="pHeadImg" class="head-img" src="" alt="두상">
+                </td>
+                <td class="label">나이</td><td class="value" id="pAge">-</td>
             </tr>
             <tr>
-                <td class="label">성별</td><td class="value" id="pGender"></td>
-                <td class="label">직업</td><td class="value" id="pJob"></td>
+                <td class="label">성별</td><td class="value" id="pGender">-</td>
             </tr>
             <tr>
-                <td class="label">신장/체중</td><td class="value" id="pBody"></td>
-                <td class="label">소지금</td><td class="value" style="color: gold;"><span id="pMoney">0</span> G</td>
+                <td class="label">직업</td><td class="value" id="pJob">-</td>
             </tr>
             <tr>
-                <td class="label">체력</td><td class="value" style="color: #ff4444;"><span id="pHP">100</span> / 100</td>
-                <td class="label">상태</td><td class="value" id="pInfection">-</td>
+                <td class="label" style="text-align:center;">신체</td>
+                <td class="label">키/체중</td><td class="value" id="pBody">-</td>
+            </tr>
+            <tr>
+                <td class="label" style="text-align:center;">상태</td>
+                <td class="label">체력</td><td class="value" style="color: #ff4444;"><span id="pHP">100</span></td>
+            </tr>
+            <tr>
+                <td class="label" style="text-align:center;">감염</td>
+                <td colspan="2" class="value" id="pInfection">-</td>
+            </tr>
+            <tr>
+                <td class="label" style="text-align:center;">자산</td>
+                <td class="value" style="color: gold;" colspan="2"><span id="pMoney">0</span> 원</td>
             </tr>
         </table>
 
         <div class="section-title active" onclick="toggleSection('pPersonality', this)">PERSONALITY</div>
-        <div id="pPersonality" style="white-space: pre-wrap; color: #ccc; margin-bottom: 40px;"></div>
+        <div id="pPersonality" style="white-space: pre-wrap; color: #ccc; margin-bottom: 30px;"></div>
 
-        <div class="section-title active" onclick="toggleSection('statsWrapper', this)">STATISTICS</div>
-        
-        <div id="statsWrapper" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 15px;">
-                <span>근력</span> <div class="stat-bars" id="stat-str"></div>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 15px;">
-                <span>민첩</span> <div class="stat-bars" id="stat-agi"></div>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 15px;">
-                <span>대인관계</span> <div class="stat-bars" id="stat-soc"></div>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 15px;">
-                <span>행운</span> <div class="stat-bars" id="stat-luk"></div>
-            </div>
-        </div>
-        
         <div class="section-title active" onclick="toggleSection('pEtc', this)">ETC</div>
-        <div id="pEtc" style="white-space: pre-wrap; color: #ccc; margin-bottom: 40px;"></div>
+        <div id="pEtc" style="white-space: pre-wrap; color: #ccc; margin-bottom: 30px;"></div>
 
-        <div class="section-title active" onclick="toggleSection('pItems', this)">ITEMS (설정)</div>
-        <div id="pItems" style="white-space: pre-wrap; color: #ccc; margin-bottom: 40px;"></div>
+        <div class="section-title active" onclick="toggleSection('pItems', this)">ITEMS</div>
+        <div id="pItems" style="white-space: pre-wrap; color: #ccc; margin-bottom: 30px;"></div>
 
-        <div class="section-title active" onclick="toggleSection('inventoryList', this)">INVENTORY (가방)</div>
+        <div class="section-title active" onclick="toggleSection('inventoryList', this)">INVENTORY</div>
         <div id="inventoryList" class="inventory-grid"></div>
         
-        <div id="myInteractionSection" style="display: none; margin-top: 30px; border-top: 1px solid var(--accent-color); padding-top: 20px;">
+        <div id="myInteractionSection" style="display: none; margin-top: 30px; border-top: 1px solid #535353; padding-top: 20px;">
             <div style="display: flex; gap: 10px;">
-                <button onclick="openUserSelectModal('money')" style="flex: 1; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s;">💰 돈 송금하기</button>
-                <button onclick="openUserSelectModal('item')" style="flex: 1; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s;">🎁 아이템 선물하기</button>
-            </div>
-        </div>
-
-        <div id="userSelectModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:3000;">
-            <div style="width:90%; max-width:400px; margin:100px auto; background:#1a1a1a; border:1px solid var(--accent-color); padding:20px; border-radius:10px;">
-                <h3 id="modalTitle" style="color:var(--accent-color); margin-top:0;">대상을 선택하세요</h3>
-                <div id="userListContainer" style="max-height:300px; overflow-y:auto; margin-bottom:20px;"></div>
-                <button onclick="closeUserModal()" style="width:100%; padding:10px; background:#444; color:white; border:none; border-radius:5px; cursor:pointer;">취소</button>
+                <button onclick="openUserSelectModal('money')" style="flex: 1; padding: 12px; background: #535353; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">💰 송금</button>
+                <button onclick="openUserSelectModal('item')" style="flex: 1; padding: 12px; background: #535353; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">🎁 선물</button>
             </div>
         </div>
     </div>
-</div>
 
-<div id="editModal">
-    <div class="modal-content">
-        <h2 style="color: var(--accent-color); margin-top: 0;">캐릭터 데이터 수정</h2>
-        <div class="form-row">
-            <div class="form-group"><label>전신 이미지 (URL)</label><input type="text" id="editFullBody"></div>
-            <div class="form-group"><label>두상 이미지 (URL)</label><input type="text" id="editHead"></div>
-        </div>
-        <div class="form-row">
-            <div class="form-group"><label>이름</label><input type="text" id="editNickname"></div>
-        </div>  
-        <div class="form-row">
-            <div class="form-group"><label>캐치프레이즈</label><input type="text" id="editCatch"></div>
-            <div class="form-group"><label>한마디</label><input type="text" id="editOne"></div>
-        </div>
-        <div class="form-row">
-            <div class="form-group"><label>나이</label><input type="text" id="editAge"></div>
-            <div class="form-group"><label>성별</label><input type="text" id="editGender"></div>
-            <div class="form-group"><label>직업</label><input type="text" id="editJob"></div>
-        </div>
-        <div class="form-row">
-            <div class="form-group"><label>키 (cm)</label><input type="text" id="editHeight"></div>
-            <div class="form-group"><label>몸무게 (kg)</label><input type="text" id="editWeight"></div>
-        </div>
-        <div class="form-row">
-            <div class="form-group"><label>근력</label><input type="number" id="editStr" min="0" max="10"></div>
-            <div class="form-group"><label>민첩</label><input type="number" id="editAgi" min="0" max="10"></div>
-            <div class="form-group"><label>대인관계</label><input type="number" id="editSoc" min="0" max="10"></div>
-            <div class="form-group"><label>행운</label><input type="number" id="editLuk" min="0" max="10"></div>
-        </div>
-        <div class="form-group"><label>성격</label><textarea id="editPersonality"></textarea></div>
-        <div class="form-group"><label>기타</label><textarea id="editEtc"></textarea></div>
-        <div class="form-group"><label>소지품</label><textarea id="editItems"></textarea></div>
-
-        <div style="display: flex; gap: 10px; margin-top: 30px;">
-            <button onclick="saveProfile()" style="flex: 2; padding: 15px; background: var(--accent-color); color: white; border: none; cursor: pointer;">저장</button>
-            <button onclick="closeEditModal()" style="flex: 1; padding: 15px; background: #444; color: white; border: none; cursor: pointer;">취소</button>
+    <div id="userSelectModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:3000;">
+        <div style="width:90%; max-width:400px; margin:100px auto; background:#1a1a1a; border:1px solid #535353; padding:20px; border-radius:10px;">
+            <h3 style="color:#535353; margin-top:0;">대상을 선택하세요</h3>
+            <div id="userListContainer" style="max-height:300px; overflow-y:auto; margin-bottom:20px;"></div>
+            <button onclick="closeUserModal()" style="width:100%; padding:10px; background:#444; color:white; border:none; border-radius:5px; cursor:pointer;">취소</button>
         </div>
     </div>
-</div>
+
+    <div id="editModal">
+        <div class="modal-content">
+            <h2 style="color: #535353; margin-top: 0;">정보 수정</h2>
+            <div class="form-row"><div class="form-group"><label>배경 이미지 URL</label><input type="text" id="editBgImg"></div></div>
+            <div class="form-row">
+                <div class="form-group"><label>전신 이미지 (URL)</label><input type="text" id="editFullBody"></div>
+                <div class="form-group"><label>두상 이미지 (URL)</label><input type="text" id="editHead"></div>
+            </div>
+            <div class="form-row"><div class="form-group"><label>이름</label><input type="text" id="editNickname"></div></div>  
+            <div class="form-row">
+                <div class="form-group"><label>캐치프레이즈</label><input type="text" id="editCatch"></div>
+                <div class="form-group"><label>한마디</label><input type="text" id="editOne"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>나이</label><input type="text" id="editAge"></div>
+                <div class="form-group"><label>성별</label><input type="text" id="editGender"></div>
+                <div class="form-group"><label>직업</label><input type="text" id="editJob"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>키 (cm)</label><input type="text" id="editHeight"></div>
+                <div class="form-group"><label>몸무게 (kg)</label><input type="text" id="editWeight"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>근력</label><input type="number" id="editStr" min="0" max="10"></div>
+                <div class="form-group"><label>민첩</label><input type="number" id="editAgi" min="0" max="10"></div>
+                <div class="form-group"><label>대인관계</label><input type="number" id="editSoc" min="0" max="10"></div>
+                <div class="form-group"><label>행운</label><input type="number" id="editLuk" min="0" max="10"></div>
+            </div>
+            <div class="form-group"><label>성격</label><textarea id="editPersonality"></textarea></div>
+            <div class="form-group"><label>기타</label><textarea id="editEtc"></textarea></div>
+            <div class="form-group"><label>소지품</label><textarea id="editItems"></textarea></div>
+
+            <div style="display: flex; gap: 10px; margin-top: 30px;">
+                <button onclick="saveProfile()" style="flex: 2; padding: 15px; background: #535353; color: white; border: none; cursor: pointer;">저장</button>
+                <button onclick="closeEditModal()" style="flex: 1; padding: 15px; background: #444; color: white; border: none; cursor: pointer;">취소</button>
+            </div>
+        </div>
+    </div>
 
 <script>
     const firebaseConfig = {
@@ -273,6 +355,11 @@
         if (!targetID) return;
         database.ref('users/' + targetID).on('value', (snapshot) => {
             const d = snapshot.val() || {};
+            // ▼▼▼ [추가할 코드] 배경 이미지 설정 (기본값 적용) ▼▼▼
+            const defaultBg = 'https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%80%E1%85%A2%E1%84%8B%E1%85%B5%E1%86%AB%E1%84%92%E1%85%AA%E1%84%86%E1%85%A7%E1%86%AB%E1%84%87%E1%85%A2%E1%84%80%E1%85%A7%E1%86%BC.png?alt=media&token=f7043cce-163a-4a4f-aa2b-ca55f2516d47';
+            const bgUrl = d.bgImg || defaultBg;
+            document.getElementById('bgLayer').style.backgroundImage = `url('${bgUrl}')`;
+            // ▲▲▲ 추가 끝 ▲▲▲
             document.getElementById('pName').innerText = d.nickname || targetID;
             document.getElementById('pCatchphrase').innerText = d.catchphrase || "";
             document.getElementById('pOneLiner').innerText = d.oneLiner || "";
@@ -287,8 +374,8 @@
             document.getElementById('pItems').innerText = d.items || "소지품이 없습니다.";
             
             const infDisplay = document.getElementById('pInfection');
-            if (d.infection === "좀비") { infDisplay.innerText = "🧟 좀비화"; infDisplay.style.color = "#ff4444"; }
-            else if (d.infection > 0) { infDisplay.innerText = "🧪 감염 " + d.infection + "단계"; infDisplay.style.color = "#00ff00"; }
+            if (d.infection === "좀비") { infDisplay.innerText = "좀비화"; infDisplay.style.color = "#ff4444"; }
+            else if (d.infection > 0) { infDisplay.innerText = "감염 " + d.infection + "단계"; infDisplay.style.color = "#00ff00"; }
             else { infDisplay.innerText = "정상"; infDisplay.style.color = "#888"; }
 
             if(d.fullBodyImg) document.getElementById('pFullBody').src = d.fullBodyImg;
@@ -346,7 +433,7 @@
 
             if (!notis) {
                 listDiv.innerHTML = '<div style="padding:15px; color:#666; text-align:center;">알림이 없습니다.</div>';
-                notiBtn.innerText = `🔔 알림 (0)`;
+                notiBtn.innerText = `알림 (0)`;
                 notiBtn.classList.remove('new-alert');
                 return;
             }
@@ -436,20 +523,90 @@
         database.ref('users/' + targetID).update(updates).then(() => { alert("저장되었습니다."); closeEditModal(); });
     }
 
-    function useItem(key, name) {
+    // profile.html 내부의 script 태그 안쪽 함수 교체
+
+    async function useItem(key, name) {
         if (!confirm(`[${name}]을(를) 사용하시겠습니까?`)) return;
-        const ITEM_EFFECTS = { "초코우유": { hp: 20 }, "에너지드링크": { hp: 10 }, "구급상자": { hp: 50 } };
-        database.ref('users/' + targetID).once('value', (snapshot) => {
-            const d = snapshot.val();
-            let updates = {};
-            if (ITEM_EFFECTS[name]) {
-                updates['hp'] = Math.min(100, (d.hp || 0) + ITEM_EFFECTS[name].hp);
-                alert(`체력이 회복되었습니다.`);
-            }
-            database.ref(`users/${targetID}/inventory/${key}`).remove().then(() => {
-                if (updates.hp !== undefined) database.ref(`users/${targetID}`).update(updates);
-            });
-        });
+
+        const myRef = database.ref(`users/${myID}`);
+        const snap = await myRef.once('value');
+        const userData = snap.val();
+        let updates = {};
+        let usedMsg = ""; // 알림창 메시지
+        let tootMsg = ""; // 마스토돈 툿 메시지
+        let tootImg = null;
+
+        // --- 아이템별 효과 구현 ---
+        
+        if (name === "마법의 소라고동") {
+            const fortunes = [
+                "오늘은 집에 있는 것이 좋겠습니다.", "오늘 귀인을 만나겠군요.",
+                "가만히 있으면 중간은 갑니다.", "지금 당장 실행하세요!",
+            ];
+            const fortune = fortunes[Math.floor(Math.random() * fortunes.length)];
+            usedMsg = `소라고동의 계시: "${fortune}"`;
+            tootMsg = `[마법의 소라고동] ${userData.nickname}님의 운세: "${fortune}"`;
+
+    
+        } else if (name === "찢어진 지도") {
+            // 랜덤 지도 이미지 (예시 이미지 링크)
+            const mapImages = [
+                "https://i.imgur.com/3SPL075.png", // A관
+                "https://i.imgur.com/3SPL075.png", // B관
+                "https://i.imgur.com/3SPL075.png"  // C관
+            ];
+            const mapImg = mapImages[Math.floor(Math.random() * mapImages.length)];
+            
+            usedMsg = "지도를 확인했습니다.";
+            tootMsg = `[찢어진 지도] ${userData.nickname}님이 낡은 지도를 펼쳤습니다.`;
+            tootImg = mapImg;
+            
+            // 화면에 띄워주기 (새창)
+            window.open(mapImg, '_blank');
+
+        } else if (name === "소주") {
+            const stats = ['stat_str', 'stat_agi', 'stat_soc', 'stat_luk'];
+            const targetStat = stats[Math.floor(Math.random() * stats.length)];
+            const statName = { 'stat_str':'근력', 'stat_agi':'민첩', 'stat_soc':'대인관계', 'stat_luk':'행운' }[targetStat];
+            
+            const currentVal = userData[targetStat] || 0;
+            updates[targetStat] = Math.min(10, currentVal + 1); // 최대 10까지
+            
+            usedMsg = `캬~! 취한다. [${statName}] 스탯이 1 올랐습니다.`;
+            tootMsg = `[소주] ${userData.nickname}님이 소주를 마시고 ${statName}이(가) 강해졌습니다!`;
+
+        } else if (name === "에너지바") {
+            const curHp = userData.hp || 0;
+            updates['hp'] = Math.min(100, curHp + 15);
+            usedMsg = `냠냠. 체력이 15 회복되었습니다.`;
+            tootMsg = `[에너지바] ${userData.nickname}님이 에너지를 충전했습니다. (HP +15)`;
+
+        } else if (name === "도시락") {
+            const curHp = userData.hp || 0;
+            updates['hp'] = Math.min(100, curHp + 30);
+            usedMsg = `잘 먹었습니다! 체력이 30 회복되었습니다.`;
+            tootMsg = `[도시락] ${userData.nickname}님이 든든하게 식사했습니다. (HP +30)`;
+
+        } else {
+            // 기타 아이템 (기계고장, 박스 등에서 나온 아이템)
+            // 특별한 효과가 없으면 그냥 사용 처리
+            usedMsg = `[${name}]을(를) 사용했습니다.`;
+            tootMsg = `${userData.nickname}님이 [${name}]을(를) 사용했습니다.`;
+        }
+
+        // 2. 아이템 삭제 및 업데이트 적용
+        await database.ref(`users/${myID}/inventory/${key}`).remove();
+        if (Object.keys(updates).length > 0) {
+            await database.ref(`users/${myID}`).update(updates);
+        }
+
+        // 3. 알림 및 봇 전송
+        alert(usedMsg);
+        if (typeof postToMastodon === "function") {
+            postToMastodon(tootMsg, tootImg);
+        }
+        
+        // (선택) 화면 갱신을 위해 리로드하거나, on listener가 자동 처리함
     }
 
     let currentAction = ""; 
@@ -500,8 +657,8 @@
                 const targetMoney = targetSnap.val().money || 0;
                 await database.ref('users/' + targetId).update({ money: targetMoney + amount });
                 
-                sendNotification(targetId, `💰 ${senderName}님이 ${amount}G를 송금했습니다.`);
-                alert(`✅ ${targetName} 님에게 송금 완료!`);
+                sendNotification(targetId, `${senderName}님이 ${amount}G를 송금했습니다.`);
+                alert(`${targetName} 님에게 송금 완료!`);
             }
         } else {
             const myInvSnap = await database.ref('users/' + myID + '/inventory').once('value');
@@ -521,8 +678,8 @@
                 await database.ref(`users/${myID}/inventory/${itemKey}`).remove();
                 await database.ref(`users/${targetId}/inventory`).push(itemData);
                 
-                sendNotification(targetId, `🎁 ${senderName}님이 [${itemData.name}]을 선물했습니다.`);
-                alert(`🎁 [${itemData.name}] 선물을 전달했습니다!`);
+                sendNotification(targetId, `${senderName}님이 [${itemData.name}]을 선물했습니다.`);
+                alert(`[${itemData.name}] 선물을 전달했습니다!`);
             }
         }
     }
@@ -548,6 +705,20 @@
         
         // 2. 제목의 화살표 회전 토글 (active 클래스 추가/제거)
         header.classList.toggle('active');
+    }
+
+// [추가] 사이드바 접고 펼치기 기능
+    function toggleSidebar() {
+        const panel = document.querySelector('.info-section');
+        const btn = document.querySelector('.toggle-btn');
+        
+        panel.classList.toggle('closed');
+        
+        if (panel.classList.contains('closed')) {
+            btn.innerText = "<"; // 닫혔으니 '여는' 화살표로 변경
+        } else {
+            btn.innerText = ">"; // 열렸으니 '닫는' 화살표로 변경
+        }
     }
 
 </script>
