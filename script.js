@@ -6,7 +6,7 @@ const userDB = {
     "forsythia_cast":        { pw: "outbreak",      nick: "강나리",  role: "user" },
     "K_JH":        { pw: "outbreak",      nick: "강진혁",  role: "user" },
     "CHOA_cast":        { pw: "outbreak",      nick: "강초아",  role: "user" },
-    "K_HANA_cast":        { pw: "outbreak",      nick: "강하나",  role: "user" },
+    "K_Hana_cast":        { pw: "outbreak",      nick: "강하나",  role: "user" },
     "K_Yohan_cast":        { pw: "outbreak",      nick: "고요한",  role: "user" },
     "MrBlueSky_cast":        { pw: "outbreak",      nick: "매튜 백",  role: "user" },
     "BackRam_cast":        { pw: "outbreak",      nick: "백람",  role: "user" },
@@ -64,7 +64,7 @@ async function postToMastodon(message, imageUrl = null) {
     // ★★★ [중요] 테스트 모드 설정 ★★★
     // true = 테스트 모드 (F12 콘솔에만 출력, 마스토돈 전송 X)
     // false = 실전 모드 (실제 마스토돈으로 전송)
-    const IS_TEST_MODE = false; 
+    const IS_TEST_MODE = true; 
 
     // --- 테스트 모드일 때 실행되는 부분 ---
     if (IS_TEST_MODE) {
