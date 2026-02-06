@@ -64,7 +64,7 @@ async function postToMastodon(message, imageUrl = null) {
     // ★★★ [중요] 테스트 모드 설정 ★★★
     // true = 테스트 모드 (F12 콘솔에만 출력, 마스토돈 전송 X)
     // false = 실전 모드 (실제 마스토돈으로 전송)
-    const IS_TEST_MODE = true; 
+    const IS_TEST_MODE = false; 
 
     // --- 테스트 모드일 때 실행되는 부분 ---
     if (IS_TEST_MODE) {
@@ -110,4 +110,5 @@ async function postToMastodon(message, imageUrl = null) {
     } catch (err) {
         console.error("🌐 서버 연결 실패:", err);
     }
+
 }
