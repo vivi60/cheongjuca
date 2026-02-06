@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>고장난 자판기 (물리 충격 요법)</title>
+    <title>고장난 자판기</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -173,11 +173,14 @@
             z-index: 5;
         }
 
+        /* [수정] 노트 디자인: 강렬한 레드 (Red) */
         .note {
             position: absolute; width: 80%; left: 10%; height: 25px;
-            background: #ff6600; 
-            border: 2px solid #ffaa00;
-            box-shadow: 0 0 10px #ff3300; 
+            
+            background: #ff0000;         /* 몸통: 완전한 빨강 */
+            border: 2px solid #ff9999;   /* 테두리: 살짝 밝은 빨강 (입체감) */
+            box-shadow: 0 0 12px #cc0000; /* 빛: 조금 어두운 빨강으로 빛나는 효과 */
+            
             border-radius: 2px; z-index: 2;
         }
 
@@ -279,11 +282,11 @@
             </div>
 
             <div class="overlay-screen" id="overlay">
-                <div class="msg-title" id="ovTitle">ITEM STUCK</div>
+                <div class="msg-title" id="ovTitle">VENDING MACHINE</div>
                 <div class="msg-desc" id="ovDesc" style="color:#aaa; font-size:16px; margin-bottom:30px;">
                     원하는 물건을 선택하고<br>자판기를 때려서 꺼내십시오.
                 </div>
-                <button class="btn-action" id="startBtn" disabled onclick="startGame()">BANG!</button>
+                <button class="btn-action" id="startBtn" disabled onclick="startGame()">START</button>
             </div>
         </div>
     </div>
@@ -302,13 +305,19 @@
 
         if (!myID) { alert("로그인이 필요합니다."); location.href = "index.html"; }
 
+        function isOperatingTime() {
+    const h = new Date().getHours();
+    // 오전 2시(2)부터 오전 8시(8) 사이면 false 반환
+    return !(h >= 2 && h < 8);
+}
+
         // 아이콘(icon) 추가됨 - 교환소에서 보이게 하기 위함
         const items = [
-            { name: "미지근한 생수", price: 30, difficulty: "EASY", target: 3000, bpm: 100, speed: 4, icon: "💧" },
-            { name: "건빵 한 봉지", price: 50, difficulty: "NORMAL", target: 8000, bpm: 120, speed: 6, icon: "🍪" },
-            { name: "의료용 붕대", price: 100, difficulty: "HARD", target: 15000, bpm: 140, speed: 8, icon: "🤕" },
-            { name: "항생제 앰플", price: 200, difficulty: "CRAZY", target: 30000, bpm: 160, speed: 10, icon: "💊" },
-            { name: "군용 MRE 식량", price: 500, difficulty: "EXTREME", target: 50000, bpm: 180, speed: 13, icon: "🍱" }
+            { name: "미지근한 생수", price: 1000, sellPrice: 1500, difficulty: "EASY", target: 6000, bpm: 100, speed: 4, icon: "💧", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A2%E1%86%BC%E1%84%89%E1%85%AE.png?alt=media&token=e07e2302-3aba-45a9-b39b-5db4d33af9f1" },
+            { name: "곰팡이 핀 쿠키", price: 2000, sellPrice: 2500, difficulty: "NORMAL", target: 8000, bpm: 120, speed: 6, icon: "🍪", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8F%E1%85%AE%E1%84%8F%E1%85%B5.png?alt=media&token=77142fd2-0c54-497e-b002-5ff7d58f0073" },
+            { name: "더러운 붕대", price: 3000, sellPrice: 3700, difficulty: "HARD", target: 10000, bpm: 140, speed: 8, icon: "🤕", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%87%E1%85%AE%E1%86%BC%E1%84%83%E1%85%A2.png?alt=media&token=5fc18dab-77bd-43b2-8f8f-ff25cdea719d" },
+            { name: "찌그러진 캔음료", price: 4000, sellPrice: 4800, difficulty: "CRAZY", target: 12000, bpm: 160, speed: 10, icon: "🥫", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8F%E1%85%A2%E1%86%AB.png?alt=media&token=875c3e82-9980-4d3f-b25d-6a69a9629632" },
+            { name: "유통기한 지난 도시락", price: 5000, sellPrice: 6000, difficulty: "EXTREME", target: 14000, bpm: 180, speed: 13, icon: "🍱", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%83%E1%85%A9%E1%84%89%E1%85%B5%E1%84%85%E1%85%A1%E1%86%A81.png?alt=media&token=89bbb744-5d5b-44fe-8c54-861d26d813be" }
         ];
 
         let selectedIdx = -1;
@@ -337,9 +346,18 @@
             items.forEach((item, idx) => {
                 const div = document.createElement('div');
                 div.className = `item-card ${selectedIdx === idx ? 'active' : ''}`;
+
+                // ▼▼▼ [수정된 부분] 이미지가 있으면 이미지 태그, 없으면 기존 아이콘 ▼▼▼
+                let displayIcon = item.icon;
+                if (item.img) {
+                    // 이미지가 있을 경우 img 태그 사용 (크기 조절 스타일 포함)
+                    displayIcon = `<img src="${item.img}" style="width: 40px; height: 40px; vertical-align: middle; margin-right: 10px; border-radius: 4px;">`;
+                }
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
                 div.innerHTML = `
                     <div class="item-info">
-                        <span class="item-name">${item.icon} ${item.name}</span>
+                        <span class="item-name">${displayIcon} ${item.name}</span>
                         <span class="item-detail">${item.difficulty} | BPM: ${item.bpm}</span>
                     </div>
                     <span class="item-price">${item.price} P</span>
@@ -355,18 +373,65 @@
             renderItemList();
 
             const item = items[idx];
-            document.getElementById('ovTitle').innerText = "READY TO HIT";
+            document.getElementById('ovTitle').innerText = "GAME START";
             document.getElementById('ovDesc').innerHTML = 
                 `타격 대상: <b style='color:#efefef'>${item.name}</b><br>` +
-                `충격량(점수) 필요: ${item.target} | 비용: ${item.price}`;
+                `필요 점수: ${item.target} | 비용: ${item.price}`;
             
             const btn = document.getElementById('startBtn');
             btn.disabled = false;
-            btn.innerText = `HIT (-${item.price}P)`;
+            btn.innerText = `GO!`;
         }
 
-        function startGame() {
+        // [수정됨] 게임 시작 함수 (하루 3회 제한 기능 추가)
+        async function startGame() {
+            if (!isOperatingTime()) {
+        alert("💤 [점검 중] 자판기도 휴식이 필요합니다.\n(이용 가능 시간: 08:00 ~ 익일 02:00)");
+        return;
+    }
             if (selectedIdx === -1) return;
+
+            // ▼▼▼ [하루 3회 제한 로직 시작] ▼▼▼
+            const today = new Date().toDateString(); // 예: "Fri Feb 06 2026" (날짜 문자열)
+            const limitRef = database.ref(`users/${myID}/game_daily_limit`); // 저장할 경로
+            
+            try {
+                // 데이터베이스에서 기록 가져오기
+                const snapshot = await limitRef.once('value');
+                const data = snapshot.val() || {};
+                
+                let playCount = 0;
+
+                // 저장된 날짜가 오늘과 같다면, 횟수를 불러옴
+                if (data.date === today) {
+                    playCount = data.count || 0;
+                }
+                // 날짜가 다르면(어제 했거나 처음이면) 0회로 간주 (자동 리셋 효과)
+
+                // 3회 이상이면 게임 시작 차단
+                if (playCount >= 3) {
+                    alert(`⛔ 오늘의 체력이 모두 소진되었습니다.\n(현재: 3/3회 사용)\n\n내일 다시 도전해주세요!`);
+                    return; 
+                }
+
+                // 게임 시작 전 횟수 차감 (업데이트)
+                await limitRef.update({
+                    date: today,
+                    count: playCount + 1
+                });
+
+                // (선택사항) 남은 횟수 알려주기
+                // alert(`게임을 시작합니다! (오늘 남은 횟수: ${2 - playCount}회)`);
+
+            } catch (e) {
+                console.error(e);
+                alert("서버 연결 오류가 발생했습니다.");
+                return;
+            }
+            // ▲▲▲ [하루 3회 제한 로직 끝] ▲▲▲
+
+
+            // --- 기존 게임 시작 코드 ---
             const item = items[selectedIdx];
             isPlaying = true;
             score = 0;
@@ -379,9 +444,39 @@
             document.getElementById('overlay').style.display = 'none';
 
             gameLoopID = requestAnimationFrame(gameLoop);
-            const interval = (60 / item.bpm) * 1000; 
-            spawnTimer = setInterval(spawnNote, interval);
+            scheduleNextNote();
         }
+
+
+        // [수정] 적당한 랜덤 리듬 (순한맛)
+        function scheduleNextNote() {
+            if (!isPlaying) return;
+
+            spawnNote(); 
+
+            const item = items[selectedIdx];
+            const baseInterval = (60 / item.bpm) * 1000; 
+
+            let randomFactor;
+            const dice = Math.random(); // 0.0 ~ 1.0
+
+            if (dice < 0.15) {
+                // 15% 확률: [살짝 빠름] (기본보다 1.6배 정도 빠름)
+                // 아까처럼 5배 빠르진 않아서 칠 만할 겁니다.
+                randomFactor = 0.6; 
+            } else if (dice < 0.85) {
+                // 70% 확률: [보통] (0.8배 ~ 1.2배 사이)
+                // 정박자랑 비슷하지만 살짝씩 엇박자가 납니다.
+                randomFactor = 0.8 + (Math.random() * 0.4); 
+            } else {
+                // 15% 확률: [휴식] (잠깐 멈칫함)
+                randomFactor = 1.8;
+            }
+
+            const nextDelay = baseInterval * randomFactor;
+            spawnTimer = setTimeout(scheduleNextNote, nextDelay);
+        }
+
 
         function gameLoop() {
             if (!isPlaying) return;
@@ -466,9 +561,9 @@
             const cEl = document.getElementById('comboVal');
             let text = type; let color = "#efefef";
             
-            if(type === "PERFECT") { text = "CRITICAL!"; color = "#ff0000"; }
-            else if(type === "HIT") { text = "SMASH!"; color = "#ffaa00"; }
-            else if(type === "BAD") { text = "GRAZE"; color = "#888"; }
+            if(type === "PERFECT") { text = "PERFECT"; color = "#ff0000"; }
+            else if(type === "HIT") { text = "HIT"; color = "#ffaa00"; }
+            else if(type === "BAD") { text = "BAD"; color = "#888"; }
             else if(type === "MISS") { text = "MISS..."; color = "#555"; }
 
             jEl.innerText = text; jEl.style.color = color;
@@ -480,7 +575,7 @@
             } else {
                 combo++; if (combo > maxCombo) maxCombo = combo;
                 score += (type === "PERFECT" ? 100 : 50) + (combo * 10);
-                hp = Math.min(100, hp + (type === "PERFECT" ? 3 : 1));
+                
                 if (combo > 2) {
                     cEl.innerText = `${combo} HIT!`;
                     cEl.classList.remove('show'); void cEl.offsetWidth; cEl.classList.add('show');
@@ -500,7 +595,7 @@
         function endGame(success) {
             isPlaying = false;
             cancelAnimationFrame(gameLoopID);
-            clearInterval(spawnTimer);
+            clearTimeout(spawnTimer);
             const overlay = document.getElementById('overlay');
             const title = document.getElementById('ovTitle');
             const desc = document.getElementById('ovDesc');
@@ -512,22 +607,19 @@
                 giveReward();
                 title.innerText = "ITEM DISPENSED!";
                 desc.innerText = `자판기를 성공적으로 가격하여\n물건을 떨어뜨렸습니다.\n최종 점수: ${score}`;
-                btn.innerText = "확인";
             } else {
-                title.innerText = "MACHINE JAMMED";
+                title.innerText = "JAMMED";
                 desc.innerText = "자판기가 고장나서 멈췄습니다.\n(HP 소진)";
                 btn.innerText = "다시 때리기";
                 btn.onclick = () => startGame();
             }
         }
 
-        // ★★★ [수정된 부분] 보상 지급 로직 (로컬 스토리지 사용) ★★★
         function giveReward() {
-            const targetItem = items[selectedIdx];
-            let finalItem = targetItem;
-            let msg = `덜컹! [${targetItem.name}]이(가) 나왔습니다.`;
-            
-            // 10% 꽝 확률
+            // 랜덤으로 엉뚱한 물건이 나올 확률 (예: 10%)
+            let finalItem = items[selectedIdx];
+            let msg = `[${finalItem.name}] 획득!`;
+
             if (Math.random() < 0.1) {
                 const randomIdx = Math.floor(Math.random() * items.length);
                 finalItem = items[randomIdx];
@@ -540,14 +632,18 @@
             // 2. 수량 증가
             inv[finalItem.name] = (inv[finalItem.name] || 0) + 1;
             
-            // 3. 교환소 판매를 위한 메타데이터 저장 (가격, 아이콘)
-            inv[finalItem.name + "_price"] = finalItem.price;
+            // 3. 교환소 판매를 위한 메타데이터 저장
+            // ▼▼▼ [수정된 부분] sellPrice가 있으면 그것을, 없으면 기본 price를 저장 ▼▼▼
+            inv[finalItem.name + "_price"] = finalItem.sellPrice || finalItem.price;
+            
             inv[finalItem.name + "_icon"] = finalItem.icon || "📦";
+            inv[finalItem.name + "_img"] = finalItem.img || ""; 
 
             // 4. 다시 저장
             localStorage.setItem("myInventory", JSON.stringify(inv));
 
-            alert(msg + "\n(교환소 인벤토리에 저장되었습니다)");
+            // 화면에 알림 (선택 사항: alert가 너무 자주 뜨면 이 줄을 지워도 됩니다)
+            // alert(msg + "\n(교환소 인벤토리에 저장되었습니다)");
         }
 
         function setupNav() {

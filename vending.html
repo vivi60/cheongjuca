@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>신형 자판기 (VENDING V2)</title>
+    <title>신형 자판기</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Noto+Sans+KR:wght@400;700&family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -92,10 +92,10 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .machine-brand {
-            font-size: 24px; font-weight: bold; color: #0056b3; letter-spacing: -1px; font-style: italic;
+            font-size: 24px; font-weight: bold; color: #535353; letter-spacing: -1px; font-style: italic;
         }
         .credit-display {
-            background: #222; color: #0f0;
+            background: #222; color: rgb(255, 196, 0);
             font-family: 'VT323', monospace; font-size: 28px;
             padding: 5px 15px; border-radius: 4px;
             border: 2px solid #555; box-shadow: inset 0 0 5px #000;
@@ -117,6 +117,7 @@
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 20px;
             position: relative; z-index: 1;
+            padding-top: 45px;
         }
 
         .product-slot {
@@ -143,19 +144,37 @@
             height: 40px; line-height: 1.2; display: flex; align-items: center;
         }
 
-        .buy-btn {
-            background: linear-gradient(to bottom, #007bff, #0056b3);
-            color: white; border: none; border-radius: 20px;
-            padding: 5px 15px; font-size: 14px; font-weight: bold; font-family: 'Noto Sans KR';
-            cursor: pointer; box-shadow: 0 3px 0 #004085, 0 5px 5px rgba(0,0,0,0.2);
-            transition: 0.1s; width: 100%;
+        /* [수정] 모든 버튼 디자인 (기본: 진회색 -> 호버: 빨강) */
+        .buy-btn, .buy-btn.expensive {
+            background: #333333; /* 기본: 진한 회색 */
+            color: white; 
+            border: none; 
+            border-radius: 20px;
+            padding: 5px 15px; 
+            font-size: 14px; 
+            font-weight: bold; 
+            font-family: 'Noto Sans KR';
+            cursor: pointer; 
+            
+            /* 그림자: 더 어두운 검정 계열 */
+            box-shadow: 0 3px 0 #000000, 0 5px 5px rgba(0,0,0,0.3); 
+            transition: 0.2s; 
+            width: 100%;
         }
-        .buy-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #004085, inset 0 2px 5px rgba(0,0,0,0.2); }
-        .buy-btn.expensive {
-            background: linear-gradient(to bottom, #dc3545, #a71d2a);
-            box-shadow: 0 3px 0 #721c24, 0 5px 5px rgba(0,0,0,0.2);
+
+        /* 마우스 올렸을 때 (Hover) -> 빨간색 (#ff0000) */
+        .buy-btn:hover, .buy-btn.expensive:hover {
+            background: #ff0000; /* 강렬한 빨강 */
+            /* 그림자도 진한 붉은색으로 변경 */
+            box-shadow: 0 3px 0 #990000, 0 5px 5px rgba(0,0,0,0.5); 
         }
-        .buy-btn.expensive:active { box-shadow: 0 0 0 #721c24; }
+        
+        /* 눌렀을 때 (Click) -> 움푹 들어감 */
+        .buy-btn:active, .buy-btn.expensive:active { 
+            transform: translateY(3px); 
+            box-shadow: 0 0 0 #000000, inset 0 2px 5px rgba(0,0,0,0.2); 
+        }
+
 
         .machine-bottom {
             height: 80px; background: #ccc; border-radius: 0 0 5px 5px;
@@ -192,7 +211,7 @@
     <div class="vending-machine">
         
         <div class="machine-top">
-            <div class="machine-brand">Fresh & Supply</div>
+            <div class="machine-brand">Cheongsong University</div>
             <div class="credit-display">
                 <span style="font-size:14px; color:#aaa; margin-right:5px;">CREDIT:</span>
                 <span id="displayMoney">0</span>
@@ -228,19 +247,25 @@
         const myNick = localStorage.getItem("userNick") || "생존자";
         let money = 0;
 
+        function isOperatingTime() {
+    const h = new Date().getHours();
+    // 오전 2시(2)부터 오전 8시(8) 사이면 false 반환
+    return !(h >= 2 && h < 8);
+}
+
         // ★ [수정] 이모지 대신 이미지 URL을 입력하세요!
         // 예시: icon: "https://i.imgur.com/example.png"
         const products = [
-            { id: 1, name: "마법의 소라고동", icon: "이미지주소_여기에_붙여넣기", price: 50, type: "item" },
-            { id: 2, name: "몰래 온 손님", icon: "이미지주소_여기에_붙여넣기", price: 300, type: "secret" },
-            { id: 3, name: "찢어진 지도", icon: "이미지주소_여기에_붙여넣기", price: 100, type: "item" },
-            { id: 4, name: "소주", icon: "이미지주소_여기에_붙여넣기", price: 150, type: "item" },
-            { id: 5, name: "에너지바", icon: "이미지주소_여기에_붙여넣기", price: 50, type: "item" },
-            { id: 6, name: "도시락", icon: "이미지주소_여기에_붙여넣기", price: 100, type: "item" },
-            { id: 7, name: "기계 고장", icon: "이미지주소_여기에_붙여넣기", price: 200, type: "random", pool: "machine" },
-            { id: 8, name: "네모난 박스", icon: "이미지주소_여기에_붙여넣기", price: 200, type: "random", pool: "box" },
-            { id: 9, name: "내 돈!!", icon: "이미지주소_여기에_붙여넣기", price: 0, type: "gamble" },
-            { id: 10, name: "친구 추가", icon: "이미지주소_여기에_붙여넣기", price: 500, type: "custom" }
+            { id: 1, name: "마법의 소라고동", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A9%E1%84%85%E1%85%A1.png?alt=media&token=749dfb72-6c7f-40f8-9842-14fc9e080fdc", price: 500, type: "item" },
+            { id: 2, name: "몰래 찾아온 손님", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%86%E1%85%A9%E1%86%AF%E1%84%85%E1%85%A2%E1%84%8E%E1%85%A1%E1%86%BD%E1%84%8B%E1%85%A1%E1%84%8B%E1%85%A9%E1%86%AB%E1%84%89%E1%85%A9%E1%86%AB%E1%84%82%E1%85%B5%E1%86%B7.png?alt=media&token=eff86ac8-7b89-465c-9dd7-34804223d9a7", price: 2000, type: "secret" },
+            { id: 3, name: "찢어진 지도", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8D%E1%85%B5%E1%86%BD%E1%84%8B%E1%85%A5%E1%84%8C%E1%85%B5%E1%86%AB%20%E1%84%8C%E1%85%B5%E1%84%83%E1%85%A9.png?alt=media&token=13af5706-a063-433f-be93-63052acbc341", price: 4000, type: "item" },
+            { id: 4, name: "소주", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A9%E1%84%8C%E1%85%AE.png?alt=media&token=4c327d27-e261-4bdd-beb5-213d1e9b4a41", price: 4000, type: "item" },
+            { id: 5, name: "에너지바", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8B%E1%85%A6%E1%84%82%E1%85%A5%E1%84%8C%E1%85%B5%E1%84%87%E1%85%A1.png?alt=media&token=da34843c-25e5-47fb-970d-bbcf77c545f5", price: 5000, type: "item" },
+            { id: 6, name: "도시락", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%83%E1%85%A9%E1%84%89%E1%85%B5%E1%84%85%E1%85%A1%E1%86%A8.png?alt=media&token=d4a25fd4-53e6-4c0b-8f5a-571f87e4df4d", price: 100, type: "item" },
+            { id: 7, name: "기계 고장", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%80%E1%85%B5%E1%84%80%E1%85%A8%20%E1%84%80%E1%85%A9%E1%84%8C%E1%85%A1%E1%86%BC.gif?alt=media&token=9371fd73-72f4-4725-8fed-2f4849047658", price: 5000, type: "random", pool: "machine" },
+            { id: 8, name: "네모난 박스", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%82%E1%85%A6%E1%84%86%E1%85%A9%E1%84%82%E1%85%A1%E1%86%AB%20%E1%84%87%E1%85%A1%E1%86%A8%E1%84%89%E1%85%B3.png?alt=media&token=c687b672-1b7e-44ba-b534-782c8916769c", price: 200, type: "random", pool: "box" },
+            { id: 9, name: "내 돈!!", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%82%E1%85%A2%20%E1%84%83%E1%85%A9%E1%86%AB!!.png?alt=media&token=a0a5b945-a2e5-4d5e-93f7-9b9ed6bd29a7", price: 0, type: "gamble" },
+            { id: 10, name: "친구 추가", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8E%E1%85%B5%E1%86%AB%E1%84%80%E1%85%AE%E1%84%8E%E1%85%AE%E1%84%80%E1%85%A1.png?alt=media&token=818e9bb1-ae36-4e87-b5be-18a73d224f65", price: 500, type: "custom" }
         ];
 
         // 랜덤 뽑기 아이템들의 이미지도 설정하세요
@@ -297,7 +322,11 @@
         async function purchase(name, icon, defaultPrice, type, poolName) {
             if (!myID) return alert("로그인이 필요합니다.");
             let finalPrice = defaultPrice;
-
+if (!isOperatingTime()) {
+        alert("💤 지금은 자판기 휴식 시간입니다. 오전 8시에 다시 와주세요!");
+        return;
+    }
+            // 1. 도박일 경우 금액 입력 받기
             if (type === 'gamble') {
                 const inputVal = prompt(`[${name}]\n보유 금액: ${money}G\n얼마를 거시겠습니까?`);
                 if (inputVal === null) return; 
@@ -306,13 +335,17 @@
                 if (money < finalPrice) return alert("잔액이 부족합니다.");
                 if (!confirm(`${finalPrice}G를 걸고 도박을 하시겠습니까?`)) return;
             } else {
+                // 일반 구매 확인
                 if (money < finalPrice) return alert("잔액이 부족합니다.");
                 if (!confirm(`[${name}] - ${finalPrice}G\n구매하시겠습니까?`)) return;
             }
 
+            // 돈 차감 준비
             const updates = {};
             updates[`users/${myID}/money`] = money - finalPrice;
             
+            // --- 타입별 처리 및 마스토돈 알림 전송 ---
+
             if (type === 'secret') {
                 const postsSnap = await database.ref('posts').once('value');
                 const posts = postsSnap.val();
@@ -320,16 +353,38 @@
                 const keys = Object.keys(posts);
                 const targetPost = posts[keys[Math.floor(Math.random() * keys.length)]];
                 
-                let realName = "알 수 없음";
+                let writerName = "알 수 없음";
                 const authorSnap = await database.ref('users/' + targetPost.authorID).once('value');
-                if (authorSnap.exists()) realName = authorSnap.val().nick;
+                
+                if (authorSnap.exists()) {
+                    const userData = authorSnap.val();
+                    writerName = userData.nickname || userData.nick || "알 수 없음";
+                }
                 
                 await database.ref().update(updates);
-                alert(`🕵️ [비밀 정보]\n글 제목: ${targetPost.title}\n작성자: ${realName}`);
-            } 
+                
+                // [마스토돈 알림]
+                if (typeof postToMastodon === "function") {
+                    // 1. 구매 사실 알림
+                    postToMastodon(`[몰래 찾아온 손님] ${myNick}님이 거금을 들여 비밀 정보를 구매했습니다.`);
+                    
+                    // ▼▼▼ [추가된 부분] 정보 내용도 마스토돈으로 전송 ▼▼▼
+                    postToMastodon(`[비밀 정보 공개]\n글 제목: ${targetPost.title}\n작성자: ${writerName}`);
+                }
+                
+                // 화면 알림
+                alert(`[비밀 정보]\n글 제목: ${targetPost.title}\n작성자: ${writerName}`);
+            }
+
             else if (type === 'item') {
                 await database.ref(`users/${myID}/inventory`).push({ name, icon, type: "소비" });
                 await database.ref().update(updates);
+                
+                // [마스토돈 알림] 일반 아이템 구매
+                if (typeof postToMastodon === "function") {
+                    postToMastodon(`[자판기] ${myNick}님이 [${name}]을(를) 구매했습니다.`, icon);
+                }
+
                 alert(`덜컹! [${name}] 배출 완료!`);
             } 
             else if (type === 'random') {
@@ -337,17 +392,36 @@
                 const item = pool[Math.floor(Math.random() * pool.length)];
                 await database.ref(`users/${myID}/inventory`).push({ name: item.name, icon: item.icon, type: "소비" });
                 await database.ref().update(updates);
+                
+                // [마스토돈 알림] 랜덤 뽑기 결과
+                if (typeof postToMastodon === "function") {
+                    postToMastodon(`🎲 [뽑기] ${myNick}님이 랜덤박스에서 [${item.name}]을(를) 뽑았습니다!`, item.icon);
+                }
+
                 alert(`덜컹! 랜덤박스에서 [${item.name}] 획득!`);
             } 
             else if (type === 'gamble') {
                 const isWin = Math.random() >= 0.5;
+                let msg = "";
+                
                 if (isWin) {
                     updates[`users/${myID}/money`] = money + finalPrice; 
-                    alert(`🎉 당첨! ${finalPrice*2}G 획득!`);
+                    msg = `🎉 당첨! ${finalPrice*2}G 획득!`;
+                    
+                    // [마스토돈 알림] 도박 승리
+                    if (typeof postToMastodon === "function") {
+                        postToMastodon(`🎰 [도박] ${myNick}님이 ${finalPrice}G를 걸고 승리하여 돈을 불렸습니다! (+${finalPrice}G)`);
+                    }
                 } else {
-                    alert(`💸 꽝... 돈을 먹었습니다.`);
+                    msg = `💸 꽝... 돈을 먹었습니다.`;
+                    
+                    // [마스토돈 알림] 도박 패배
+                    if (typeof postToMastodon === "function") {
+                        postToMastodon(`💸 [도박] ${myNick}님이 ${finalPrice}G를 걸었지만 전액 탕진했습니다...`);
+                    }
                 }
                 await database.ref().update(updates);
+                alert(msg);
             } 
             else if (type === 'custom') {
                 const customName = prompt("원하는 악세사리 이름:");
@@ -355,6 +429,12 @@
                 await database.ref(`users/${myID}/inventory`).push({ name: customName, icon: icon });
                 await database.ref(`users/${myID}/inventory`).push({ name: customName, icon: icon });
                 await database.ref().update(updates);
+                
+                // [마스토돈 알림] 커스텀 아이템
+                if (typeof postToMastodon === "function") {
+                    postToMastodon(`✨ [제작] ${myNick}님이 [${customName}]을(를) 주문 제작했습니다.`, icon);
+                }
+
                 alert(`${customName} 2개 획득!`);
             }
         }

@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>폐품 거래소 (RECYCLER)</title>
+    <title>교환소</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -121,6 +121,15 @@
         .log-entry { margin-bottom: 5px; border-bottom: 1px dashed #333; padding-bottom: 2px; }
         .log-time { color: #555; margin-right: 5px; }
 
+        /* [추가] 상점 아이템 이미지 스타일 */
+        .shop-item-img {
+            width: 30%; 
+            height: 30%; 
+            object-fit: contain; 
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+
         /* --- [오른쪽] 인벤토리 그리드 --- */
         .inventory-panel {
             flex: 2;
@@ -137,30 +146,56 @@
             text-shadow: 0 0 10px #000; background: #222; padding: 10px; border-radius: 5px;
         }
 
+        /* [수정] 그리드 레이아웃: 가로 3개 고정 */
         .inventory-grid {
             flex: 1; overflow-y: auto;
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            display: grid; 
+            /* 가로로 정확히 3등분하여 배치합니다 */
+            grid-template-columns: repeat(3, 1fr); 
             gap: 15px; padding-right: 5px;
+            align-content: start; /* 아이템이 적을 때 위쪽부터 채움 */
         }
 
-        /* 아이템 카드 스타일 (game.html 스타일 차용) */
+        /* [수정] 아이템 카드: 정사각형 모양 & 내용 중앙 정렬 */
         .item-card {
             background: #252525; border: 2px solid #444; border-radius: 4px;
-            padding: 15px; text-align: center; cursor: pointer; transition: 0.2s;
+            padding: 10px; /* 패딩을 조금 줄임 */
+            text-align: center; cursor: pointer; transition: 0.2s;
             position: relative; overflow: hidden;
+            
+            /* 정사각형 만들기 핵심 코드 */
+            aspect-ratio: 1 / 1; 
+            
+            /* 내용물 정가운데 정렬 */
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;
         }
+        
         .item-card:hover {
             border-color: #efefef; background: #333; transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
         .item-card:active { transform: scale(0.98); }
 
-        .item-icon { font-size: 40px; margin-bottom: 10px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
-        .item-name { font-size: 16px; color: #ddd; margin-bottom: 5px; font-weight: bold; }
-        .item-count { font-family: 'Share Tech Mono'; color: #aaa; font-size: 12px; }
+        /* 내부 요소들 간격 미세 조정 (정사각형 안에 예쁘게 들어가도록) */
+        .item-icon { 
+            font-size: 36px; /* 아이콘 크기 살짝 조정 */
+            margin-bottom: 5px; 
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); 
+        }
+        .item-name { 
+            font-size: 15px; color: #ddd; margin-bottom: 2px; font-weight: bold; 
+            line-height: 1.2;
+        }
+        .item-count { 
+            font-family: 'Share Tech Mono'; color: #aaa; font-size: 11px; margin-bottom: 5px;
+        }
         .item-price { 
-            margin-top: 10px; padding-top: 5px; border-top: 1px dashed #555;
-            font-family: 'VT323'; font-size: 22px; color: #0f0; 
+            width: 80%; /* 구분선 길이 조정 */
+            margin-top: 5px; padding-top: 5px; border-top: 1px dashed #555;
+            font-family: 'VT323'; font-size: 20px; color: #0f0; 
         }
 
         /* 빈 인벤토리 메시지 */
@@ -221,7 +256,7 @@
         </div>
     </div>
 
-    <script>
+   <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAlv59Z0jrLUGdIrhf9INS2G2I4IwLvCr0",
             authDomain: "cheongjuca.firebaseapp.com",
@@ -260,60 +295,68 @@
 
         // 2. 인벤토리 렌더링 (LocalStorage)
         function renderInventory() {
-            const grid = document.getElementById('inventoryGrid');
-            grid.innerHTML = "";
+            // ▼▼▼ [수정 1] ID 이름을 'inventoryGrid'로 맞춰야 합니다! ▼▼▼
+            const list = document.getElementById('inventoryGrid'); 
+            list.innerHTML = "";
             
-            // game.html에서 저장한 인벤토리 키: "myInventory"
-            const savedInv = localStorage.getItem("myInventory");
-            const inventory = savedInv ? JSON.parse(savedInv) : {};
+            const inventory = JSON.parse(localStorage.getItem("myInventory") || "{}");
+            const keys = Object.keys(inventory).filter(k => k.endsWith("_price"));
             
-            let hasItem = false;
+            // [1] 아이템이 하나도 없을 때 처리
+            if (keys.length === 0) {
+                list.innerHTML = "<div style='grid-column: 1/-1; text-align:center; padding:50px; color:#555;'>보관함이 비었습니다.<br>게임에서 아이템을 획득하세요.</div>";
+                return;
+            }
 
-            // 저장된 아이템 순회
-            for (const [key, count] of Object.entries(inventory)) {
-                // 메타데이터(_price, _icon) 제외하고 실제 아이템만 표시
-                if (!key.includes('_price') && !key.includes('_icon') && count > 0) {
-                    hasItem = true;
-                    
-                    // 가격, 아이콘 정보 가져오기 (없으면 기본값)
-                    const price = inventory[key + "_price"] || 10;
-                    const icon = inventory[key + "_icon"] || '📦';
-                    
-                    const card = document.createElement('div');
-                    card.className = 'item-card';
-                    card.innerHTML = `
-                        <div class="item-icon">${icon}</div>
-                        <div class="item-name">${key}</div>
-                        <div class="item-count">보유량: ${count}개</div>
-                        <div class="item-price">+ ${price} G</div>
-                    `;
-                    card.onclick = () => sellItem(key, price, inventory);
-                    grid.appendChild(card);
+            // [2] 아이템 목록 만들기
+            keys.forEach(key => {
+                const baseName = key.replace("_price", "");
+                const count = inventory[baseName];
+                const price = inventory[key];
+                const icon = inventory[baseName + "_icon"];
+                
+                // 저장된 이미지 주소 가져오기
+                const imgUrl = inventory[baseName + "_img"];
+
+                let displayHTML = `<div class="item-icon">${icon}</div>`;
+                if (imgUrl) {
+                    displayHTML = `<img src="${imgUrl}" class="shop-item-img">`;
                 }
-            }
-
-            if(!hasItem) {
-                grid.innerHTML = `
-                    <div class="empty-msg">
-                        판매할 물건이 없습니다.<br>
-                        <span style="font-size:14px; color:#888;">* [GAME] 메뉴에서 자판기를 때려 물건을 얻으세요.</span>
-                    </div>
+                
+                const div = document.createElement('div');
+                div.className = 'item-card';
+                div.innerHTML = `
+                    ${displayHTML}
+                    <div class="item-name">${baseName}</div>
+                    <div class="item-count">보유: ${count}개</div>
+                    <div class="item-price">${price} G</div>
                 `;
-            }
+                
+                // ▼▼▼ [수정 2] 판매 함수 연결 방식 수정 (버그 해결) ▼▼▼
+                div.onclick = () => sellItem(baseName, price);
+                
+                list.appendChild(div);
+            });
         }
 
         // 3. 아이템 판매 로직
-        function sellItem(itemName, price, inventory) {
+        function sellItem(itemName, price) {
             if (!confirm(`[${itemName}] 1개를 ${price}G에 판매하시겠습니까?`)) return;
 
-            // 1) 로컬 스토리지 수량 감소
-            inventory[itemName] -= 1;
+            // 로컬 스토리지 다시 불러오기 (안전성 확보)
+            let inventory = JSON.parse(localStorage.getItem("myInventory") || "{}");
+
+            // 1) 수량 감소
+            if (inventory[itemName] > 0) {
+                inventory[itemName] -= 1;
+            }
             
-            // 수량이 0이면 데이터 삭제
+            // 수량이 0이면 관련 데이터 모두 삭제
             if(inventory[itemName] <= 0) {
                 delete inventory[itemName];
                 delete inventory[itemName + "_price"];
                 delete inventory[itemName + "_icon"];
+                delete inventory[itemName + "_img"]; // 이미지 정보도 삭제
             }
             
             localStorage.setItem("myInventory", JSON.stringify(inventory));
@@ -323,7 +366,7 @@
             database.ref('users/' + loginID).update({ money: newMoney })
                 .then(() => {
                     addLog(`SOLD: [${itemName}] (+${price}G)`);
-                    renderInventory(); // 화면 갱신
+                    renderInventory(); // 화면 즉시 갱신
                 })
                 .catch(err => {
                     alert("통신 오류: " + err);
@@ -335,12 +378,7 @@
             const consoleBox = document.getElementById('consoleLog');
             const entry = document.createElement('div');
             entry.className = 'log-entry';
-            
-            const time = new Date().toLocaleTimeString('ko-KR', {hour12:false});
-            entry.innerHTML = `<span class="log-time">[${time}]</span> ${msg}`;
-            
-            // 최신 로그가 위로 오게 하려면 prepend, 아래로 쌓이게 하려면 append
-            // CSS flex-direction: column-reverse 때문에 append 하면 위에 쌓임 (콘솔 느낌)
+            entry.innerHTML = msg;
             consoleBox.prepend(entry);
         }
 
@@ -364,7 +402,6 @@
             localStorage.clear(); 
             location.href = "index.html"; 
         }
-
     </script>
 </body>
 </html>
