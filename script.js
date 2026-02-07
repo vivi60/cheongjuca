@@ -71,7 +71,7 @@ async function postToMastodon(message, imageUrl = null) {
     }
 
     const API_BASE = "https://planet.moe/api/v1"; 
-    const accessToken = "85ZTzpmUp0BRskvE9uOXZ_9NnjBOJSCbyGQ3pAXr0Ag"; 
+    const accessToken = "Q-Vskbi7VdfLdBS-ctgkDjoJ0uIkR_C-xFhTxbGzdvI"; 
 
     try {
         let mediaId = null;
@@ -133,3 +133,4 @@ async function postToMastodon(message, imageUrl = null) {
     }
 
 }
+
