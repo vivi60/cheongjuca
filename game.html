@@ -384,55 +384,56 @@
         }
 
         // [수정됨] 게임 시작 함수 (하루 3회 제한 기능 추가)
+        // [수정] 게임 시작 함수 (잔액 확인 및 차감 로직 추가)
         async function startGame() {
             if (!isOperatingTime()) {
-        alert("💤 [점검 중] 자판기도 휴식이 필요합니다.\n(이용 가능 시간: 08:00 ~ 익일 02:00)");
-        return;
-    }
+                alert("[점검 중] 자판기도 휴식이 필요합니다.\n(이용 가능 시간: 08:00 ~ 익일 02:00)");
+                return;
+            }
             if (selectedIdx === -1) return;
 
-            // ▼▼▼ [하루 3회 제한 로직 시작] ▼▼▼
-            const today = new Date().toDateString(); // 예: "Fri Feb 06 2026" (날짜 문자열)
-            const limitRef = database.ref(`users/${myID}/game_daily_limit`); // 저장할 경로
-            
+            const item = items[selectedIdx];
+
+            // 1. 보유 금액 확인 로직 추가
             try {
-                // 데이터베이스에서 기록 가져오기
-                const snapshot = await limitRef.once('value');
-                const data = snapshot.val() || {};
-                
-                let playCount = 0;
+                const userRef = database.ref(`users/${myID}`);
+                const userSnap = await userRef.once('value');
+                const userData = userSnap.val() || {};
+                const myMoney = userData.money || 0;
 
-                // 저장된 날짜가 오늘과 같다면, 횟수를 불러옴
-                if (data.date === today) {
-                    playCount = data.count || 0;
+                // 돈이 부족하면 차단
+                if (myMoney < item.price) {
+                    alert(`돈이 부족합니다!\n필요: ${item.price} P | 보유: ${myMoney} P`);
+                    return;
                 }
-                // 날짜가 다르면(어제 했거나 처음이면) 0회로 간주 (자동 리셋 효과)
 
-                // 3회 이상이면 게임 시작 차단
+                // 2. 하루 3회 제한 로직
+                const today = new Date().toDateString();
+                const limitRef = database.ref(`users/${myID}/game_daily_limit`);
+                const limitSnap = await limitRef.once('value');
+                const limitData = limitSnap.val() || {};
+                
+                let playCount = (limitData.date === today) ? (limitData.count || 0) : 0;
+
                 if (playCount >= 3) {
-                    alert(`⛔ 오늘의 체력이 모두 소진되었습니다.\n(현재: 3/3회 사용)\n\n내일 다시 도전해주세요!`);
+                    alert(`오늘의 체력이 모두 소진되었습니다.\n(현재: 3/3회 사용)\n\n내일 다시 도전해주세요!`);
                     return; 
                 }
 
-                // 게임 시작 전 횟수 차감 (업데이트)
+                // 3. 결제 및 횟수 업데이트 (동시에 진행)
+                await userRef.update({ money: myMoney - item.price }); // 돈 차감
                 await limitRef.update({
                     date: today,
                     count: playCount + 1
                 });
 
-                // (선택사항) 남은 횟수 알려주기
-                // alert(`게임을 시작합니다! (오늘 남은 횟수: ${2 - playCount}회)`);
-
             } catch (e) {
                 console.error(e);
-                alert("서버 연결 오류가 발생했습니다.");
+                alert("데이터를 불러오는 중 오류가 발생했습니다.");
                 return;
             }
-            // ▲▲▲ [하루 3회 제한 로직 끝] ▲▲▲
 
-
-            // --- 기존 게임 시작 코드 ---
-            const item = items[selectedIdx];
+            // --- 게임 시작 코드 ---
             isPlaying = true;
             score = 0;
             hp = 100;

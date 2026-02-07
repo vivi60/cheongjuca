@@ -257,28 +257,30 @@
         // 예시: icon: "https://i.imgur.com/example.png"
         const products = [
             { id: 1, name: "마법의 소라고동", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A9%E1%84%85%E1%85%A1.png?alt=media&token=749dfb72-6c7f-40f8-9842-14fc9e080fdc", price: 500, type: "item" },
-            { id: 2, name: "몰래 찾아온 손님", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%86%E1%85%A9%E1%86%AF%E1%84%85%E1%85%A2%E1%84%8E%E1%85%A1%E1%86%BD%E1%84%8B%E1%85%A1%E1%84%8B%E1%85%A9%E1%86%AB%E1%84%89%E1%85%A9%E1%86%AB%E1%84%82%E1%85%B5%E1%86%B7.png?alt=media&token=eff86ac8-7b89-465c-9dd7-34804223d9a7", price: 2000, type: "secret" },
-            { id: 3, name: "찢어진 지도", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8D%E1%85%B5%E1%86%BD%E1%84%8B%E1%85%A5%E1%84%8C%E1%85%B5%E1%86%AB%20%E1%84%8C%E1%85%B5%E1%84%83%E1%85%A9.png?alt=media&token=13af5706-a063-433f-be93-63052acbc341", price: 4000, type: "item" },
+            { id: 2, name: "몰래 온 손님", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%86%E1%85%A9%E1%86%AF%E1%84%85%E1%85%A2%E1%84%8E%E1%85%A1%E1%86%BD%E1%84%8B%E1%85%A1%E1%84%8B%E1%85%A9%E1%86%AB%E1%84%89%E1%85%A9%E1%86%AB%E1%84%82%E1%85%B5%E1%86%B7.png?alt=media&token=eff86ac8-7b89-465c-9dd7-34804223d9a7", price: 2000, type: "secret" },
+            { id: 3, name: "지도", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8D%E1%85%B5%E1%86%BD%E1%84%8B%E1%85%A5%E1%84%8C%E1%85%B5%E1%86%AB%20%E1%84%8C%E1%85%B5%E1%84%83%E1%85%A9.png?alt=media&token=13af5706-a063-433f-be93-63052acbc341", price: 4000, type: "item" },
             { id: 4, name: "소주", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A9%E1%84%8C%E1%85%AE.png?alt=media&token=4c327d27-e261-4bdd-beb5-213d1e9b4a41", price: 4000, type: "item" },
             { id: 5, name: "에너지바", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8B%E1%85%A6%E1%84%82%E1%85%A5%E1%84%8C%E1%85%B5%E1%84%87%E1%85%A1.png?alt=media&token=da34843c-25e5-47fb-970d-bbcf77c545f5", price: 5000, type: "item" },
-            { id: 6, name: "도시락", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%83%E1%85%A9%E1%84%89%E1%85%B5%E1%84%85%E1%85%A1%E1%86%A8.png?alt=media&token=d4a25fd4-53e6-4c0b-8f5a-571f87e4df4d", price: 100, type: "item" },
-            { id: 7, name: "기계 고장", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%80%E1%85%B5%E1%84%80%E1%85%A8%20%E1%84%80%E1%85%A9%E1%84%8C%E1%85%A1%E1%86%BC.gif?alt=media&token=9371fd73-72f4-4725-8fed-2f4849047658", price: 5000, type: "random", pool: "machine" },
-            { id: 8, name: "네모난 박스", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%82%E1%85%A6%E1%84%86%E1%85%A9%E1%84%82%E1%85%A1%E1%86%AB%20%E1%84%87%E1%85%A1%E1%86%A8%E1%84%89%E1%85%B3.png?alt=media&token=c687b672-1b7e-44ba-b534-782c8916769c", price: 200, type: "random", pool: "box" },
-            { id: 9, name: "내 돈!!", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%82%E1%85%A2%20%E1%84%83%E1%85%A9%E1%86%AB!!.png?alt=media&token=a0a5b945-a2e5-4d5e-93f7-9b9ed6bd29a7", price: 0, type: "gamble" },
-            { id: 10, name: "친구 추가", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8E%E1%85%B5%E1%86%AB%E1%84%80%E1%85%AE%E1%84%8E%E1%85%AE%E1%84%80%E1%85%A1.png?alt=media&token=818e9bb1-ae36-4e87-b5be-18a73d224f65", price: 500, type: "custom" }
+            { id: 6, name: "도시락", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%83%E1%85%A9%E1%84%89%E1%85%B5%E1%84%85%E1%85%A1%E1%86%A8.png?alt=media&token=d4a25fd4-53e6-4c0b-8f5a-571f87e4df4d", price: 8000, type: "item" },
+            { id: 7, name: "랜덤박스", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%80%E1%85%B5%E1%84%80%E1%85%A8%20%E1%84%80%E1%85%A9%E1%84%8C%E1%85%A1%E1%86%BC.gif?alt=media&token=9371fd73-72f4-4725-8fed-2f4849047658", price: 5000, type: "random", pool: "machine" },
+            { id: 8, name: "특전 키트", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%82%E1%85%A6%E1%84%86%E1%85%A9%E1%84%82%E1%85%A1%E1%86%AB%20%E1%84%87%E1%85%A1%E1%86%A8%E1%84%89%E1%85%B3.png?alt=media&token=c687b672-1b7e-44ba-b534-782c8916769c", price: 15000, type: "random", pool: "box" },
+            { id: 9, name: "도박", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%82%E1%85%A2%20%E1%84%83%E1%85%A9%E1%86%AB!!.png?alt=media&token=a0a5b945-a2e5-4d5e-93f7-9b9ed6bd29a7", price: 0, type: "gamble" },
+            { id: 10, name: "친구 추가", icon: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8E%E1%85%B5%E1%86%AB%E1%84%80%E1%85%AE%E1%84%8E%E1%85%AE%E1%84%80%E1%85%A1.png?alt=media&token=818e9bb1-ae36-4e87-b5be-18a73d224f65", price: 10000, type: "custom" }
         ];
 
         // 랜덤 뽑기 아이템들의 이미지도 설정하세요
         const randomPools = {
+            //랜덤박스
             "machine": [
-                {name:"녹슨 톱니바퀴", icon:"이미지주소_여기에_붙여넣기"}, 
-                {name:"전선 뭉치", icon:"이미지주소_여기에_붙여넣기"}, 
-                {name:"수상한 칩", icon:"이미지주소_여기에_붙여넣기"}
+                {name:"test", icon:"이미지"}, 
+                
             ],
+            //특전키트
             "box": [
-                {name:"곰인형", icon:"이미지주소_여기에_붙여넣기"}, 
-                {name:"낡은 책", icon:"이미지주소_여기에_붙여넣기"}, 
-                {name:"황금 열쇠", icon:"이미지주소_여기에_붙여넣기"}
+                {name:"강나리 만쥬", icon:"https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/shop%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%82%E1%85%A1%E1%84%85%E1%85%B5.png?alt=media&token=5b2d6280-184a-4630-8a65-1a254068eafe"}, 
+                {name:"범지태 만쥬", icon:"https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/shop%2F%E1%84%87%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B5%E1%84%90%E1%85%A2.png?alt=media&token=fde9516d-0f06-4239-86e6-4171135dd634"}, 
+                {name:"강초아 만쥬", icon:"https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/shop%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8E%E1%85%A9%E1%84%8B%E1%85%A1.png?alt=media&token=a4bbda20-fbfc-4847-a14b-77666f571b17"},
+                {name:"강진혁 만쥬", icon:"https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/shop%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8C%E1%85%B5%E1%86%AB%E1%84%92%E1%85%A7%E1%86%A8.png?alt=media&token=b6813277-1750-4aba-9171-7b9d32bcd439"},
             ]
         };
 
@@ -323,7 +325,7 @@
             if (!myID) return alert("로그인이 필요합니다.");
             let finalPrice = defaultPrice;
 if (!isOperatingTime()) {
-        alert("💤 지금은 자판기 휴식 시간입니다. 오전 8시에 다시 와주세요!");
+        alert("지금은 자판기 휴식 시간입니다. 오전 8시에 다시 와주세요!");
         return;
     }
             // 1. 도박일 경우 금액 입력 받기
@@ -377,16 +379,37 @@ if (!isOperatingTime()) {
             }
 
             else if (type === 'item') {
-                await database.ref(`users/${myID}/inventory`).push({ name, icon, type: "소비" });
-                await database.ref().update(updates);
-                
-                // [마스토돈 알림] 일반 아이템 구매
-                if (typeof postToMastodon === "function") {
-                    postToMastodon(`[자판기] ${myNick}님이 [${name}]을(를) 구매했습니다.`, icon);
+                // ▼▼▼ [수정된 로직] 지도는 인벤토리에 넣지 않고 즉시 실행 ▼▼▼
+                if (name === "지도") {
+                    const mapImages = [
+                        "", 
+                        ""
+                    ];
+                    const mapImg = mapImages[Math.floor(Math.random() * mapImages.length)];
+                    
+                    // 돈만 차감하고 인벤토리 push는 하지 않음
+                    await database.ref().update(updates);
+                    
+                    // 마스토돈 알림
+                    if (typeof postToMastodon === "function") {
+                        postToMastodon(`[지도] ${myNick}님이 찢어진 지도를 구매하였습니다.`, icon);
+                    }
+                    
+                    alert("🗺️ 지도를 확인했습니다!");
+                    window.open(mapImg, '_blank'); // 새 창으로 지도 이미지 열기
+                } 
+                else {
+                    // 지도가 아닌 일반 아이템들은 기존처럼 인벤토리에 저장
+                    await database.ref(`users/${myID}/inventory`).push({ name, icon, type: "소비" });
+                    await database.ref().update(updates);
+                    
+                    if (typeof postToMastodon === "function") {
+                        postToMastodon(`[자판기] ${myNick}님이 [${name}]을(를) 구매했습니다.`, icon);
+                    }
+                    alert(`덜컹! [${name}] 배출 완료!`);
                 }
-
-                alert(`덜컹! [${name}] 배출 완료!`);
-            } 
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            }
             else if (type === 'random') {
                 const pool = randomPools[poolName];
                 const item = pool[Math.floor(Math.random() * pool.length)];

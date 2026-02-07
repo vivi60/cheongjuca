@@ -103,9 +103,42 @@
     box-shadow: 0 0 5px #ff0000; /* 빛나는 효과 색상 */
 }
         .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
-        .inv-item { background: #222; padding: 15px 10px; border-radius: 8px; text-align: center; border: 1px solid #333; transition: 0.3s; cursor: pointer; }
-        .inv-item:hover { border-color: var(--accent-color); background: #2a2a2a; }
+        /* [수정] 인벤토리 아이템: 정사각형 버튼 스타일 */
+        .inv-item { 
+            background: #222; 
+            border-radius: 8px; 
+            text-align: center; 
+            border: 1px solid #333; 
+            transition: 0.3s; 
+            cursor: pointer; 
+            
+            /* 정사각형 만들기 핵심 */
+            aspect-ratio: 1 / 1; 
+            
+            /* 내용물을 중앙으로 정렬 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box; /* 패딩이 크기에 영향을 주지 않도록 설정 */
+        }
 
+        .inv-item:hover { 
+            border-color: var(--accent-color); 
+            background: #2a2a2a; 
+            transform: translateY(-3px); /* 호버 시 살짝 떠오르는 효과 */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* 아이템 내부 텍스트 크기 및 간격 미세 조정 */
+        .inv-item div {
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis; /* 이름이 너무 길면 ... 처리 */
+            white-space: nowrap;
+            margin-top: 5px;
+        }
         #editModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; overflow-y: auto; padding: 50px 0; }
         .modal-content { width: 90%; max-width: 850px; margin: auto; background: #1a1a1a; padding: 40px; border-radius: 15px; border: 1px solid var(--accent-color); }
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
@@ -389,11 +422,23 @@
             const invList = document.getElementById('inventoryList');
             invList.innerHTML = '';
             const invData = d.inventory || {};
+            // 인벤토리 생성 부분 수정
             Object.entries(invData).forEach(([key, item]) => {
                 const div = document.createElement('div');
                 div.className = 'inv-item';
                 div.onclick = () => useItem(key, item.name);
-                div.innerHTML = `<div style="font-size: 24px;">${item.icon || '📦'}</div><div style="font-size: 12px;">${item.name}</div>`;
+
+                // ▼▼▼ [수정된 로직] 이미지 주소가 있으면 <img> 태그 사용 ▼▼▼
+                let displayHTML = `<div style="font-size: 24px;">${item.icon || '📦'}</div>`;
+                
+                // 만약 item.img 또는 item.icon에 URL(http)이 포함되어 있다면 이미지로 출력
+                const imgSource = item.img || item.icon;
+                if (imgSource && (imgSource.startsWith('http') || imgSource.startsWith('https'))) {
+                    displayHTML = `<img src="${imgSource}" style="width: 40px; height: 40px; object-fit: contain; margin-bottom: 5px; border-radius: 4px;">`;
+                }
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+                div.innerHTML = `${displayHTML}<div style="font-size: 12px;">${item.name}</div>`;
                 invList.appendChild(div);
             });
         });
@@ -526,6 +571,17 @@
     // profile.html 내부의 script 태그 안쪽 함수 교체
 
     async function useItem(key, name) {
+        // ▼▼▼ [수정된 로직] 이름에 특정 단어가 포함되어 있는지 체크 ▼▼▼
+        const unusableKeywords = ["만쥬",];
+        
+        // some 함수를 사용하여 이름에 금지 키워드가 하나라도 포함되어 있는지 확인합니다.
+        const isUnusable = unusableKeywords.some(keyword => name.includes(keyword));
+
+        if (isUnusable) {
+            alert(`[${name}] 아이템은 사용할 수 없으며, 인벤토리 보관용입니다.`);
+            return; // 사용 로직 중단
+        }
+
         if (!confirm(`[${name}]을(를) 사용하시겠습니까?`)) return;
 
         const myRef = database.ref(`users/${myID}`);
@@ -540,8 +596,8 @@
         
         if (name === "마법의 소라고동") {
             const fortunes = [
-                "오늘은 집에 있는 것이 좋겠습니다.", "오늘 귀인을 만나겠군요.",
-                "가만히 있으면 중간은 갑니다.", "지금 당장 실행하세요!",
+                "동료와 의사소통이 잘 되는 날이에요. 의견 차를 좁힐 수 있겠어요.", "뜻밖의 재화를 얻을 수 있어요. 밖으로 나가보는 건 어떨까요?", "좋은 거래를 할 수 있을 것 같아요. 중고거래를 해 보는 건 어떨까요?", "기다리던 소식이 찾아올 것 같아요. 알림을 확인해봐요.", "한계까지 무리할 지도 몰라요. 동료에게 도움을 요청해봐요.", "자신감을 갖고 당당하게 말해봐요. 모두가 당신에게 귀 기울일 거예요.", "마음의 장벽이 낮아진 시기예요. 사기 당하지 않도록 조심하세요.", "이야기를 끝까지 듣고 나서 움직여요. 섣부른 추측은 오해를 불러일으켜요.", "좋은 절약법을 찾은 것 같아요. 자판기의 도박을 그만두는 건 어떨까요?", 
+                "실력 발휘로 맹활약해요. 오늘이라면 당신도 좀비 슬레이어!",
             ];
             const fortune = fortunes[Math.floor(Math.random() * fortunes.length)];
             usedMsg = `소라고동의 계시: "${fortune}"`;
@@ -551,9 +607,9 @@
         } else if (name === "찢어진 지도") {
             // 랜덤 지도 이미지 (예시 이미지 링크)
             const mapImages = [
-                "https://i.imgur.com/3SPL075.png", // A관
-                "https://i.imgur.com/3SPL075.png", // B관
-                "https://i.imgur.com/3SPL075.png"  // C관
+                 "이미지", // A관
+                 "이미지", // B관
+                 "이미지"  // C관
             ];
             const mapImg = mapImages[Math.floor(Math.random() * mapImages.length)];
             

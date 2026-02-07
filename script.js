@@ -60,52 +60,73 @@ function logout() {
 
 // [업그레이드 + 테스트 모드] 마스토돈 봇 연동 함수
 async function postToMastodon(message, imageUrl = null) {
-    
-    // ★★★ [중요] 테스트 모드 설정 ★★★
-    // true = 테스트 모드 (F12 콘솔에만 출력, 마스토돈 전송 X)
-    // false = 실전 모드 (실제 마스토돈으로 전송)
-    const IS_TEST_MODE = true; 
+    const IS_TEST_MODE = true; // 테스트가 끝나면 false로 바꾸세요.
 
-    // --- 테스트 모드일 때 실행되는 부분 ---
     if (IS_TEST_MODE) {
-        console.group("%c📢 [마스토돈 전송 테스트 (발송 차단됨)]", "color: orange; font-size: 14px; font-weight: bold;");
+        console.group("%c📢 [마스토돈 전송 테스트]", "color: orange; font-weight: bold;");
         console.log(`📄 내용: ${message}`);
-        if (imageUrl) {
-            console.log(`🖼 이미지: ${imageUrl}`);
-            // 이미지가 있다면 콘솔에 미리보기 띄우기 (크롬 등에서 지원)
-            console.log("%c ", `font-size: 1px; padding: 50px; background: url(${imageUrl}) no-repeat; background-size: contain;`);
-        }
-        console.log(">> 실제 서버로는 전송되지 않았습니다.");
+        if (imageUrl) console.log(`🖼 이미지: ${imageUrl}`);
         console.groupEnd();
-        return; // 여기서 함수를 강제 종료해서 API 요청을 막습니다.
+        return;
     }
 
-    // --- 실전 모드일 때 실행되는 부분 (기존 코드) ---
     const API_BASE = "https://planet.moe/api/v1"; 
     const accessToken = "85ZTzpmUp0BRskvE9uOXZ_9NnjBOJSCbyGQ3pAXr0Ag"; 
 
-    let statusText = message;
-    if (imageUrl) {
-        statusText += `\n\n(이미지: ${imageUrl})`;
-    }
-
     try {
+        let mediaId = null;
+
+        // 1. 이미지가 있을 경우 마스토돈 서버에 먼저 업로드
+        if (imageUrl) {
+            try {
+                // 이미지 URL에서 파일 데이터를 가져옴
+                const imageRes = await fetch(imageUrl);
+                const blob = await imageRes.blob();
+                
+                // 마스토돈 미디어 업로드용 폼 데이터 생성
+                const formData = new FormData();
+                formData.append('file', blob, 'image.png');
+
+                const mediaRes = await fetch(`${API_BASE}/media`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                    body: formData
+                });
+
+                if (mediaRes.ok) {
+                    const mediaData = await mediaRes.json();
+                    mediaId = mediaData.id; // 업로드된 이미지의 ID 획득
+                    console.log("🖼 미디어 업로드 성공 ID:", mediaId);
+                }
+            } catch (mediaErr) {
+                console.error("🖼 미디어 업로드 중 오류:", mediaErr);
+                // 이미지 업로드 실패 시 텍스트만이라도 보내기 위해 계속 진행
+            }
+        }
+
+        // 2. 게시글 전송 (미디어 ID가 있으면 사진 게시물로 올라감)
+        const payload = { 
+            status: message,
+            visibility: 'private' 
+        };
+
+        if (mediaId) {
+            payload.media_ids = [mediaId]; // 사진 ID 첨부
+        }
+
         const response = await fetch(`${API_BASE}/statuses`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
-                status: statusText,
-                visibility: 'private' // 팔로워 전용
-            })
+            body: JSON.stringify(payload)
         });
 
         if (response.ok) {
-            console.log("✅ 마스토돈 봇 전송 성공!");
+            console.log("✅ 마스토돈 사진 게시글 전송 성공!");
         } else {
-            console.error("❌ 마스토돈 전송 실패");
+            console.error("❌ 게시글 전송 실패");
         }
     } catch (err) {
         console.error("🌐 서버 연결 실패:", err);
