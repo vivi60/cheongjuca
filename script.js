@@ -60,7 +60,7 @@ function logout() {
 
 // [업그레이드 + 테스트 모드] 마스토돈 봇 연동 함수
 async function postToMastodon(message, imageUrl = null) {
-    const IS_TEST_MODE = true; // 테스트가 끝나면 false로 바꾸세요.
+    const IS_TEST_MODE = false; // 테스트가 끝나면 false로 바꾸세요.
 
     if (IS_TEST_MODE) {
         console.group("%c📢 [마스토돈 전송 테스트]", "color: orange; font-weight: bold;");
@@ -131,4 +131,5 @@ async function postToMastodon(message, imageUrl = null) {
     } catch (err) {
         console.error("🌐 서버 연결 실패:", err);
     }
+
 }
