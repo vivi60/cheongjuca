@@ -713,10 +713,16 @@
                 const targetMoney = targetSnap.val().money || 0;
                 await database.ref('users/' + targetId).update({ money: targetMoney + amount });
                 
+                // ★ [추가] 마스토돈 송금 알림
+                if (typeof postToMastodon === "function") {
+                    await postToMastodon(`💸 [송금] @${targetId}님, ${myNick}님이 ${amount}G를 보냈습니다!`);
+                }
+
                 sendNotification(targetId, `${senderName}님이 ${amount}G를 송금했습니다.`);
                 alert(`${targetName} 님에게 송금 완료!`);
             }
         } else {
+            // --- 아이템 선물 처리 섹션 ---
             const myInvSnap = await database.ref('users/' + myID + '/inventory').once('value');
             const myInv = myInvSnap.val();
             if (!myInv) return alert("선물할 아이템이 가방에 없습니다.");
@@ -734,6 +740,11 @@
                 await database.ref(`users/${myID}/inventory/${itemKey}`).remove();
                 await database.ref(`users/${targetId}/inventory`).push(itemData);
                 
+                // ★ [추가] 마스토돈 아이템 선물 알림
+                if (typeof postToMastodon === "function") {
+                    await postToMastodon(`🎁 [선물] @${targetId}님, ${myNick}님이 [${itemData.name}]을(를) 보냈습니다!`);
+                }
+
                 sendNotification(targetId, `${senderName}님이 [${itemData.name}]을 선물했습니다.`);
                 alert(`[${itemData.name}] 선물을 전달했습니다!`);
             }
