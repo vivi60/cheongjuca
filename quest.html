@@ -415,7 +415,7 @@
 
                 await database.ref('requests').push(newQuest);
                 if (typeof postToMastodon === "function") {
-                    //await postToMastodon(`[의뢰] ${myNick}: '${title}'\n보상: ${newQuest.reward}`);
+                await postToMastodon(`새 의뢰가 등록되었습니다.`);
                 }
                 alert("등록 완료!");
                 
@@ -449,7 +449,7 @@
                 if (quest.rewardMoney > 0) await database.ref(`users/${myID}`).update({ money: currentMoney + quest.rewardMoney });
                 if (quest.rewardData) await database.ref(`users/${myID}/inventory`).push(quest.rewardData);
                 
-                if (typeof postToMastodon === "function") await postToMastodon(`🎊 [완료] ${myNick}님이 '${quest.title}' 의뢰 완료!`);
+                if (typeof postToMastodon === "function") await postToMastodon(`[완료] ${myNick}님이 '${quest.title}' 의뢰 완료!`);
                 
                 alert(`${quest.reward} 획득!`);
                 database.ref('requests/' + key).remove();
