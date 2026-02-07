@@ -131,6 +131,4 @@ async function postToMastodon(message, imageUrl = null) {
     } catch (err) {
         console.error("🌐 서버 연결 실패:", err);
     }
-
 }
-

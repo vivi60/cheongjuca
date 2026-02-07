@@ -572,7 +572,7 @@
 
     async function useItem(key, name) {
         // ▼▼▼ [수정된 로직] 이름에 특정 단어가 포함되어 있는지 체크 ▼▼▼
-        const unusableKeywords = ["만쥬",];
+        const unusableKeywords = ["만쥬","확성기", "쇠지렛대", "야구배트","목검","가족사진","스케이트보드","밧줄","신분증","콘돔","개사료","탄창 없는 권총","위스키","휴대전화","여자아이 인형","음식모형","MP3","노트와펜","철가방","도끼","포도당 사탕","응급키트","물병"];
         
         // some 함수를 사용하여 이름에 금지 키워드가 하나라도 포함되어 있는지 확인합니다.
         const isUnusable = unusableKeywords.some(keyword => name.includes(keyword));
@@ -605,20 +605,24 @@
 
     
         } else if (name === "찢어진 지도") {
-            // 랜덤 지도 이미지 (예시 이미지 링크)
-            const mapImages = [
-                 "이미지", // A관
-                 "이미지", // B관
-                 "이미지"  // C관
+            // [수정] 이미지 대신 텍스트 정보 리스트로 변경
+            const mapInfos = [
+                 "테스트", 
+                 
             ];
-            const mapImg = mapImages[Math.floor(Math.random() * mapImages.length)];
+            // 랜덤으로 텍스트 하나 선택
+            const selectedInfo = mapInfos[Math.floor(Math.random() * mapInfos.length)];
             
-            usedMsg = "지도를 확인했습니다.";
-            tootMsg = `[찢어진 지도] ${userData.nickname}님이 낡은 지도를 펼쳤습니다.`;
-            tootImg = mapImg;
+            usedMsg = `[지도 확인] ${selectedInfo}`;
+            tootMsg = `[찢어진 지도] ${userData.nickname}님이 낡은 지도를 확인했습니다.\n내용: "${selectedInfo}"`;
             
-            // 화면에 띄워주기 (새창)
-            window.open(mapImg, '_blank');
+            // 이미지 변수는 비워둡니다.
+            tootImg = null;
+            
+            // [삭제] window.open(mapImg, '_blank');  <- 새 창 기능을 제거했습니다.
+
+            // 화면에 알림만 띄워줍니다.
+            alert(usedMsg);
 
         } else if (name === "소주") {
             const stats = ['stat_str', 'stat_agi', 'stat_soc', 'stat_luk'];
