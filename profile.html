@@ -749,9 +749,9 @@ if (name.includes("소라고동")) {
                 await database.ref('users/' + targetId).update({ money: targetMoney + amount });
                 
                 // ★ [추가] 마스토돈 송금 알림
-                if (typeof postToMastodon === "function") {
-                    await postToMastodon(`💸 [송금] ${targetName}님에게 ${myNick}님이 ${amount}G를 보냈습니다!`);
-                }
+                if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
+                postToMastodon(`💸 [송금] @${targetId}님, ${myNick}님이 [${amount}G]를 보냈습니다!`);
+}
 
                 sendNotification(targetId, `${senderName}님이 ${amount}G를 송금했습니다.`);
                 alert(`${targetName} 님에게 송금 완료!`);
@@ -776,9 +776,9 @@ if (name.includes("소라고동")) {
                 await database.ref(`users/${targetId}/inventory`).push(itemData);
                 
                 // ★ [추가] 마스토돈 아이템 선물 알림
-                if (typeof postToMastodon === "function") {
-                    await postToMastodon(`🎁 [선물] @${targetId}님, ${myNick}님이 [${itemData.name}]을(를) 보냈습니다!`);
-                }
+                if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
+                postToMastodon(`🎁 [선물] @${targetId}님, ${myNick}님이 [${itemData.name}]을(를) 보냈습니다!`);
+}
 
                 sendNotification(targetId, `${senderName}님이 [${itemData.name}]을 선물했습니다.`);
                 alert(`[${itemData.name}] 선물을 전달했습니다!`);
