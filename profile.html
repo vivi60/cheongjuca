@@ -372,6 +372,7 @@
     const params = new URLSearchParams(window.location.search);
     const targetID = params.get('name');
     const myID = localStorage.getItem("loginID") || localStorage.getItem("userNick");
+    const myNick = localStorage.getItem("userNick") || "생존자";
 
     function createStatBars(containerId, value) {
         const container = document.getElementById(containerId);
@@ -749,7 +750,7 @@ if (name.includes("소라고동")) {
                 
                 // ★ [추가] 마스토돈 송금 알림
                 if (typeof postToMastodon === "function") {
-                    await postToMastodon(`💸 [송금] @${targetId}님, ${myNick}님이 ${amount}G를 보냈습니다!`);
+                    await postToMastodon(`💸 [송금] ${targetName}님에게 ${myNick}님이 ${amount}G를 보냈습니다!`);
                 }
 
                 sendNotification(targetId, `${senderName}님이 ${amount}G를 송금했습니다.`);
@@ -823,5 +824,6 @@ if (name.includes("소라고동")) {
     }
 
 </script>
+<script src="script.js"></script>
 </body>
 </html>
