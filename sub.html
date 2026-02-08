@@ -135,6 +135,28 @@
         .pos-9  { top: 73%; left: 45%; transform: rotate(-2deg); }
         .pos-10 { top: 68%; left: 68%; transform: rotate(3deg); }
 
+
+        /* 좌하단 관리자 비밀 버튼 스타일 */
+.admin-secret-corner {
+    position: fixed;
+    bottom: 10px; /* 바닥에서 10px */
+    left: 10px;   /* 왼쪽에서 10px */
+    width: 12px;
+    height: 12px;
+    background-color: rgba(255, 255, 255, 0.02); /* 거의 투명에 가까운 상태 */
+    border-radius: 2px;
+    z-index: 10000;
+    transition: all 0.5s ease;
+    text-decoration: none;
+    border: 1px solid transparent;
+}
+
+.admin-secret-corner:hover {
+    background-color: rgba(171, 0, 0, 0.3); /* 마우스를 올리면 희미한 붉은색 */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+}
+
     </style>
 
     <script>
@@ -177,7 +199,6 @@
             "CDH_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%8E%E1%85%AC%E1%84%83%E1%85%A9%E1%84%92%E1%85%AA1.png?alt=media&token=264f9e05-95fd-4818-8b85-e4eda9dff9c8",
             "sea_cast": "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2Fmember%2F%E1%84%92%E1%85%A1%E1%86%AB%E1%84%87%E1%85%A1%E1%84%83%E1%85%A11.png?alt=media&token=58d977e8-df7a-4ce3-bf4b-c230bb4aa01a"
         };
-
 
         let allSurvivors = []; 
         let currentPage = 0;
@@ -300,5 +321,7 @@
         <div class="nav-arrow next-arrow" id="nextBtn" onclick="nextPage()">&gt;</div>
     </div>
 
+     <a href="profile.html?name=13reaking_news" class="admin-secret-corner" title=""></a>
+     
 </body>
 </html>
