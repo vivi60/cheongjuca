@@ -394,13 +394,10 @@ if (!isOperatingTime()) {
                 await database.ref().update(updates);
                 
                 // [마스토돈 알림]
-                if (typeof postToMastodon === "function") {
-                    // 1. 구매 사실 알림
-                    postToMastodon(`[몰래 찾아온 손님] ${myNick}님이 거금을 들여 비밀 정보를 구매했습니다.`);
-                    
-                    // ▼▼▼ [추가된 부분] 정보 내용도 마스토돈으로 전송 ▼▼▼
-                    postToMastodon(`[비밀 정보 공개]\n글 제목: ${targetPost.title}\n작성자: ${writerName}`);
-                }
+                if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
+    postToMastodon(`[몰래 찾아온 손님] ${myNick}님이 비밀 정보를 구매했습니다.`);
+    postToMastodon(`[비밀 정보 공개]\n글 제목: ${targetPost.title}\n작성자: ${writerName}`);
+}
                 
                 // 화면 알림
                 alert(`[비밀 정보]\n글 제목: ${targetPost.title}\n작성자: ${writerName}`);
@@ -419,9 +416,9 @@ if (!isOperatingTime()) {
                     await database.ref().update(updates);
                     
                     // 마스토돈 알림
-                    if (typeof postToMastodon === "function") {
-                        postToMastodon(`[지도] ${myNick}님이 찢어진 지도를 구매하였습니다.`, icon);
-                    }
+                    if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
+                     postToMastodon(`[지도] ${myNick}님이 찢어진 지도를 구매하였습니다.`, icon);
+}
                     
                     alert("🗺️ 지도를 확인했습니다!");
                     window.open(mapImg, '_blank'); // 새 창으로 지도 이미지 열기
@@ -431,9 +428,9 @@ if (!isOperatingTime()) {
                     await database.ref(`users/${myID}/inventory`).push({ name, icon, type: "소비" });
                     await database.ref().update(updates);
                     
-                    if (typeof postToMastodon === "function") {
-                        postToMastodon(`[자판기] ${myNick}님이 [${name}]을(를) 구매했습니다.`, icon);
-                    }
+                    if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
+                    postToMastodon(`[자판기] ${myNick}님이 [${name}]을(를) 구매했습니다.`, icon);
+}
                     alert(`덜컹! [${name}] 배출 완료!`);
                 }
                 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
@@ -445,9 +442,9 @@ if (!isOperatingTime()) {
                 await database.ref().update(updates);
                 
                 // [마스토돈 알림] 랜덤 뽑기 결과
-                if (typeof postToMastodon === "function") {
-                    postToMastodon(`🎲 [뽑기] ${myNick}님이 랜덤박스에서 [${item.name}]을(를) 뽑았습니다!`, item.icon);
-                }
+                if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
+                postToMastodon(`🎲 [뽑기] ${myNick}님이 랜덤박스에서 [${item.name}]을(를) 뽑았습니다!`, item.icon);
+}
 
                 alert(`덜컹! 랜덤박스에서 [${item.name}] 획득!`);
             } 
@@ -460,14 +457,14 @@ if (!isOperatingTime()) {
                     msg = `🎉 당첨! ${finalPrice*2}G 획득!`;
                     
                     // [마스토돈 알림] 도박 승리
-                    if (typeof postToMastodon === "function") {
+                    if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
                         postToMastodon(`🎰 [도박] ${myNick}님이 ${finalPrice}G를 걸고 승리하여 돈을 불렸습니다! (+${finalPrice}G)`);
                     }
                 } else {
                     msg = `💸 꽝... 돈을 먹었습니다.`;
                     
                     // [마스토돈 알림] 도박 패배
-                    if (typeof postToMastodon === "function") {
+                    if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
                         postToMastodon(`💸 [도박] ${myNick}님이 ${finalPrice}G를 걸었지만 전액 탕진했습니다...`);
                     }
                 }
@@ -482,9 +479,9 @@ if (!isOperatingTime()) {
                 await database.ref().update(updates);
                 
                 // [마스토돈 알림] 커스텀 아이템
-                if (typeof postToMastodon === "function") {
-                    postToMastodon(`✨ [제작] ${myNick}님이 [${customName}]을(를) 주문 제작했습니다.`, icon);
-                }
+                if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
+                postToMastodon(`✨ [제작] ${myNick}님이 [${customName}]을(를) 주문 제작했습니다.`, icon);
+}
 
                 alert(`${customName} 2개 획득!`);
             }
