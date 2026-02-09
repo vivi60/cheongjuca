@@ -443,7 +443,7 @@ if (!isOperatingTime()) {
                 
                 // [마스토돈 알림] 랜덤 뽑기 결과
                 if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
-                postToMastodon(`🎲 [뽑기] ${myNick}님이 랜덤박스에서 [${item.name}]을(를) 뽑았습니다!`, item.icon);
+               await postToMastodon(`🎲 [뽑기] ${myNick}님이 랜덤박스에서 [${item.name}]을(를) 뽑았습니다!`, item.icon);
 }
 
                 alert(`덜컹! 랜덤박스에서 [${item.name}] 획득!`);
