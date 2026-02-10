@@ -15,7 +15,6 @@ const userDB = {
     "UJ_cast":        { pw: "outbreak",      nick: "유재이",  role: "user" },
     "H_gyeol55_cast":        { pw: "outbreak",      nick: "유한결",  role: "user" },
     "YT_cast":        { pw: "outbreak",      nick: "윤태",  role: "user" },
-    "anchor_cast":        { pw: "outbreak",      nick: "이기조",  role: "user" },
     "Eunjeong_cast":        { pw: "outbreak",      nick: "이은정",  role: "user" },
     "2PU0_cast":        { pw: "outbreak",      nick: "이필우",  role: "user" },
     "SAE2ON_cast":        { pw: "outbreak",      nick: "임새언",  role: "user" },
