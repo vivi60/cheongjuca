@@ -363,21 +363,39 @@
         }
 
         function loadMyInventoryForQuest() {
-            const rewardSelect = document.getElementById('qRewardSelect');
-            if (!myID) return;
-            database.ref(`users/${myID}/inventory`).on('value', (snapshot) => {
-                const inv = snapshot.val();
-                rewardSelect.innerHTML = '<option value="">보상 아이템 선택</option>';
-                if (inv) {
-                    Object.entries(inv).forEach(([key, item]) => {
-                        const opt = document.createElement('option');
-                        opt.value = JSON.stringify({ key: key, name: item.name, icon: item.icon, price: item.price || 0 });
-                        opt.innerText = `${item.icon} ${item.name}`;
-                        rewardSelect.appendChild(opt);
-                    });
-                }
+    const rewardSelect = document.getElementById('qRewardSelect');
+    if (!myID) return;
+
+    database.ref(`users/${myID}/inventory`).on('value', (snapshot) => {
+        const inv = snapshot.val();
+        // 초기화 시 '보상 아이템 선택' 기본 문구 유지
+        rewardSelect.innerHTML = '<option value="">보상 아이템 선택</option>';
+        
+        if (inv) {
+            Object.entries(inv).forEach(([key, item]) => {
+                const opt = document.createElement('option');
+                
+                // [수정 핵심] 실제 저장될 데이터(JSON)는 value에 넣고, 
+                // 화면에 보일 '이름'은 innerText에 넣습니다.
+                const itemInfo = { 
+                    key: key, 
+                    name: item.name, 
+                    icon: item.icon, 
+                    price: item.price || 0 
+                };
+                
+                opt.value = JSON.stringify(itemInfo);
+                
+                // 아이콘이 이미지 주소(http)인 경우 [이미지]라고 표시하고 이름 출력
+                const isImageIcon = item.icon && item.icon.startsWith('http');
+                const displayIcon = isImageIcon ? '🖼️' : (item.icon || '📦');
+                
+                opt.innerText = `${displayIcon} ${item.name}`; // 이 부분이 화면에 보입니다.
+                rewardSelect.appendChild(opt);
             });
         }
+    });
+}
 
         async function writeQuest() {
             const rewardMoney = parseInt(document.getElementById('qRewardMoney').value) || 0;
