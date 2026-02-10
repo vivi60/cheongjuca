@@ -412,10 +412,14 @@
             if (rewardMoney > currentMoney) return alert("돈이 부족합니다.");
 
             const rewardObj = rewardRaw ? JSON.parse(rewardRaw) : null;
-            let rewardText = "";
-            if (rewardMoney > 0) rewardText += `${rewardMoney}G`;
-            if (rewardObj) rewardText += ` ${rewardObj.icon}${rewardObj.name}`;
-
+            // [수정 후]
+let rewardText = "";
+if (rewardMoney > 0) rewardText += `${rewardMoney}G`;
+if (rewardObj) {
+    // 아이콘이 http로 시작하는 이미지 링크라면 [아이템] 혹은 🖼️ 같은 이모지로 대체
+    const displayIcon = (rewardObj.icon && rewardObj.icon.startsWith('http')) ? '🎁' : (rewardObj.icon || '📦');
+    rewardText += ` ${displayIcon}${rewardObj.name}`;
+}
             if (confirm(`보상: [${rewardText.trim()}] 등록하시겠습니까?`)) {
                 await database.ref(`users/${myID}`).update({ money: currentMoney - rewardMoney });
                 if (rewardObj) await database.ref(`users/${myID}/inventory/${rewardObj.key}`).remove();
