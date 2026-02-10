@@ -100,8 +100,7 @@ async function postToMastodon(message, imageUrl = null) {
                 }
             } catch (mediaErr) {
                 console.error("🖼 미디어 업로드 중 오류:", mediaErr);
-                // 이미지 업로드 실패 시 텍스트만이라도 보내기 위해 계속 진행
-                message += `\n\n(이미지: ${imageUrl})`;
+                
             }
         }
 
