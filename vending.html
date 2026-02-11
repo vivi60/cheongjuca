@@ -351,10 +351,12 @@
         async function purchase(name, icon, defaultPrice, type, poolName) {
             if (!myID) return alert("로그인이 필요합니다.");
             let finalPrice = defaultPrice;
-if (!isOperatingTime()) {
-        alert("지금은 자판기 휴식 시간입니다. 오전 8시에 다시 와주세요!");
-        return;
-    }
+
+            if (!isOperatingTime()) {
+                alert("지금은 자판기 휴식 시간입니다. 오전 8시에 다시 와주세요!");
+                return;
+            }
+
             // 1. 도박일 경우 금액 입력 받기
             if (type === 'gamble') {
                 const inputVal = prompt(`[${name}]\n보유 금액: ${money}G\n얼마를 거시겠습니까?`);
@@ -373,8 +375,9 @@ if (!isOperatingTime()) {
             const updates = {};
             updates[`users/${myID}/money`] = money - finalPrice;
             
-            // --- 타입별 처리 및 마스토돈 알림 전송 ---
+            // --- 타입별 처리 로직 ---
 
+            // A. 비밀 정보 (몰래온손님)
             if (type === 'secret') {
                 const postsSnap = await database.ref('posts').once('value');
                 const posts = postsSnap.val();
@@ -392,61 +395,42 @@ if (!isOperatingTime()) {
                 
                 await database.ref().update(updates);
                 
-                // [마스토돈 알림]
                 if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
-    postToMastodon(`[몰래 찾아온 손님] ${myNick}님이 비밀 정보를 구매했습니다.`);
-    postToMastodon(`[비밀 정보 공개]\n글 제목: ${targetPost.title}\n작성자: ${writerName}`);
-}
-                
-                // 화면 알림
+                    await postToMastodon(`[몰래 찾아온 손님] ${myNick}님이 비밀 정보를 구매했습니다.`);
+                    await postToMastodon(`[비밀 정보 공개]\n글 제목: ${targetPost.title}\n작성자: ${writerName}`);
+                }
                 alert(`[비밀 정보]\n글 제목: ${targetPost.title}\n작성자: ${writerName}`);
             }
 
+            // B. 일반 아이템 (지도 포함 모든 인벤토리 저장 아이템)
             else if (type === 'item') {
-                // ▼▼▼ [수정된 로직] 지도는 인벤토리에 넣지 않고 즉시 실행 ▼▼▼
-                if (name === "지도") {
-                    const mapImages = [
-                        "", 
-                        ""
-                    ];
-                    const mapImg = mapImages[Math.floor(Math.random() * mapImages.length)];
-                    
-                    // 돈만 차감하고 인벤토리 push는 하지 않음
-                    await database.ref().update(updates);
-                    
-                    // 마스토돈 알림
-                    if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
-                     postToMastodon(`[지도] ${myNick}님이 찢어진 지도를 구매하였습니다.`, icon);
-}
-                    
-                    alert("🗺️ 지도를 확인했습니다!");
-                    window.open(mapImg, '_blank'); // 새 창으로 지도 이미지 열기
-                } 
-                else {
-                    // 지도가 아닌 일반 아이템들은 기존처럼 인벤토리에 저장
-                    await database.ref(`users/${myID}/inventory`).push({ name, icon, type: "소비" });
-                    await database.ref().update(updates);
-                    
-                    if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
-                    postToMastodon(`[자판기] ${myNick}님이 [${name}]을(를) 구매했습니다.`, icon);
-}
-                    alert(`덜컹! [${name}] 배출 완료!`);
+                await database.ref(`users/${myID}/inventory`).push({ 
+                    name: name, 
+                    icon: icon, 
+                    type: "소비" 
+                });
+                await database.ref().update(updates);
+
+                if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
+                    await postToMastodon(`[자판기] ${myNick}님이 [${name}]을(를) 구매했습니다.`, icon);
                 }
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+                alert(`덜컹! [${name}] 배출 완료! (가방을 확인하세요)`);
             }
+
+            // C. 랜덤 뽑기 (랜덤박스, 특전키트)
             else if (type === 'random') {
                 const pool = randomPools[poolName];
                 const item = pool[Math.floor(Math.random() * pool.length)];
                 await database.ref(`users/${myID}/inventory`).push({ name: item.name, icon: item.icon, type: "소비" });
                 await database.ref().update(updates);
                 
-                // [마스토돈 알림] 랜덤 뽑기 결과
                 if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
-               await postToMastodon(`🎲 [뽑기] ${myNick}님이 랜덤박스에서 [${item.name}]을(를) 뽑았습니다!`, item.icon);
-}
-
+                    await postToMastodon(`🎲 [뽑기] ${myNick}님이 랜덤박스에서 [${item.name}]을(를) 뽑았습니다!`, item.icon);
+                }
                 alert(`덜컹! 랜덤박스에서 [${item.name}] 획득!`);
             } 
+
+            // D. 도박 결과 처리
             else if (type === 'gamble') {
                 const isWin = Math.random() >= 0.5;
                 let msg = "";
@@ -454,22 +438,20 @@ if (!isOperatingTime()) {
                 if (isWin) {
                     updates[`users/${myID}/money`] = money + finalPrice; 
                     msg = `🎉 당첨! ${finalPrice*2}G 획득!`;
-                    
-                    // [마스토돈 알림] 도박 승리
                     if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
-                        postToMastodon(`🎰 [도박] ${myNick}님이 ${finalPrice}G를 걸고 승리하여 돈을 불렸습니다! (+${finalPrice}G)`);
+                        await postToMastodon(`🎰 [도박] ${myNick}님이 ${finalPrice}G를 걸고 승리하여 돈을 불렸습니다! (+${finalPrice}G)`);
                     }
                 } else {
                     msg = `💸 꽝... 돈을 먹었습니다.`;
-                    
-                    // [마스토돈 알림] 도박 패배
                     if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
-                        postToMastodon(`💸 [도박] ${myNick}님이 ${finalPrice}G를 걸었지만 전액 탕진했습니다...`);
+                        await postToMastodon(`💸 [도박] ${myNick}님이 ${finalPrice}G를 걸었지만 전액 탕진했습니다...`);
                     }
                 }
                 await database.ref().update(updates);
                 alert(msg);
             } 
+
+            // E. 커스텀 아이템 제작
             else if (type === 'custom') {
                 const customName = prompt("원하는 악세사리 이름:");
                 if (!customName) return;
@@ -477,11 +459,9 @@ if (!isOperatingTime()) {
                 await database.ref(`users/${myID}/inventory`).push({ name: customName, icon: icon });
                 await database.ref().update(updates);
                 
-                // [마스토돈 알림] 커스텀 아이템
                 if (myID !== '13reaking_news' && typeof postToMastodon === "function") {
-                postToMastodon(`✨ [제작] ${myNick}님이 [${customName}]을(를) 주문 제작했습니다.`, icon);
-}
-
+                    await postToMastodon(`✨ [제작] ${myNick}님이 [${customName}]을(를) 주문 제작했습니다.`, icon);
+                }
                 alert(`${customName} 2개 획득!`);
             }
         }
