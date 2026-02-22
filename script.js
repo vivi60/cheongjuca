@@ -20,7 +20,6 @@ const userDB = {
     "SAE2ON_cast":        { pw: "outbreak",      nick: "임새언",  role: "user" },
     "SEA__FOREST_cast":        { pw: "outbreak",      nick: "임해신",  role: "user" },
     "dumpling_cast":        { pw: "outbreak",      nick: "장만우",  role: "user" },
-    "HAECHAN":        { pw: "outbreak",      nick: "정해찬",  role: "user" },
     "BlueGreen_cast":        { pw: "outbreak",      nick: "청록",  role: "user" },
     "CDH_cast":        { pw: "outbreak",      nick: "최도화",  role: "user" },
     "sea_cast":        { pw: "outbreak",      nick: "한바다",  role: "user" },
