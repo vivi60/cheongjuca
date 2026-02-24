@@ -204,7 +204,7 @@
 
         //0이 1월이고 1이 2월임
         function calculateCountdown() {
-            const targetDate = new Date(2026, 1 , 6); 
+            const targetDate = new Date(2026, 1 , 19); 
             const today = new Date();
             const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
             
@@ -217,4 +217,5 @@
         function logout() { localStorage.clear(); location.href='index.html'; }
     </script>
 </body>
+
 </html>
